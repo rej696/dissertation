@@ -1,0 +1,123 @@
+
+@article{Yun_2022,
+author = {Yun, Joobeom and Rustamov, Fayozbek and Kim, Juhwan and Shin, Youngjoo},
+title = {Fuzzing of Embedded Systems: A Survey},
+year = {2022},
+issue_date = {July 2023},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {55},
+number = {7},
+issn = {0360-0300},
+url = {https://doi.org/10.1145/3538644},
+doi = {10.1145/3538644},
+abstract = {Security attacks abuse software vulnerabilities of IoT devices; hence, detecting and eliminating these vulnerabilities immediately are crucial. Fuzzing is an efficient method to identify vulnerabilities automatically, and many publications have been released to date. However, fuzzing for embedded systems has not been studied extensively owing to various obstacles, such as multi-architecture support, crash detection difficulties, and limited resources. Thus, the article introduces fuzzing techniques for embedded systems and the fuzzing differences for desktop and embedded systems. Further, we collect state-of-the-art technologies, discuss their advantages and disadvantages, and classify embedded system fuzzing tools. Finally, future directions for fuzzing research of embedded systems are predicted and discussed.},
+journal = {ACM Comput. Surv.},
+month = {dec},
+articleno = {137},
+numpages = {33},
+keywords = {Firmware fuzzing, fuzzing, IoT devices, firmware analysis, embedded systems, software testing, symbolic execution, concolic execution}
+}
+
+@article{Eisele_2022, title={Debugger-driven embedded fuzzing}, DOI={10.1109/icst53961.2022.00062}, journal={2022 IEEE Conference on Software Testing, Verification and Validation (ICST)}, author={Eisele, Max}, year={2022}}
+
+@article{Eisele_et_al_2022, title={Embedded fuzzing: A review of challenges, tools, and solutions}, volume={5}, DOI={10.1186/s42400-022-00123-y}, number={1}, journal={Cybersecurity}, author={Eisele, Max and Maugeri, Marcello and Shriwas, Rachna and Huth, Christopher and Bella, Giampaolo}, year={2022}}
+
+@article{Muench_2018, title={What you corrupt is not what you crash: Challenges in fuzzing embedded devices}, DOI={10.14722/ndss.2018.23166}, journal={Proceedings 2018 Network and Distributed System Security Symposium}, author={Muench, Marius and Stijohann, Jan and Kargl, Frank and Francillon, Aurelien and Balzarotti, Davide}, year={2018}}
+
+@article{Borsig_2020, title={Fuzzing framework for ESP32 microcontrollers}, DOI={10.1109/wifs49906.2020.9360889}, journal={2020 IEEE International Workshop on Information Forensics and Security (WIFS)}, author={Borsig, Matthias and Nitzsche, Sven and Eisele, Max and Groll, Roland and Becker, Jurgen and Baumgart, Ingmar}, year={2020}}
+
+@article{Beckmann_2023, title={Coverage-guided fuzzing of embedded systems leveraging hardware tracing}, DOI={10.1007/978-3-031-25460-4_21}, journal={Computer Security. ESORICS 2022 International Workshops}, author={Beckmann, Maximilian and Steffan, Jan}, year={2023}, pages={362–378}}
+
+@inproceedings{Chen_2022,
+author = {Chen, Libo and Cai, Quanpu and Ma, Zhenbang and Wang, Yanhao and Hu, Hong and Shen, Minghang and Liu, Yue and Guo, Shanqing and Duan, Haixin and Jiang, Kaida and Xue, Zhi},
+title = {SFuzz: Slice-Based Fuzzing for Real-Time Operating Systems},
+year = {2022},
+isbn = {9781450394505},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3548606.3559367},
+doi = {10.1145/3548606.3559367},
+abstract = {Real-Time Operating System (RTOS) has become the main category of embedded systems. It is widely used to support tasks requiring real-time response such as printers and switches. The security of RTOS has been long overlooked as it was running in special environments isolated from attackers. However, with the rapid development of IoT devices, tremendous RTOS devices are connected to the public network. Due to the lack of security mechanisms, these devices are extremely vulnerable to a wide spectrum of attacks. Even worse, the monolithic design of RTOS combines various tasks and services into a single binary, which hinders the current program testing and analysis techniques working on RTOS. In this paper, we propose SFuzz, a novel slice-based fuzzer, to detect security vulnerabilities in RTOS. Our insight is that RTOS usually divides a complicated binary into many separated but single-minded tasks. Each task accomplishes a particular event in a deterministic way and its control flow is usually straightforward and independent. Therefore, we identify such code from the monolithic RTOS binary and synthesize a slice for effective testing. Specifically, SFuzz first identifies functions that handle user input, constructs call graphs that start from callers of these functions, and leverages forward slicing to build the execution tree based on the call graphs and pruning the paths independent of external inputs. Then, it detects and handles roadblocks within the coarse-grain scope that hinder effective fuzzing, such as instructions unrelated to the user input. And then, it conducts coverage-guided fuzzing on these code snippets. Finally, SFuzz leverages forward and backward slicing to track and verify each path constraint and determine whether a bug discovered in the fuzzer is a real vulnerability. SFuzz successfully discovered 77 zero-day bugs on 35 RTOS samples, and 67 of them have been assigned CVE or CNVD IDs. Our empirical evaluation shows that SFuzz outperforms the state-of-the-art tools (e.g., UnicornAFL) on testing RTOS.},
+booktitle = {Proceedings of the 2022 ACM SIGSAC Conference on Computer and Communications Security},
+pages = {485–498},
+numpages = {14},
+keywords = {taint analysis, concolic execution, rtos, slice-based fuzzing},
+location = {Los Angeles, CA, USA},
+series = {CCS '22}
+}
+
+@article{Godefroid_2012, title={Sage: Whitebox fuzzing for Security Testing}, volume={10}, DOI={10.1145/2090147.2094081}, number={1}, journal={Queue}, author={Godefroid, Patrice and Levin, Michael Y. and Molnar, David}, year={2012}, pages={20–27}}
+
+@article{Krishnamoorthy_2010, title={Tackling the path explosion problem in symbolic execution-driven test generation for programs}, DOI={10.1109/ats.2010.19}, journal={2010 19th IEEE Asian Test Symposium}, author={Krishnamoorthy, Saparya and Hsiao, Michael S. and Lingappan, Loganathan}, year={2010}}
+
+@article{Clements_2021, title={Is your firmware real or re-hosted? A case study in re-hosting vxworks control system firmware}, DOI={10.14722/bar.2021.23006}, journal={Proceedings 2021 Workshop on Binary Analysis Research}, author={Clements, Abraham A. and Carpenter, Logan and Moeglein, William A. and Wright, Christopher}, year={2021}}
+
+@INPROCEEDINGS{Svoboda_2021,
+  author={Svoboda, David},
+  booktitle={2021 IEEE Secure Development Conference (SecDev)},
+  title={Hands-on Tutorial: How Exploitable is Insecure C Code?},
+  year={2021},
+  volume={},
+  number={},
+  pages={7-8},
+  doi={10.1109/SecDev51306.2021.00015}}
+
+@ARTICLE{Abdumohasan_2021,
+author={Aloseel, Abdulmohsan and He, Hongmei and Shaw, Carl and Khan, Muhammad Ali},
+journal={IEEE Access},
+title={Analytical Review of Cybersecurity for Embedded Systems},
+year={2021},
+volume={9},
+number={},
+pages={961-982},
+doi={10.1109/ACCESS.2020.3045972}}
+
+@online{Google_2023,
+    author={Google},
+    title={OSS-Fuzz},
+    url={https://google.github.io/oss-fuzz/},
+    urldate = {2023-11-28},
+    year = {2023},
+}
+@online{Behrang_2023,
+    author={Behrang, F.},
+    title = {nrf52 radio emu},
+    url = {https://github.com/befoulad/nrf52_radio_emu},
+    urldate = {2023-12-28},
+    year = {2023},
+}
+@online{UnicornMode,
+    author={Maier, Dominik and Voss, Nathan and Fioraldi, Andrea},
+    title = {Unicorn-based binary-only instrumentation for afl-fuzz},
+    url = {https://github.com/AFLplusplus/AFLplusplus/blob/stable/unicorn_mode/README.md},
+    urldate = {2023-12-28},
+    year = {2023},
+}
+@online{AFL_2019,
+    author={Google},
+    title={AFL (american fuzzy lop)},
+    url={https://afl-1.readthedocs.io/en/latest/index.html},
+    urldate = {2023-11-28},
+    year = {2019},
+}
+
+@inproceedings {Maier_2019,
+author = {Dominik Maier and Benedikt Radtke and Bastian Harren},
+title = {Unicorefuzz: On the Viability of Emulation for Kernelspace Fuzzing},
+booktitle = {13th USENIX Workshop on Offensive Technologies (WOOT 19)},
+year = {2019},
+address = {Santa Clara, CA},
+url = {https://www.usenix.org/conference/woot19/presentation/maier},
+publisher = {USENIX Association},
+month = aug
+}
+
+@online{gnatfuzz,
+    author={AdaCore},
+    title={Gnatfuzz User's Guide},
+    url={https://docs.adacore.com/live/wave/gnatdas/html/gnatdas_ug/gnatfuzz/gnatfuzz_part.html#},
+    urldate = {2024-01-02},
+    year = {2023},
+}
+
