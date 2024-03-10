@@ -17,7 +17,7 @@ TARGET := $(BUILD)/firmware
 SOURCES := $(shell find $(SRC) -name '*.c')
 OBJECTS := $(SOURCES:$(SRC)/%.c=$(BUILD)/%.o)
 
-.PHONY: build dump clean
+.PHONY: build dump clean emu
 
 build: $(TARGET).bin
 
@@ -36,6 +36,15 @@ flash: $(TARGET).bin
 
 dump: $(TARGET).elf
 	$(OBJDUMP) -dh $<
+
+emu: $(TARGET).bin emu_install
+	. venv/bin/activate; python3 -m emu $<
+
+emu_install: requirements.txt venv
+	. venv/bin/activate; pip install -r requirements.txt
+
+venv:
+	python3 -m venv venv
 
 clean:
 	rm -rf build

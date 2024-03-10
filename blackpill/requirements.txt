@@ -1,0 +1,2 @@
+capstone==5.0.1
+unicorn==2.0.1.post1
