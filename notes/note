@@ -1,1 +1,3 @@
 TODO use fuzzware to fuzz aac kryten software as a case study
+TODO implement simple sensor reading device with blackpill
+TODO build tmtc interface on blackpill and emulate and fuzz test

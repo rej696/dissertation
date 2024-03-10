@@ -2,7 +2,6 @@
 #include <stdbool.h>
 #include "pinutils.h"
 #include "gpio.h"
-#include "rcc.h"
 #include "uart.h"
 #include "systick.h"
 
@@ -21,7 +20,7 @@ int main(void)
             static bool on = true;
             gpio_write(led, on);
             on = !on;
-            uart_write_str(UART1, "hi\r\n");
+            uart_write_str(UART1, on ? "tick\r\n" : "tock\r\n");
         }
 
         /* Modify speed of the timer based on uart1 input */

@@ -1,3 +1,5 @@
 TODO setup dissertation repository
 TODO add submodules to interesting projects
 TODO investigate fuzzware
+DONE work through bare-metal-programming-guide with blackpill (2024-03-10 18:57)
+TODO implement unicorn emulator for blackpill
