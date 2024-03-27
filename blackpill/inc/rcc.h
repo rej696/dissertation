@@ -41,6 +41,6 @@ typedef struct rcc {
     volatile uint32_t DCKCFGR;
 } rcc_t;
 
-#define RCC ((rcc_t *) 0x40023800)
+#define RCC ((rcc_t *)0x40023800)
 
 #endif /* RCC_H_ */

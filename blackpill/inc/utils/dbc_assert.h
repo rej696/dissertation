@@ -32,107 +32,106 @@
 #define DBC_ASSERT_H_
 
 /*! @file
-* @brief Memory-efficient Design by Contract (DBC) for embedded C and C++.
-*
-* @note
-* The runtime checking of the DBC assertions can be disabled by defining
-* the macro #DBC_DISABLE. However, it is generally **not** advisable to
-* disable assertions, *especially* in the production code. Instead, the
-* assertion fault handler DBC_fault_handler() should be very carefully
-* designed and tested under all fault conditions.
-*/
+ * @brief Memory-efficient Design by Contract (DBC) for embedded C and C++.
+ *
+ * @note
+ * The runtime checking of the DBC assertions can be disabled by defining
+ * the macro #DBC_DISABLE. However, it is generally **not** advisable to
+ * disable assertions, *especially* in the production code. Instead, the
+ * assertion fault handler DBC_fault_handler() should be very carefully
+ * designed and tested under all fault conditions.
+ */
 
 /* Active DbC macros -------------------------------------------------------*/
 #ifndef DBC_DISABLE
 
 /*! General purpose assertion with user-specified ID number.
-*
-* @details
-* Makes sure the `expr_` parameter is TRUE. Calls the DBC_fault_handler()
-* callback if the `expr_` evaluates to FALSE. This assertion takes the
-* user-supplied parameter `label_` to identify the location of this
-* assertion within the module. This avoids the volatility of using line
-* numbers, which change whenever a line of code is added or removed
-* upstream from the assertion. Uses the __FILE__ and __LINE__ macros
-* to call the DBC_fault_handler
-*
-* @param[in] expr_  Boolean expression to check
-*
-* @note
-* The `expr_` expression is **not** evaluated if assertions are
-* disabled with the ::DBC_DISABLE switch.
-*/
-#define DBC_ASSERT(expr_) ((expr_) \
-    ? ((void)0) : DBC_fault_handler(__FILE__, __LINE__))
+ *
+ * @details
+ * Makes sure the `expr_` parameter is TRUE. Calls the DBC_fault_handler()
+ * callback if the `expr_` evaluates to FALSE. This assertion takes the
+ * user-supplied parameter `label_` to identify the location of this
+ * assertion within the module. This avoids the volatility of using line
+ * numbers, which change whenever a line of code is added or removed
+ * upstream from the assertion. Uses the __FILE__ and __LINE__ macros
+ * to call the DBC_fault_handler
+ *
+ * @param[in] expr_  Boolean expression to check
+ *
+ * @note
+ * The `expr_` expression is **not** evaluated if assertions are
+ * disabled with the ::DBC_DISABLE switch.
+ */
+#define DBC_ASSERT(expr_) ((expr_) ? ((void)0) : DBC_fault_handler(__FILE__, __LINE__))
 
 /*! General purpose assertion with user-specified ID number that
-* evaluates the `expr_` expression even when assertions are disabled.
-*
-* @details
-* Like the DBC_ASSERT() macro, except it **always** evaluates the
-* `expr_` expression even when DBC assertions are disabled with the
-* #DBC_DISABLE macro.
-*
-* @param[in] expr_  Boolean expression to check
-*/
+ * evaluates the `expr_` expression even when assertions are disabled.
+ *
+ * @details
+ * Like the DBC_ASSERT() macro, except it **always** evaluates the
+ * `expr_` expression even when DBC assertions are disabled with the
+ * #DBC_DISABLE macro.
+ *
+ * @param[in] expr_  Boolean expression to check
+ */
 #define DBC_ALLEGE(expr_) DBC_ASSERT(expr_)
 
 /*! Assertion for a wrong path through the code
-*
-* @details
-* Calls the DBC_fault_handler() callback if ever executed. This assertion
-* takes the user-supplied parameter `id_` to identify the location of
-* this assertion within the file. This avoids the volatility of using
-* line numbers, which change whenever a line of code is added or removed
-* upstream from the assertion. Uses the __FILE__ and __LINE__ macros
-* to call the DBC_fault_handler
-*
-* @param[in] label_ numeric label of the assertion (unique within the module)
-*/
+ *
+ * @details
+ * Calls the DBC_fault_handler() callback if ever executed. This assertion
+ * takes the user-supplied parameter `id_` to identify the location of
+ * this assertion within the file. This avoids the volatility of using
+ * line numbers, which change whenever a line of code is added or removed
+ * upstream from the assertion. Uses the __FILE__ and __LINE__ macros
+ * to call the DBC_fault_handler
+ *
+ * @param[in] label_ numeric label of the assertion (unique within the module)
+ */
 #define DBC_ERROR DBC_fault_handler(__FILE__, __LINE__)
 
 /*! Assertion for checking preconditions.
-*
-* @details
-* Equivalent to DBC_ASSERT(), except the name provides a better
-* documentation of the intention of this assertion.
-*
-* @param[in] label_ numeric label of the assertion (unique within the module)
-* @param[in] expr_  Boolean expression to check
-*
-* @note
-* The `expr_` expression is **not** evaluated if assertions are
-* disabled with the ::DBC_DISABLE switch.
-*/
-#define DBC_REQUIRE(expr_)  DBC_ASSERT((expr_))
+ *
+ * @details
+ * Equivalent to DBC_ASSERT(), except the name provides a better
+ * documentation of the intention of this assertion.
+ *
+ * @param[in] label_ numeric label of the assertion (unique within the module)
+ * @param[in] expr_  Boolean expression to check
+ *
+ * @note
+ * The `expr_` expression is **not** evaluated if assertions are
+ * disabled with the ::DBC_DISABLE switch.
+ */
+#define DBC_REQUIRE(expr_) DBC_ASSERT((expr_))
 
 /*! Assertion for checking postconditions.
-*
-* @details
-* Equivalent to DBC_ASSERT(), except the name provides a better
-* documentation of the intention of this assertion.
-*
-* @param[in] expr_  Boolean expression to check
-*
-* @note
-* The `expr_` expression is **not** evaluated if assertions are
-* disabled with the ::DBC_DISABLE switch.
-*/
+ *
+ * @details
+ * Equivalent to DBC_ASSERT(), except the name provides a better
+ * documentation of the intention of this assertion.
+ *
+ * @param[in] expr_  Boolean expression to check
+ *
+ * @note
+ * The `expr_` expression is **not** evaluated if assertions are
+ * disabled with the ::DBC_DISABLE switch.
+ */
 #define DBC_ENSURE(expr_) DBC_ASSERT((expr_))
 
 /*! Assertion for checking invariants.
-*
-* @details
-* Equivalent to DBC_ASSERT(), except the name provides a better
-* documentation of the intention of this assertion.
-*
-* @param[in] expr_  Boolean expression to check
-*
-* @note
-* The `expr_` expression is **not** evaluated if assertions are
-* disabled with the ::DBC_DISABLE switch.
-*/
-#define DBC_INVARIANT(expr_)  DBC_ASSERT((expr_))
+ *
+ * @details
+ * Equivalent to DBC_ASSERT(), except the name provides a better
+ * documentation of the intention of this assertion.
+ *
+ * @param[in] expr_  Boolean expression to check
+ *
+ * @note
+ * The `expr_` expression is **not** evaluated if assertions are
+ * disabled with the ::DBC_DISABLE switch.
+ */
+#define DBC_INVARIANT(expr_) DBC_ASSERT((expr_))
 
 #ifndef DBC_NORETURN
 #define DBC_NORETURN
@@ -167,7 +166,7 @@ extern "C" {
 * endless loop that ties up the CPU. During debugging, DBC_fault_handler()
 * is an ideal place to put a breakpoint.
 */
-DBC_NORETURN void DBC_fault_handler(char const * module, int label);
+DBC_NORETURN void DBC_fault_handler(char const *module, int label);
 
 #ifdef __cplusplus
 }
@@ -176,12 +175,12 @@ DBC_NORETURN void DBC_fault_handler(char const * module, int label);
 /* Inactive DbC macros -----------------------------------------------------*/
 #else
 
-#define DBC_ASSERT(expr_)      ((void)0)
-#define DBC_ERROR              ((void)0)
-#define DBC_REQUIRE(expr_)     ((void)0)
-#define DBC_ENSURE(expr_)      ((void)0)
-#define DBC_INVARIANT(expr_)   ((void)0)
-#define DBC_ALLEGE(expr_)      ((void)(expr_))
+#define DBC_ASSERT(expr_)    ((void)0)
+#define DBC_ERROR            ((void)0)
+#define DBC_REQUIRE(expr_)   ((void)0)
+#define DBC_ENSURE(expr_)    ((void)0)
+#define DBC_INVARIANT(expr_) ((void)0)
+#define DBC_ALLEGE(expr_)    ((void)(expr_))
 
 #endif /* Inactive DBC macros */
 

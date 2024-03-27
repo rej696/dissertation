@@ -1,10 +1,11 @@
 #ifndef GPIO_H_
 #define GPIO_H_
 
-#include <stdint.h>
-#include <stdbool.h>
-#include "rcc.h"
 #include "pinutils.h"
+#include "rcc.h"
+
+#include <stdbool.h>
+#include <stdint.h>
 
 typedef struct gpio {
     volatile uint32_t MODER;
@@ -18,7 +19,7 @@ typedef struct gpio {
     volatile uint32_t AFR[2];
 } gpio_t;
 
-#define GPIO(bank) ((gpio_t *) (0x40020000 + 0x400 * (bank)))
+#define GPIO(bank) ((gpio_t *)(0x40020000 + 0x400 * (bank)))
 
 typedef enum {
     GPIO_MODE_INPUT = 0,

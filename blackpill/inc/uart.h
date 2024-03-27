@@ -1,8 +1,8 @@
 #ifndef UART_H_
 #define UART_H_
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct uart {
     volatile uint32_t SR;
@@ -24,7 +24,6 @@ typedef enum uart_id {
  * @brief Initialise the uart hardware with the given baudrate
  *
  * @pre baud shall not be 0
- * @pre uart_id shall be within the range of valid uarts
  *
  * @param uart_id[in] the id of the uart device
  * @param baud[in] the desired baudrate for the device

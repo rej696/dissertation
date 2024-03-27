@@ -1,19 +1,43 @@
 ---
 BasedOnStyle: WebKit
+
+# Control alignment of things
 AlignAfterOpenBracket: AlwaysBreak
-AlignConsecutiveMacros: true
+AlignConsecutiveMacros: Consecutive
 AlignEscapedNewlines: Right
-AlignOperands: true
+AlignOperands: Align
+AlignArrayOfStructures: Right
 AlignTrailingComments: true
-AllowAllArgumentsOnNextLine: false
-AllowAllParametersOfDeclarationOnNextLine: false
+
+# Control what statements can be compressed onto a single line
 AllowShortBlocksOnASingleLine: Never
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: All
 AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+# Control how functions are formatted
+IndentWrappedFunctionNames: false
+PenaltyReturnTypeOnItsOwnLine: 1000
+PenaltyBreakBeforeFirstCallParameter: 1
+
+# Control whether functions arguments can be on the same line
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
 BinPackArguments: false
 BinPackParameters: false
+
+# Control where newlines are inserted or removed
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeTernaryOperators: true
+BreakStringLiterals: true
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1
+PenaltyBreakComment: 0
+PenaltyBreakAssignment: 1000
+
+# Control brace placement
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterCaseLabel: false
@@ -25,37 +49,40 @@ BraceWrapping:
   BeforeElse: false
   SplitEmptyFunction: false
   SplitEmptyRecord: false
-BreakBeforeBinaryOperators: NonAssignment
-BreakBeforeTernaryOperators: true
-BreakStringLiterals: true
-ColumnLimit: 100
-ContinuationIndentWidth: 4
-Cpp11BracedListStyle: true
-IncludeBlocks: Regroup
-IndentCaseLabels: true
-IndentPPDirectives: None
-IndentWidth: 4
-IndentWrappedFunctionNames: false
-KeepEmptyLinesAtTheStartOfBlocks: false
-MaxEmptyLinesToKeep: 1
-NamespaceIndentation: None
-PenaltyReturnTypeOnItsOwnLine: 1000
-PenaltyBreakAssignment: 1000
-PenaltyBreakBeforeFirstCallParameter: 1
-PenaltyBreakComment: 0
+
+# Control where spaces are added or removed
 PointerAlignment: Right
-ReflowComments: true
-SortIncludes: true
 SpaceAfterCStyleCast: false
 SpaceAfterLogicalNot: false
 SpaceBeforeAssignmentOperators: true
-SpaceBeforeCpp11BracedList: true
 SpaceBeforeParens: ControlStatements
 SpaceBeforeSquareBrackets: false
+SpacesBeforeTrailingComments: 2
 SpaceInEmptyBlock: false
 SpaceInEmptyParentheses: false
-SpacesBeforeTrailingComments: 2
-SpacesInContainerLiterals: false
 SpacesInSquareBrackets: false
+SpacesInCStyleCastParentheses: false
+
+# Control how things are indented
+IndentWidth: 4
+ContinuationIndentWidth: 4
 UseTab: Never
+IndentCaseLabels: true
+IndentPPDirectives: None
+
+# Control how includes are sorted
+# Note: IncludeCategories can be used to automatically group includes
+IncludeBlocks: Regroup
+SortIncludes: CaseSensitive
+
+# Other settings
+ColumnLimit: 100
+QualifierAlignment: Custom
+QualifierOrder: ['static', 'inline', 'volatile', 'type', 'const']
+ReflowComments: true
+
+# C++ specific settings
+Cpp11BracedListStyle: true
+NamespaceIndentation: None
+SpaceBeforeCpp11BracedList: true
 ---

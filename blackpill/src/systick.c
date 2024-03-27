@@ -1,22 +1,24 @@
+#include "systick.h"
+
+#include "pinutils.h"
+#include "rcc.h"
+
 #include <stdbool.h>
 #include <stdint.h>
-#include "systick.h"
-#include "rcc.h"
-#include "pinutils.h"
 
 static volatile uint32_t s_ticks; /* tick counter */
 
-void systick_init(uint32_t const ticks) {
-    if ((ticks - 1) > 0xffffff) return; // Systick timer is 24 bit
+void systick_init(uint32_t const ticks)
+{
+    if ((ticks - 1) > 0xffffff)
+        return;  // Systick timer is 24 bit
     SYSTICK->LOAD = ticks - 1;
     SYSTICK->VAL = 0;
     SYSTICK->CTRL = BIT(0) | BIT(1) | BIT(2); /* Enable Systick */
-    RCC->APB2ENR |= BIT(14); /* SYSCFG enable */
+    RCC->APB2ENR |= BIT(14);                  /* SYSCFG enable */
 }
 
-uint32_t systick_get_ticks(void) {
-    return s_ticks;
-}
+uint32_t systick_get_ticks(void) { return s_ticks; }
 
 bool systick_timer_expired(uint32_t *const timer, uint32_t const period, uint32_t const now)
 {
@@ -41,6 +43,4 @@ bool systick_timer_expired(uint32_t *const timer, uint32_t const period, uint32_
     return true;
 }
 
-void SysTick_Handler(void) {
-    s_ticks++;
-}
+void SysTick_Handler(void) { s_ticks++; }

@@ -1,10 +1,10 @@
-#include <stdint.h>
-#include <stdbool.h>
-#include "pinutils.h"
 #include "gpio.h"
-#include "uart.h"
+#include "pinutils.h"
 #include "systick.h"
+#include "uart.h"
 
+#include <stdbool.h>
+#include <stdint.h>
 
 int main(void)
 {
@@ -37,4 +37,3 @@ int main(void)
 
     return 0;
 }
-

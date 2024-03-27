@@ -1,8 +1,8 @@
 #ifndef SYSTICK_H_
 #define SYSTICK_H_
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct systick {
     volatile uint32_t CTRL;
@@ -11,7 +11,7 @@ typedef struct systick {
     volatile uint32_t CALIB;
 } systick_t;
 
-#define SYSTICK ((systick_t *) 0xe000e010)
+#define SYSTICK    ((systick_t *)0xe000e010)
 #define CLOCK_FREQ (16000000) /* HSI (internal) clock for black pill is 16MHz */
 
 void systick_init(uint32_t const ticks);

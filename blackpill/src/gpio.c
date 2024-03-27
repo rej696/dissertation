@@ -1,8 +1,10 @@
 #include "gpio.h"
-#include "rcc.h"
+
 #include "pinutils.h"
-#include <stdint.h>
+#include "rcc.h"
+
 #include <stdbool.h>
+#include <stdint.h>
 
 void gpio_set_mode(uint16_t const pin, uint8_t const mode)
 {
@@ -18,7 +20,7 @@ bool gpio_set_af(uint16_t const pin, uint8_t const af_num)
     gpio_t *gpio = GPIO(PINBANK(pin));
     int n = PINNO(pin);
     gpio->AFR[n >> 3] &= ~(15UL << ((n & 7) * 4));
-    gpio->AFR[n >> 3] |= ((uint32_t) af_num) << ((n & 7) * 4);
+    gpio->AFR[n >> 3] |= ((uint32_t)af_num) << ((n & 7) * 4);
     return true;
 }
 
