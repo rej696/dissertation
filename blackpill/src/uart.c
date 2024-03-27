@@ -2,6 +2,7 @@
 #include "gpio.h"
 #include "pinutils.h"
 #include "systick.h"
+#include "utils/dbc_assert.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -12,6 +13,8 @@ uart_t *uart_map[3] = {
 };
 
 void uart_init(uart_id_t const uart_id, uint32_t const baud) {
+    DBC_REQUIRE((uart_id >= UART1) && (uart_id <= UART6));
+    DBC_REQUIRE(baud != 0);
     uint8_t af = 0; /* Alternate Function */
     uint16_t rx = 0;
     uint16_t tx = 0;

@@ -20,7 +20,23 @@ typedef enum uart_id {
     UART6 = 2
 } uart_id_t;
 
+/**
+ * @brief Initialise the uart hardware with the given baudrate
+ *
+ * @pre baud shall not be 0
+ * @pre uart_id shall be within the range of valid uarts
+ *
+ * @param uart_id[in] the id of the uart device
+ * @param baud[in] the desired baudrate for the device
+ */
 void uart_init(uart_id_t const uart_id, uint32_t const baud);
+
+/**
+ * @brief Check if there is data available to be read from the uart
+ *
+ * @param uart_id[in] the id of the uart device
+ * @return flag indicating if there is data to be read from the buffer
+ */
 bool uart_read_ready(uart_id_t const uart_id);
 uint8_t uart_read_byte(uart_id_t const uart_id);
 void uart_write_byte(uart_id_t const uart_id, uint8_t const byte);
