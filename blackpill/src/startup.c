@@ -6,19 +6,19 @@
 extern int main(void);
 
 /* Startup code */
-__attribute__((naked, noreturn)) void _reset(void)
+__attribute__((noreturn)) void _reset(void)
 {
     /* declare linkerscript symbols */
-    extern uint32_t _sbss, _ebss;   /* Start/end of .bss section */
-    extern uint32_t _sdata, _edata; /* Start/end of .data section in flash */
+    extern uint32_t __bss_start__, __bss_end__;   /* Start/end of .bss section */
+    extern uint32_t __data_start__, __data_end__; /* Start/end of .data section in flash */
     extern uint32_t _sidata;        /* Start of .data section in sram */
 
     /* set .bss to zero */
-    for (uint32_t *dst = &_sbss; dst < &_ebss; ++dst) {
+    for (uint32_t *dst = &__bss_start__; dst < &__bss_end__; ++dst) {
         *dst = 0U;
     }
 
-    for (uint32_t *dst = &_sdata, *src = &_sidata; dst < &_edata; ++dst, ++src) {
+    for (uint32_t *dst = &__data_start__, *src = &_sidata; dst < &__data_end__; ++dst, ++src) {
         *dst = *src;
     }
 

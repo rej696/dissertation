@@ -14,7 +14,7 @@ from unicorn import (
     Uc,
     UC_ARCH_ARM,
     UC_MODE_LITTLE_ENDIAN,
-    UC_SECOND_SCALE,
+    UC_MILISECOND_SCALE,
     UC_HOOK_CODE,
 )
 from unicorn.arm_const import UC_ARM_REG_PC, UC_ARM_REG_MSP
@@ -128,7 +128,7 @@ class Emulator:
             self.uc.emu_start(
                 self.vector_table["reset_handler"],
                 self.fw_size + self.base_addr,
-                20 * UC_SECOND_SCALE,
+                1 * UC_MILISECOND_SCALE,
                 0,
             )
         except Exception as e:

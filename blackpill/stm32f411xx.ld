@@ -37,10 +37,10 @@ SECTIONS {
     /* Data section (i.e. initialised, modifiable)
      * sdata and edata symbols can be used to copy data section to ram in the reset function */
     .data : {
-        _sdata = .;   /* .data section start */
+        __data_start__ = .;   /* .data section start */
         *(.first_data)
         *(.data SORT(.data.*))
-        _edata = .;  /* .data section end */
+        __data_end__ = .;  /* .data section end */
     } > sram AT > flash
     /*       ^ The AT keyword allows the section to specify the load address
      *       where the section is loaded at runtime, see
@@ -54,13 +54,13 @@ SECTIONS {
      * sbss and ebss can be used to zero the content of the bss section in the
      * reset function */
     .bss : {
-        _sbss = .;              /* .bss section start */
+        __bss_start__ = .;              /* .bss section start */
         /* COMMON is a legacy symbol that refers to global variables without an initialiser in C
          * SORT indicates to sort the symbols before placing them in the section */
         *(.bss SORT(.bss.*) COMMON)
-        _ebss = .;              /* .bss section end */
+        __bss_end__ = .;              /* .bss section end */
     } > sram
 
     . = ALIGN(8);
-    _end = .;     /* for cmsis_gcc.h  */
+    _exit = .;     /* for cmsis_gcc.h  */
 }
