@@ -1,8 +1,8 @@
-#include "uart.h"
+#include "hal/uart.h"
 
-#include "gpio.h"
-#include "pinutils.h"
-#include "systick.h"
+#include "hal/gpio.h"
+#include "hal/pinutils.h"
+#include "hal/systick.h"
 #include "utils/dbc_assert.h"
 
 #include <stdbool.h>

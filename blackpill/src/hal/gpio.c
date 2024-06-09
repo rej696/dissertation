@@ -1,7 +1,7 @@
-#include "gpio.h"
+#include "hal/gpio.h"
 
-#include "pinutils.h"
-#include "rcc.h"
+#include "hal/pinutils.h"
+#include "hal/rcc.h"
 
 #include <stdbool.h>
 #include <stdint.h>

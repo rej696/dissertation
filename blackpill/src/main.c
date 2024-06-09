@@ -1,7 +1,7 @@
-#include "gpio.h"
-#include "pinutils.h"
-#include "systick.h"
-#include "uart.h"
+#include "hal/gpio.h"
+#include "hal/pinutils.h"
+#include "hal/systick.h"
+#include "hal/uart.h"
 
 #include <stdbool.h>
 #include <stdint.h>

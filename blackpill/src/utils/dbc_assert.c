@@ -1,6 +1,6 @@
 #include "utils/dbc_assert.h"
 
-#include "uart.h"
+#include "hal/uart.h"
 
 DBC_NORETURN void DBC_fault_handler(char const *module, int label)
 {
