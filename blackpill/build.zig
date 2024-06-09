@@ -3,11 +3,11 @@ const std = @import("std");
 const exe_name = "firmware";
 
 const c_src: []const []const u8 = &.{
-    "startup.c",
-    "main.c",
-    "uart.c",
-    "gpio.c",
-    "systick.c",
+    "hal/startup.c",
+    // "main.c",
+    "hal/uart.c",
+    "hal/gpio.c",
+    "hal/systick.c",
     "utils/dbc_assert.c",
 };
 
@@ -25,7 +25,17 @@ const c_flags: []const []const u8 = &.{
 
 pub fn build(b: *std.Build) void {
     const target = b.resolveTargetQuery(target_default);
-    const optimize = b.standardOptimizeOption(.{});
+    const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseSmall });
+
+    const zig_obj = b.addObject(.{
+        .name = "zig_main.o",
+        .target = target,
+        .optimize = optimize,
+        .link_libc = false,
+        .single_threaded = false,
+        .root_source_file = b.path("src/main.zig"),
+    });
+    zig_obj.addIncludePath(b.path("inc"));
 
     const exe = b.addExecutable(.{
         .name = exe_name ++ ".elf",
@@ -34,7 +44,10 @@ pub fn build(b: *std.Build) void {
         .link_libc = false,
         .linkage = .static,
         .single_threaded = true,
+        // .root_source_file = b.path("src/main.zig"),
     });
+
+    exe.addObject(zig_obj);
 
     setupArmGcc(b, exe);
 
@@ -43,6 +56,7 @@ pub fn build(b: *std.Build) void {
     exe.link_gc_sections = true;
     exe.link_data_sections = true;
     exe.link_function_sections = true;
+    exe.verbose_link = true;
     exe.setLinkerScript(b.path("stm32f411xx.ld"));
 
     // program include path
@@ -84,7 +98,17 @@ const target_default: std.Target.Query = .{
 
 /// ObjCopy an elf to a hex or bin format
 fn extractBin(b: *std.Build, exe: *std.Build.Step.Compile, comptime format: std.Build.Step.ObjCopy.RawFormat) void {
-    const bin = b.addObjCopy(exe.getEmittedBin(), .{ .format = format });
+    // const strip: std.Build.Step.ObjCopy.Strip = if (format == .bin) .debug_and_symbols else .none;
+    const bin = b.addObjCopy(exe.getEmittedBin(), .{
+        .format = format,
+        // .only_sections = &.{
+        //     ".vectors",
+        //     ".text",
+        //     ".rodata",
+        //     ".data",
+        //     ".bss",
+        // },
+    });
     bin.step.dependOn(&exe.step);
     const copy_bin = b.addInstallBinFile(bin.getOutput(), exe_name ++ "." ++ @tagName(format));
     b.default_step.dependOn(&copy_bin.step);
