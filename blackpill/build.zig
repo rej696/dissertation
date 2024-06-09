@@ -4,7 +4,7 @@ const exe_name = "firmware";
 
 const c_src: []const []const u8 = &.{
     "hal/startup.c",
-    // "main.c",
+    "main.c",
     "hal/uart.c",
     "hal/gpio.c",
     "hal/systick.c",
@@ -32,8 +32,9 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
         .link_libc = false,
-        .single_threaded = false,
-        .root_source_file = b.path("src/main.zig"),
+        .single_threaded = true,
+        .pic = true,
+        .root_source_file = b.path("src/zig/main.zig"),
     });
     zig_obj.addIncludePath(b.path("inc"));
 
@@ -44,7 +45,6 @@ pub fn build(b: *std.Build) void {
         .link_libc = false,
         .linkage = .static,
         .single_threaded = true,
-        // .root_source_file = b.path("src/main.zig"),
     });
 
     exe.addObject(zig_obj);
@@ -56,7 +56,6 @@ pub fn build(b: *std.Build) void {
     exe.link_gc_sections = true;
     exe.link_data_sections = true;
     exe.link_function_sections = true;
-    exe.verbose_link = true;
     exe.setLinkerScript(b.path("stm32f411xx.ld"));
 
     // program include path
@@ -98,16 +97,8 @@ const target_default: std.Target.Query = .{
 
 /// ObjCopy an elf to a hex or bin format
 fn extractBin(b: *std.Build, exe: *std.Build.Step.Compile, comptime format: std.Build.Step.ObjCopy.RawFormat) void {
-    // const strip: std.Build.Step.ObjCopy.Strip = if (format == .bin) .debug_and_symbols else .none;
     const bin = b.addObjCopy(exe.getEmittedBin(), .{
         .format = format,
-        // .only_sections = &.{
-        //     ".vectors",
-        //     ".text",
-        //     ".rodata",
-        //     ".data",
-        //     ".bss",
-        // },
     });
     bin.step.dependOn(&exe.step);
     const copy_bin = b.addInstallBinFile(bin.getOutput(), exe_name ++ "." ++ @tagName(format));
@@ -118,34 +109,48 @@ fn extractBin(b: *std.Build, exe: *std.Build.Step.Compile, comptime format: std.
 /// https://github.com/haydenridd/stm32-zig-porting-guide
 fn setupArmGcc(b: *std.Build, exe: *std.Build.Step.Compile) void {
     // get the arm gcc compiler
-    const arm_gcc_pgm = if (b.option([]const u8, "armgcc", "Path to arm-none-eabi-gcc compiler")) |arm_gcc_path|
-        b.findProgram(&.{"arm-none-eabi-gcc"}, &.{arm_gcc_path}) catch {
-            std.log.err("Can't find arm-none-eabi-gcc at provided path: {s}\n", .{arm_gcc_path});
-            unreachable;
-        }
-    else
-        b.findProgram(&.{"arm-none-eabi-gcc"}, &.{}) catch {
-            std.log.err("Can't find arm-none-eabi-gcc in PATH\n", .{});
-            unreachable;
-        };
+    const arm_gcc = getDepPath(b, "arm-none-eabi-gcc");
 
     // figure out paths to arm gcc built-in libraries
-    const gcc_arm_sysroot_path = std.mem.trim(u8, b.run(&.{ arm_gcc_pgm, "-print-sysroot" }), "\r\n");
-    const gcc_arm_multidir_relative_path = std.mem.trim(u8, b.run(&.{ arm_gcc_pgm, "-mcpu=cortex-m4", "-mfpu=fpv4-sp-d16", "-mfloat-abi=hard", "-print-multi-directory" }), "\r\n");
-    const gcc_arm_version = std.mem.trim(u8, b.run(&.{ arm_gcc_pgm, "-dumpversion" }), "\r\n");
-    const gcc_arm_lib_path1 = b.fmt("{s}/../lib/gcc/arm-none-eabi/{s}/{s}", .{ gcc_arm_sysroot_path, gcc_arm_version, gcc_arm_multidir_relative_path });
-    const gcc_arm_lib_path2 = b.fmt("{s}/lib/{s}", .{ gcc_arm_sysroot_path, gcc_arm_multidir_relative_path });
+    const sysroot_path = parseCommand(b, &.{ arm_gcc, "-print-sysroot" });
+    const multidir_rel_path = parseCommand(b, &.{
+        arm_gcc,
+        "-mcpu=cortex-m4",
+        "-mfpu=fpv4-sp-d16",
+        "-mfloat-abi=hard",
+        "-print-multi-directory",
+    });
+    const version = parseCommand(b, &.{ arm_gcc, "-dumpversion" });
+    const lib_path1 = b.fmt("{s}/../lib/gcc/arm-none-eabi/{s}/{s}", .{ sysroot_path, version, multidir_rel_path });
+    const lib_path2 = b.fmt("{s}/lib/{s}", .{ sysroot_path, multidir_rel_path });
 
     // manually add nano version of newlib c (--specs nano.specs -lc -lgcc)
-    exe.addLibraryPath(.{ .path = gcc_arm_lib_path1 });
-    exe.addLibraryPath(.{ .path = gcc_arm_lib_path2 });
-    exe.addSystemIncludePath(.{ .path = b.fmt("{s}/include", .{gcc_arm_sysroot_path}) });
+    exe.addLibraryPath(.{ .path = lib_path1 });
+    exe.addLibraryPath(.{ .path = lib_path2 });
+    exe.addSystemIncludePath(.{ .path = b.fmt("{s}/include", .{sysroot_path}) });
     exe.linkSystemLibrary("c_nano");
 
     // manually add c runtime objects bundled with arm-gcc
-    exe.addObjectFile(.{ .path = b.fmt("{s}/crt0.o", .{gcc_arm_lib_path2}) });
-    exe.addObjectFile(.{ .path = b.fmt("{s}/crti.o", .{gcc_arm_lib_path1}) });
-    exe.addObjectFile(.{ .path = b.fmt("{s}/crtbegin.o", .{gcc_arm_lib_path1}) });
-    exe.addObjectFile(.{ .path = b.fmt("{s}/crtend.o", .{gcc_arm_lib_path1}) });
-    exe.addObjectFile(.{ .path = b.fmt("{s}/crtn.o", .{gcc_arm_lib_path1}) });
+    exe.addObjectFile(.{ .path = b.fmt("{s}/crt0.o", .{lib_path2}) });
+    exe.addObjectFile(.{ .path = b.fmt("{s}/crti.o", .{lib_path1}) });
+    exe.addObjectFile(.{ .path = b.fmt("{s}/crtbegin.o", .{lib_path1}) });
+    exe.addObjectFile(.{ .path = b.fmt("{s}/crtend.o", .{lib_path1}) });
+    exe.addObjectFile(.{ .path = b.fmt("{s}/crtn.o", .{lib_path1}) });
+}
+
+fn getDepPath(b: *std.Build, name: []const u8) []const u8 {
+    return if (b.option([]const u8, name, b.fmt("Path to {s} dependency", .{name}))) |path|
+        b.findProgram(&.{name}, &.{path}) catch {
+            std.log.err("Can't find {s} at provided path: {s}\n", .{ name, path });
+            unreachable;
+        }
+    else
+        b.findProgram(&.{name}, &.{}) catch {
+            std.log.err("Can't find {s} in PATH\n", .{name});
+            unreachable;
+        };
+}
+
+fn parseCommand(b: *std.Build, argv: []const []const u8) []const u8 {
+    return std.mem.trim(u8, b.run(argv), "\r\n");
 }

@@ -128,7 +128,7 @@ class Emulator:
             self.uc.emu_start(
                 self.vector_table["reset_handler"],
                 self.fw_size + self.base_addr,
-                1 * UC_MILISECOND_SCALE,
+                5 * UC_MILISECOND_SCALE,
                 0,
             )
         except Exception as e:

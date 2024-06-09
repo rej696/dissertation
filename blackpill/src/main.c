@@ -1,13 +1,18 @@
+#if 0
 #include "hal/gpio.h"
 #include "hal/pinutils.h"
 #include "hal/systick.h"
 #include "hal/uart.h"
+#endif
 
 #include <stdbool.h>
-#include <stdint.h>
+
+extern int zig_main(void);
 
 int main(void)
 {
+    return zig_main();
+#if 0
     uint16_t led = PIN('C', 13);
     gpio_set_mode(led, GPIO_MODE_OUTPUT);
     systick_init(CLOCK_FREQ / 1000); /* tick every ms */
@@ -36,4 +41,5 @@ int main(void)
     }
 
     return 0;
+#endif
 }
