@@ -77,9 +77,14 @@ SECTIONS {
     /* .debug_str 0 : { *(.debug_str) } */
     /* .debug_types 0 : { *(.debug_types) } */
 
-    /* Init Array and Fini Array are Contructor Destructor sections */
+    /* Init Array and Fini Array are Contructor Destructor sections
+     * .jcr is some old style constructor section for arm-gcc v6.3
+     * These were appearing in the zig build because of linking in the arm-gcc
+     * start files, but actually we want -nostartfiles so these don't need to
+     * be discarded*/
     /DISCARD/ : {
         *(.init_array)
         *(.fini_array)
+        *(.jcr)
     }
 }

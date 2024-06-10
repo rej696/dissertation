@@ -49,7 +49,8 @@ pub fn build(b: *std.Build) void {
 
     exe.addObject(zig_obj);
 
-    setupArmGcc(b, exe);
+    // Might not need this for start files
+    // setupArmGcc(b, exe);
 
     // setup linker script
     exe.entry = .{ .symbol_name = "_reset" };
@@ -90,7 +91,7 @@ const target_default: std.Target.Query = .{
     .cpu_model = std.Target.Query.CpuModel{ .explicit = &std.Target.arm.cpu.cortex_m4 },
     .cpu_features_add = std.Target.arm.featureSet(
         &[_]std.Target.arm.Feature{
-            std.Target.arm.Feature.fp_armv8d16sp,
+            std.Target.arm.Feature.vfp4d16sp,
         },
     ),
 };
@@ -125,17 +126,17 @@ fn setupArmGcc(b: *std.Build, exe: *std.Build.Step.Compile) void {
     const lib_path2 = b.fmt("{s}/lib/{s}", .{ sysroot_path, multidir_rel_path });
 
     // manually add nano version of newlib c (--specs nano.specs -lc -lgcc)
-    exe.addLibraryPath(.{ .path = lib_path1 });
-    exe.addLibraryPath(.{ .path = lib_path2 });
-    exe.addSystemIncludePath(.{ .path = b.fmt("{s}/include", .{sysroot_path}) });
+    exe.addLibraryPath(.{ .cwd_relative = lib_path1 });
+    exe.addLibraryPath(.{ .cwd_relative = lib_path2 });
+    exe.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/include", .{sysroot_path}) });
     exe.linkSystemLibrary("c_nano");
 
     // manually add c runtime objects bundled with arm-gcc
-    exe.addObjectFile(.{ .path = b.fmt("{s}/crt0.o", .{lib_path2}) });
-    exe.addObjectFile(.{ .path = b.fmt("{s}/crti.o", .{lib_path1}) });
-    exe.addObjectFile(.{ .path = b.fmt("{s}/crtbegin.o", .{lib_path1}) });
-    exe.addObjectFile(.{ .path = b.fmt("{s}/crtend.o", .{lib_path1}) });
-    exe.addObjectFile(.{ .path = b.fmt("{s}/crtn.o", .{lib_path1}) });
+    exe.addObjectFile(.{ .cwd_relative = b.fmt("{s}/crt0.o", .{lib_path2}) });
+    exe.addObjectFile(.{ .cwd_relative = b.fmt("{s}/crti.o", .{lib_path1}) });
+    exe.addObjectFile(.{ .cwd_relative = b.fmt("{s}/crtbegin.o", .{lib_path1}) });
+    exe.addObjectFile(.{ .cwd_relative = b.fmt("{s}/crtend.o", .{lib_path1}) });
+    exe.addObjectFile(.{ .cwd_relative = b.fmt("{s}/crtn.o", .{lib_path1}) });
 }
 
 fn getDepPath(b: *std.Build, name: []const u8) []const u8 {
