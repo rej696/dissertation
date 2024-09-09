@@ -4,7 +4,7 @@
 #include "hal/uart.h"
 
 #include <stdbool.h>
-
+#include <stddef.h>
 
 int main(void)
 {
@@ -26,12 +26,19 @@ int main(void)
         /* Modify speed of the timer based on uart1 input */
         if (uart_read_ready(UART1)) {
             uint8_t byte = uart_read_byte(UART1);
-            uart_write_byte(UART1, byte);
+            char *string = "Invalid!\r\n";
             if (byte == '+') {
                 period >>= 1;
+                string = "+\r\n";
             } else if (byte == '-') {
                 period <<= 1;
+                string = "-\r\n";
+            } else if (byte == '\0') {
+                string[sizeof(string)] = '0';
             }
+            uart_write_str(UART1, string);
+
+
         }
     }
 

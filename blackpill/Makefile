@@ -2,6 +2,9 @@
 CC := arm-none-eabi-gcc
 OBJCOPY := arm-none-eabi-objcopy
 OBJDUMP := arm-none-eabi-objdump
+GDB := arm-none-eabi-gdb
+
+SYMBOL ?= main
 
 CFLAGS  ?=  -W -Wall -Wextra -Werror -Wundef -Wshadow -Wdouble-promotion \
             -Wformat-truncation -fno-common -Wconversion \
@@ -36,6 +39,9 @@ flash: $(TARGET).bin
 
 dump: $(TARGET).elf
 	$(OBJDUMP) -dh $<
+
+disasm: $(TARGET).elf
+	$(GDB) -q $< -ex "set pagination off" -ex "disas /s $(SYMBOL)" -ex quit
 
 emu: $(TARGET).bin emu_install
 	. venv/bin/activate; python3 -m emu $<
