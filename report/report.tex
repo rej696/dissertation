@@ -247,14 +247,31 @@ when compared to desktop or server systems remain the variety in CPU
 architectures in embedded systems, and the lack of an operating system such as
 linux for bare metal systems \citep{Eisele_et_al_2022}. Currently, the
 availability and ease of use of fuzzing tooling for embedded systems does not
-match that of desktop applications. However, while much research outlines the
+match that of desktop applications.
+
+% Talk about the promise of rehosting/emulation/
+% IOTFuzz
+% HALucinator
+% FuzzWare
+% Hoedur
+% Faster Fuzzers (near Native?)
+
+% Outstanding problems for firmware fuzzing?
+
+% Introduce the Space Context? (maybe earlier) reference willbold and gutierrez
+
+
+% CUT?
+However, while much research outlines the
 challenges with current embedded systems fuzzing techniques, it is unclear how
 these challenges compare with the effort required to verify embedded software
 using traditional techniques. In order to prove that embedded fuzz testing is a
 viable alternative to existing verification methods, a comparison of the cost
 effectiveness of conducting embedded fuzzing with other verification techniques
 is required.
+% ENDCUT
 
+% CUT?
 The design and implementation of embedded software and its verification is
 highly coupled to hardware. The nordic semiconductor NRF52 family of
 microcontrollers are a common choice for IOT devices. NRF52s are based on the
@@ -273,6 +290,9 @@ engine to be built with AFL++ support \citep{UnicornMode}. Maier develops the
 Unicorefuzz framework and presents an example use of AFL++ Unicorn Mode for
 fuzzing kernel modules, which have similar challenges to embedded systems
 \citep{Maier_2019}.
+% ENDCUT?
+
+
 
 
 
