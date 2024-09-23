@@ -8,7 +8,7 @@
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{longtable}
-\graphicspath{ {./} }
+\graphicspath{ {images/} }
 
 \setlength{\parindent}{0em}
 \setlength{\parskip}{1em}
@@ -47,6 +47,8 @@
 
 % Gantt Chart package
 \usepackage{pgfgantt}
+
+\usepackage{subfiles}
 
 \title{An Analysis of Emulation based Fuzz Testing for NRF52 Embedded Software Verification}
 \author{Rowan Saunders}
@@ -138,160 +140,21 @@
 % -- identify manual testing methodd (on-target)
 % -- identify black-box testing method
 
-\section{Problem Description} \label{sec:1}
+\section{Abstract}
 
-Embedded systems are becoming more prevalent in today's society, due to the
-rise of the Internet of Things (IOT) \citep{Abdumohasan_2021}. Embedded
-software is often written in low level languages such as C where errors and
-security vulnerabilities are easy to introduce \citep{Svoboda_2021}, and have
-many many attack surfaces where these mistakes could be exploited
-\citep{Abdumohasan_2021}. Furthermore, many embedded systems have stringent
-reliability requirements, such as safety critical software in automotive
-devices. As such, verification and testing of embedded systems is paramount to
-prevent the presence of security exploits and critical bugs in these devices.
+\section{Acknowledgements}
 
-In the non-embedded space, many software programs use a methodology called fuzz
-testing to automatically verify the software. Google has used fuzzing to great
-effect, detecting over 10000 security vulnerabilities in over 1000 open source
-projects through its OSS-Fuzz project \citep{Google_2023}. In its most basic
-form, fuzz testing, or fuzzing, consists of generating some input test data and
-monitoring the response of the software/system under test (SUT) to this input.
-If the fuzzer detects the program has crashed, it saves the generated test data
-for analysis by an engineer, and mutates the input data in some way to produce
-a different result. This brute force approach is known as black-box fuzzing,
-and given enough time to execute, will uncover many exploitable bugs with the
-system, such as memory leaks, buffer overflows, and off by one errors. Basic
-black-box fuzzing on an embedded system will require some fuzzing harness
-\citep{Eisele_et_al_2022} and some method of detecting a fault, such as
-performing a liveness check \citep{Yun_2022}. Borsig et al. do not consider
-black-box fuzzing as a promising methodology for fuzzing an esp32 based IOT
-device, and conclude that white-box and grey-box fuzzing techniques are more
-capable \citep{Borsig_2020}.
+% contents page
 
-Compared to black-box fuzzing, white-box fuzzing involves targeted test case
-generation through static program analysis techniques, generating a test case
-to match every statically identified code path. Microsoft have had success
-using white-box fuzzing to identify difficult bugs that were missed by
-black-box fuzzing \citep{Godefroid_2012}. However, symbolic execution
-techniques used in white-box fuzzing can become unfeasably computationally
-expensive for larger projects \citep{Krishnamoorthy_2010}.
+\section{Introduction}
 
-Grey-box fuzzing is a middle ground between black-box and white-box fuzzing.
-Grey-box fuzzing relies on the fuzzer receiving feedback regarding code
-coverage for each generated test-case to mutate and generate further test
-cases. This approach allows it to find code paths faster than black-box
-testing, but without requiring any static code analysis \citep{Yun_2022}.
+\subfile{sections/introduction}
 
-Grey-box fuzzing of a program can be easily implemented for application (i.e
-non-embedded) software using popular fuzzers like AFL. AFL provides a library
-that is linked into the program at compile time, along with several sanitisers,
-to instrument the program. This allows AFL to receive coverage information from
-the running program during fuzzing \citep{AFL_2019}. Embedded systems often run on
-constrained environments, where running the fuzzer on the target hardware would
-be unfeasible. As such, the fuzzer and the SUT are run in different
-environments, and it is difficult to instrument and forward runtime information
-for grey-box fuzzing \citep{Muench_2018}.
+\section{Description of Work} \label{sec:1}
 
-Attempts to solve this problem focus either on fuzzing a program running on
-target hardware, or in an emulated environment \citep{Eisele_et_al_2022}.
-Running in an emulated environment allows easy inspection of the SUT by the
-fuzzer, and potentially faster running and parallel tests
-\citep{Eisele_et_al_2022}. However, emulating embedded systems correctly is a
-hard problem, and due to the diversity in operating systems, hardware,
-peripherals etc. often means that development effort spent on emulating one
-system cannot be easily transferred to another. Attempts have been made to
-automate emulator development, such as Clements et al. HALucinator, which
-allows Hardware Abstraction Layer (HAL) functions in a compiled binary to be
-stubbed and fuzzed \citep{Clements_2021}.
-Chen et al. investigate a novel approach to fuzzing Real Time Operating Systems
-(RTOS) which involves slicing a single program into its constituent tasks and
-fuzzing them separately on an emulator based on the call graph of the program
-\citep{Chen_2022}.
+\section{Analysis}
 
-Yun et al. note that most embedded systems fuzzers rely on emulation
-\citep{Yun_2022}. However, most bugs found through emulation still need to be
-validated on hardware, and so being able to run the fuzz tests directly on the
-target hardware is preferable \citep{Eisele_et_al_2022}. Several methods have
-been discussed to improve instrumentation and feedback from running fuzz tests
-on target hardware. Beckmann et al. propose making use of the tracing
-facilities on modern Arm Cortex-M microcontrollers to stream coverage
-information back to the fuzzer \citep{Beckmann_2023}. Eisele proposes using a
-debugger as a method of inspecting the SUT and providing coverage feedback to a
-fuzzer \citep{Eisele_2022}.
-
-During the development of an embedded system, engineers often require access to
-representative development hardware to effectively design and write software.
-Often, waiting for prototype hardware to start software development does not
-align with business deadlines. The use of emulators improves enables engineers
-to write embedded software without access to development hardware, improving
-productivity and reducing development time.
-
-Existing research into embedded systems fuzzing often focuses on its
-cybersecurity applications and benefits. However, fuzz testing can also be an
-effective method for general verification of software. AdaCore provide a fuzz
-testing tool called GNATfuzz, which enables subprogram level fuzz testing as a
-supplement to unit testing for Ada and SPARK embedded software
-\citep{gnatfuzz}. By isolating subprograms and building isolated fuzz test
-executables in a manner similar to a unit testing framework, GNATfuzz removes
-the need to be able to run the full program under a fuzzer, and thus the need
-for an emulator or target hardware. However, the effectiveness of this approach
-is relient on Ada's extended runtime constraint checking when compared to C
-\citep{gnatfuzz}. Furthermore, subprogram level fuzzing is less able detect
-more complex issues resulting from interactions with hardware peripherals and
-state.
-
-While research into the fuzz testing of embedded systems has been increasing
-year by year \citep{Yun_2022}, there are few generic solutions
-\citep{Eisele_et_al_2022}. The two main challenges to embedded system fuzzing
-when compared to desktop or server systems remain the variety in CPU
-architectures in embedded systems, and the lack of an operating system such as
-linux for bare metal systems \citep{Eisele_et_al_2022}. Currently, the
-availability and ease of use of fuzzing tooling for embedded systems does not
-match that of desktop applications.
-
-% Talk about the promise of rehosting/emulation/
-% IOTFuzz
-% HALucinator
-% FuzzWare
-% Hoedur
-% Faster Fuzzers (near Native?)
-
-% Outstanding problems for firmware fuzzing?
-
-% Introduce the Space Context? (maybe earlier) reference willbold and gutierrez
-
-
-% CUT?
-However, while much research outlines the
-challenges with current embedded systems fuzzing techniques, it is unclear how
-these challenges compare with the effort required to verify embedded software
-using traditional techniques. In order to prove that embedded fuzz testing is a
-viable alternative to existing verification methods, a comparison of the cost
-effectiveness of conducting embedded fuzzing with other verification techniques
-is required.
-% ENDCUT
-
-% CUT?
-The design and implementation of embedded software and its verification is
-highly coupled to hardware. The nordic semiconductor NRF52 family of
-microcontrollers are a common choice for IOT devices. NRF52s are based on the
-ARM Cortex-M architecture, and include embedded radio peripherals, such as
-bluetooth low energy and wifi (amongst others). Another common IOT radio
-microcontroller is the ESP32, for which Borsig et al. previously developed a
-fuzzing framework \citep{Borsig_2020}. Furthermore, Yun suggested the need for
-further research into emulation of specific architectures and devices
-\citep{Yun_2022}. An NRF52 was used by Beckmann for on-target coverage guided
-fuzzing of a bare metal ARM Cortex-M system using instruction tracing over a
-single wire output (SWO) interface \citep{Beckmann_2023}. Additionally, Behrang
-outlines a method for using the unicorn cpu emulator to execute NRF52 based
-bare-metal radio firmware \citep{Behrang_2023}. The desktop fuzzer AFL++
-includes an implementation called "unicorn\_mode" which allows the unicorn
-engine to be built with AFL++ support \citep{UnicornMode}. Maier develops the
-Unicorefuzz framework and presents an example use of AFL++ Unicorn Mode for
-fuzzing kernel modules, which have similar challenges to embedded systems
-\citep{Maier_2019}.
-% ENDCUT?
-
+\section{Conclusions and Future Work}
 
 
 
@@ -393,74 +256,6 @@ results of the study to IOT devices. The deliverables for this extended objectiv
 \pagebreak
 \section{Project Plan} \label{sec:3}
 
-
-% - Extensions
-
-% For the project, an Agile approach is suggested, allowing the requirements,
-% design, implementation and fuzz testing functionality to be developed
-% incrementally. This is especially important as the design and specification of
-% the example system is to enable the demonstration of fuzzing of the system.
-
-% The project is split into Epics, each with an estimate to completion in
-% terms of (working) days.
-% These are specified in \textit{Table \ref{tab:1}}. From these Epics, tasks will
-% be identified in an agile manner. It is likely that the set of tasks will
-% change through the course of the project.
-
-% \begin{table}[H]
-%     \centering
-%     \begin{tabular}{| l | c |}
-%         \hline
-%         Epic Title & Estimate (days) \\
-%         \hline
-%         Literature Review & 5 \\
-%         Study Fuzzing Tools & 3 \\
-%         Study Embedded Systems & 2 \\
-%         Example System Requirements Engineering & 3 \\
-%         Example System Design & 3 \\
-%         Example System Implementation & 15 \\
-%         Tooling development and integration & 5 \\
-%         Instrumenting example system & 5 \\
-%         Fuzz testing example system & 10 \\
-%         Writing Documentation & 3 \\
-%         Writing Final Report & 10 \\
-%         \hline
-%     \end{tabular}
-%     \caption{Initial list of Epics for the Project}
-%     \label{tab:1}
-% \end{table}
-
-% The total estimate from all the Epics in \textit{Table \ref{tab:1}} above is 64
-% days. Given an expected average rate of 8 working days per calendar month, an
-% overall estimate of the expected timeline can be calculated at around 8 months.
-% Some example task breakdown for some of these Epics is shown below:
-
-% \begin{itemize}
-%     \item Example System Requirements Engineering
-%         \begin{itemize}
-%             \item Develop use cases for the example embedded system
-%             \item Develop system requirements for the example embedded system
-%             \item Identify requirements for conducting chosen fuzzing methodology
-%         \end{itemize}
-%     \item Example System Design
-%         \begin{itemize}
-%             \item Define interfaces to the example embedded system
-%             \item Determine hardware platform, such as processor architecture and peripherals
-%         \end{itemize}
-%     \item Tooling development and integration
-%         \begin{itemize}
-%             \item Identify potential issues for fuzzer integration
-%             \item Develop scripts for running fuzz tests
-%             \item Create build system for project
-%             \item Development of test harnesses for example system
-%         \end{itemize}
-%     \item Instrumenting example system
-%         \begin{itemize}
-%             \item Determine methodology for conducting fuzz tests
-%             \item Develop instrumentation for fuzz tests
-%         \end{itemize}
-% \end{itemize}
-
 \textit{Figure \ref{fig:top}} shows a top level gantt chart for the duration of
 the project. The timeframe in \textit{Figure \ref{fig:top}} is scoped in terms
 of week increments (i.e. 5 working days each). The expected duration of the
@@ -527,250 +322,8 @@ required capability for executing the fuzz tests. Some tasks in the extended
 study may require access to an NRF52 development kit. This has already been
 procured, as it may also be useful for experimenting with during the pilot study.
 
-
-% \newgeometry{
-%     a3paper,
-%    total={170mm,257mm},
-%    left=20mm,
-%    top=20mm,
-% }
-\begin{landscape}
-% \begin{figure}[tbh]
-%     \begin{center}
-%         \begin{ganttchart}[%y unit title=0.4cm,
-%             % y unit chart=0.5cm,
-%             vgrid,hgrid,
-%             expand chart=227mm,
-%             title label anchor/.style={below=-1.6ex},
-%             title left shift=.05,
-%             title right shift=.05,
-%             title height=1,
-%             progress label text={},
-%             bar height=0.7,
-%             group right shift=0,
-%             group top shift=.6,
-%             group height=.3
-%             ]{1}{12}
-%         % \begin{ganttchart}{1}{22}
-%             \gantttitle{Working weeks (5 days)}{12} \\
-%             \gantttitlelist{1,...,12}{1} \\
-%             \ganttbar[name=litrev]{Literature Review}{1}{1} \\
-%             \ganttbar[name=ps]{Pilot Study}{2}{6} \\
-%             \ganttbar[name=ext]{Target Hardware Extensions}{7}{12} \\
-%             \ganttmilestone[name=complete]{Project completed}{12}
-%             \ganttlink{litrev}{ps}
-%             \ganttlink{ps}{ext}
-%             \ganttlink{ps}{complete}
-%             \ganttlink{ext}{complete}
-%         \end{ganttchart}
-%     \end{center}
-%     \caption{Top level Gantt Chart}
-% \end{figure}
-
-\begin{figure}[tbh]
-    \begin{center}
-        \begin{ganttchart}[%y unit title=0.4cm,
-            % y unit chart=0.5cm,
-            vgrid,hgrid,
-            expand chart=227mm,
-            title label anchor/.style={below=-1.6ex},
-            title left shift=.05,
-            title right shift=.05,
-            title height=1,
-            progress label text={},
-            bar height=0.7,
-            group right shift=0,
-            group top shift=.6,
-            group height=.3
-            ]{1}{13}
-        % \begin{ganttchart}{1}{22}
-            \gantttitle{Working weeks (5 days)}{13} \\
-            \gantttitlelist{1,...,13}{1} \\
-            \ganttbar[name=litrev]{Literature Review}{1}{1} \\
-            \ganttbar[name=ps]{Pilot Study}{2}{6} \\
-            \ganttbar[name=ext]{Extended Study}{7}{11} \\
-            \ganttbar[name=ra]{Results Analysis}{12}{12} \\
-            \ganttbar[name=writeup]{Writeup}{13}{13} \\
-            \ganttmilestone[name=complete]{Project completed}{13}
-            \ganttlink{litrev}{ps}
-            \ganttlink{ps}{ext}
-            \ganttlink{ext}{ra}
-            \ganttlink{ra}{writeup}
-            \ganttlink{writeup}{complete}
-        \end{ganttchart}
-    \end{center}
-    \caption{Top Level Gantt Chart}
-    \label{fig:top}
-\end{figure}
-
-\begin{figure}[tbh]
-    \begin{center}
-        \begin{ganttchart}[%y unit title=0.4cm,
-            % y unit chart=0.5cm,
-            vgrid,hgrid,
-            expand chart=227mm,
-            title label anchor/.style={below=-1.6ex},
-            title left shift=.05,
-            title right shift=.05,
-            title height=1,
-            progress label text={},
-            bar height=0.7,
-            group right shift=0,
-            group top shift=.6,
-            group height=.3
-            ]{1}{25}
-        % \begin{ganttchart}{1}{22}
-            \gantttitle{Working days}{25} \\
-            \gantttitlelist{1,...,25}{1} \\
-            \ganttgroup[name=ps]{Pilot Study}{1}{25} \\
-            \ganttbar[name=psreq]{Document Example System Requirements}{1}{2} \\
-            \ganttbar[name=psdev]{Develop Initial Firmware}{3}{6} \\
-            \ganttbar[name=psemu]{Develop Initial Unicorn Emulator}{7}{11} \\
-            \ganttbar[name=psperiph]{Model basic NRF52 peripherals}{12}{14} \\
-            \ganttbar[name=psconfafl]{Configure Unicorn-AFL Fuzzer}{15}{15} \\
-            \ganttbar[name=psrunafl]{Run Unicorn-AFL Fuzzer}{16}{16} \\
-            \ganttbar[name=psbbemu]{Integrate Black-box fuzzer with Emulator}{17}{18} \\
-            \ganttbar[name=psbbrun]{Run Black-box fuzzer}{19}{19} \\
-            \ganttbar[name=psmandev]{Write manual test suite}{20}{21} \\
-            \ganttbar[name=psmanemu]{Integrate manual tests with Emulator}{22}{22} \\
-            \ganttbar[name=psmanrun]{Run manual test suite}{23}{23} \\
-            \ganttbar[name=psanal]{Pilot results analysis}{24}{25} \\
-            \ganttmilestone[name=pscomplete]{Pilot study completed}{25}
-            \ganttlink{psreq}{psdev}
-            \ganttlink{psdev}{psemu}
-            \ganttlink{psemu}{psperiph}
-            \ganttlink{psperiph}{psconfafl}
-            \ganttlink{psconfafl}{psrunafl}
-            \ganttlink{psperiph}{psbbemu}
-            \ganttlink{psbbemu}{psbbrun}
-            \ganttlink{psreq}{psmandev}
-            \ganttlink{psperiph}{psmanemu}
-            \ganttlink{psmandev}{psmanemu}
-            \ganttlink{psmanemu}{psmanrun}
-            \ganttlink{psrunafl}{psanal}
-            \ganttlink{psbbrun}{psanal}
-            \ganttlink{psmanrun}{psanal}
-            \ganttlink{psanal}{pscomplete}
-        \end{ganttchart}
-    \end{center}
-    \caption{Detail level Gantt Chart for Pilot Study}
-    \label{fig:pilot}
-\end{figure}
-
-\begin{figure}[tbh]
-    \begin{center}
-        \begin{ganttchart}[%y unit title=0.4cm,
-            % y unit chart=0.5cm,
-            vgrid,hgrid,
-            expand chart=227mm,
-            title label anchor/.style={below=-1.6ex},
-            title left shift=.05,
-            title right shift=.05,
-            title height=1,
-            progress label text={},
-            bar height=0.7,
-            group right shift=0,
-            group top shift=.6,
-            group height=.3
-            ]{1}{25}
-        % \begin{ganttchart}{1}{22}
-            \gantttitle{Working days}{25} \\
-            \gantttitlelist{1,...,25}{1} \\
-            \ganttgroup[name=ex]{Extended Study}{1}{25} \\
-            \ganttbar[name=exreq]{Document additional requirements}{1}{2} \\
-            \ganttbar[name=exdev]{Extended exiting firmware}{3}{7} \\
-            \ganttbar[name=exemu]{Adapt Unicorn emulator}{8}{9} \\
-            \ganttbar[name=experiph]{Model additional NRF52 peripherals}{10}{15} \\
-            \ganttbar[name=exconfafl]{Configure Unicorn-AFL fuzzer}{16}{16} \\
-            \ganttbar[name=exrunafl]{Run Unicorn-AFL fuzzer}{17}{17} \\
-            \ganttbar[name=exbbemu]{Adapt Black-box fuzzer emulator harnesses}{18}{18} \\
-            \ganttbar[name=exbbrun]{Run Black-box fuzzer}{19}{19} \\
-            \ganttbar[name=exmandev]{Write additional manual tests}{20}{20} \\
-            \ganttbar[name=exmanemu]{Adapt manual test emulator harnesses}{21}{21} \\
-            \ganttbar[name=exmanrun]{Run manual test suite}{22}{22} \\
-            \ganttbar[name=exanal]{Extended results analysis}{23}{25} \\
-            \ganttmilestone[name=excomplete]{Extended study completed}{25}
-            \ganttlink{exreq}{exdev}
-            \ganttlink{exdev}{exemu}
-            \ganttlink{exemu}{experiph}
-            \ganttlink{experiph}{exconfafl}
-            \ganttlink{exconfafl}{exrunafl}
-            \ganttlink{experiph}{exbbemu}
-            \ganttlink{exbbemu}{exbbrun}
-            \ganttlink{exreq}{exmandev}
-            \ganttlink{experiph}{exmanemu}
-            \ganttlink{exmandev}{exmanemu}
-            \ganttlink{exmanemu}{exmanrun}
-            \ganttlink{exrunafl}{exanal}
-            \ganttlink{exbbrun}{exanal}
-            \ganttlink{exmanrun}{exanal}
-            \ganttlink{exanal}{excomplete}
-        \end{ganttchart}
-    \end{center}
-    \caption{Detail level Gantt Chart for Extended Study where the pilot example system is modified to increase system complexity}
-    \label{fig:ext1}
-\end{figure}
-
-\begin{figure}[tbh]
-    \begin{center}
-        \begin{ganttchart}[%y unit title=0.4cm,
-            % y unit chart=0.5cm,
-            vgrid,hgrid,
-            expand chart=227mm,
-            title label anchor/.style={below=-1.6ex},
-            title left shift=.05,
-            title right shift=.05,
-            title height=1,
-            progress label text={},
-            bar height=0.7,
-            group right shift=0,
-            group top shift=.6,
-            group height=.3
-            ]{1}{25}
-        % \begin{ganttchart}{1}{22}
-            \gantttitle{Working days}{25} \\
-            \gantttitlelist{1,...,25}{1} \\
-            \ganttgroup[name=ex]{Extended Study}{1}{25} \\
-            \ganttbar[name=exharness]{Develop base hardware test harness}{1}{3} \\
-            \ganttbar[name=exmanadapt]{Adapt existing manual test suite for running on hardware}{4}{5} \\
-            \ganttbar[name=exmantest]{Run manual test suite on hardware}{6}{6} \\
-            \ganttbar[name=exbbadapt]{Configure Black-box fuzzer for running on hardware}{7}{8} \\
-            \ganttbar[name=exbbtest]{Run black-box fuzzer on hardware}{9}{9} \\
-            \ganttbar[name=excovresearch]{Research hardware coverage-guided fuzzing methodologies}{10}{12} \\
-            \ganttbar[name=excovintegrate]{Integrate coverage guided fuzzer with test harnesses}{13}{16} \\
-            \ganttbar[name=excovinstrument]{Instrument SUT according to chosen fuzzing methodology}{17}{21} \\
-            \ganttbar[name=excovrun]{Run hardware coverage guided fuzzer}{22}{22} \\
-            \ganttbar[name=exanal]{Extended results analysis}{23}{25} \\
-            \ganttmilestone[name=excomplete]{Extended study completed}{25}
-
-            \ganttlink{exharness}{exmanadapt}
-            \ganttlink{exmanadapt}{exmantest}
-            \ganttlink{exharness}{exbbadapt}
-            \ganttlink{exbbadapt}{exbbtest}
-            \ganttlink{excovresearch}{excovintegrate}
-            \ganttlink{exharness}{excovintegrate}
-            \ganttlink{excovintegrate}{excovinstrument}
-            \ganttlink{excovinstrument}{excovrun}
-            \ganttlink{exmantest}{exanal}
-            \ganttlink{exbbtest}{exanal}
-            \ganttlink{excovrun}{exanal}
-            \ganttlink{exanal}{excomplete}
-        \end{ganttchart}
-    \end{center}
-    \caption{Detail level Gantt Chart for Extended Study where the pilot example system is tested with additional verification techniques}
-    \label{fig:ext2}
-\end{figure}
-\end{landscape}
-% \restoregeometry
-
-
-
 \pagebreak
 \bibliography{report.bib}
-\pagebreak
-\includepdf[pages=-]{ethics-checklist-1.pdf}
-\includepdf[pages=-]{ethics-checklist-2.pdf}
-
 
 
 \end{document}

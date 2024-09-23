@@ -1,0 +1,174 @@
+\documentclass[../report.tex]{subfiles}
+\graphicspath{{\subfix{../images}}}
+\begin{document}
+
+introduction
+
+\subsection{Motivation}
+
+\subsection{Background}
+
+\subsection{Research Questions and Objectives}
+
+% Build on Hoedur and Willbold to integrate a protocol fuzzer for spacepacket/ccsds protocols?
+% - investigate Hoedur, how does it work, how can it be extended?
+% - investigate protocol fuzzers, what do we need to do to build one?
+% - test against Willbolds open source satellite software with the protocol fuzzer, and compare results?
+
+\subsection{Overview}
+
+% Problem Description from prep report
+
+Embedded systems are becoming more prevalent in today's society, due to the
+rise of the Internet of Things (IOT) \citep{Abdumohasan_2021}. Embedded
+software is often written in low level languages such as C where errors and
+security vulnerabilities are easy to introduce \citep{Svoboda_2021}, and have
+many many attack surfaces where these mistakes could be exploited
+\citep{Abdumohasan_2021}. Furthermore, many embedded systems have stringent
+reliability requirements, such as safety critical software in automotive
+devices. As such, verification and testing of embedded systems is paramount to
+prevent the presence of security exploits and critical bugs in these devices.
+
+In the non-embedded space, many software programs use a methodology called fuzz
+testing to automatically verify the software. Google has used fuzzing to great
+effect, detecting over 10000 security vulnerabilities in over 1000 open source
+projects through its OSS-Fuzz project \citep{Google_2023}. In its most basic
+form, fuzz testing, or fuzzing, consists of generating some input test data and
+monitoring the response of the software/system under test (SUT) to this input.
+If the fuzzer detects the program has crashed, it saves the generated test data
+for analysis by an engineer, and mutates the input data in some way to produce
+a different result. This brute force approach is known as black-box fuzzing,
+and given enough time to execute, will uncover many exploitable bugs with the
+system, such as memory leaks, buffer overflows, and off by one errors. Basic
+black-box fuzzing on an embedded system will require some fuzzing harness
+\citep{Eisele_et_al_2022} and some method of detecting a fault, such as
+performing a liveness check \citep{Yun_2022}. Borsig et al. do not consider
+black-box fuzzing as a promising methodology for fuzzing an esp32 based IOT
+device, and conclude that white-box and grey-box fuzzing techniques are more
+capable \citep{Borsig_2020}.
+
+Compared to black-box fuzzing, white-box fuzzing involves targeted test case
+generation through static program analysis techniques, generating a test case
+to match every statically identified code path. Microsoft have had success
+using white-box fuzzing to identify difficult bugs that were missed by
+black-box fuzzing \citep{Godefroid_2012}. However, symbolic execution
+techniques used in white-box fuzzing can become unfeasably computationally
+expensive for larger projects \citep{Krishnamoorthy_2010}.
+
+Grey-box fuzzing is a middle ground between black-box and white-box fuzzing.
+Grey-box fuzzing relies on the fuzzer receiving feedback regarding code
+coverage for each generated test-case to mutate and generate further test
+cases. This approach allows it to find code paths faster than black-box
+testing, but without requiring any static code analysis \citep{Yun_2022}.
+
+Grey-box fuzzing of a program can be easily implemented for application (i.e
+non-embedded) software using popular fuzzers like AFL. AFL provides a library
+that is linked into the program at compile time, along with several sanitisers,
+to instrument the program. This allows AFL to receive coverage information from
+the running program during fuzzing \citep{AFL_2019}. Embedded systems often run on
+constrained environments, where running the fuzzer on the target hardware would
+be unfeasible. As such, the fuzzer and the SUT are run in different
+environments, and it is difficult to instrument and forward runtime information
+for grey-box fuzzing \citep{Muench_2018}.
+
+Attempts to solve this problem focus either on fuzzing a program running on
+target hardware, or in an emulated environment \citep{Eisele_et_al_2022}.
+Running in an emulated environment allows easy inspection of the SUT by the
+fuzzer, and potentially faster running and parallel tests
+\citep{Eisele_et_al_2022}. However, emulating embedded systems correctly is a
+hard problem, and due to the diversity in operating systems, hardware,
+peripherals etc. often means that development effort spent on emulating one
+system cannot be easily transferred to another. Attempts have been made to
+automate emulator development, such as Clements et al. HALucinator, which
+allows Hardware Abstraction Layer (HAL) functions in a compiled binary to be
+stubbed and fuzzed \citep{Clements_2021}.
+Chen et al. investigate a novel approach to fuzzing Real Time Operating Systems
+(RTOS) which involves slicing a single program into its constituent tasks and
+fuzzing them separately on an emulator based on the call graph of the program
+\citep{Chen_2022}.
+
+Yun et al. note that most embedded systems fuzzers rely on emulation
+\citep{Yun_2022}. However, most bugs found through emulation still need to be
+validated on hardware, and so being able to run the fuzz tests directly on the
+target hardware is preferable \citep{Eisele_et_al_2022}. Several methods have
+been discussed to improve instrumentation and feedback from running fuzz tests
+on target hardware. Beckmann et al. propose making use of the tracing
+facilities on modern Arm Cortex-M microcontrollers to stream coverage
+information back to the fuzzer \citep{Beckmann_2023}. Eisele proposes using a
+debugger as a method of inspecting the SUT and providing coverage feedback to a
+fuzzer \citep{Eisele_2022}.
+
+During the development of an embedded system, engineers often require access to
+representative development hardware to effectively design and write software.
+Often, waiting for prototype hardware to start software development does not
+align with business deadlines. The use of emulators improves enables engineers
+to write embedded software without access to development hardware, improving
+productivity and reducing development time.
+
+Existing research into embedded systems fuzzing often focuses on its
+cybersecurity applications and benefits. However, fuzz testing can also be an
+effective method for general verification of software. AdaCore provide a fuzz
+testing tool called GNATfuzz, which enables subprogram level fuzz testing as a
+supplement to unit testing for Ada and SPARK embedded software
+\citep{gnatfuzz}. By isolating subprograms and building isolated fuzz test
+executables in a manner similar to a unit testing framework, GNATfuzz removes
+the need to be able to run the full program under a fuzzer, and thus the need
+for an emulator or target hardware. However, the effectiveness of this approach
+is relient on Ada's extended runtime constraint checking when compared to C
+\citep{gnatfuzz}. Furthermore, subprogram level fuzzing is less able detect
+more complex issues resulting from interactions with hardware peripherals and
+state.
+
+While research into the fuzz testing of embedded systems has been increasing
+year by year \citep{Yun_2022}, there are few generic solutions
+\citep{Eisele_et_al_2022}. The two main challenges to embedded system fuzzing
+when compared to desktop or server systems remain the variety in CPU
+architectures in embedded systems, and the lack of an operating system such as
+linux for bare metal systems \citep{Eisele_et_al_2022}. Currently, the
+availability and ease of use of fuzzing tooling for embedded systems does not
+match that of desktop applications.
+
+% Talk about the promise of rehosting/emulation/
+% IOTFuzz
+% HALucinator
+% FuzzWare
+% Hoedur
+% Faster Fuzzers (near Native?)
+
+% Outstanding problems for firmware fuzzing?
+
+% Introduce the Space Context? (maybe earlier) reference willbold and gutierrez
+
+
+% CUT?
+However, while much research outlines the
+challenges with current embedded systems fuzzing techniques, it is unclear how
+these challenges compare with the effort required to verify embedded software
+using traditional techniques. In order to prove that embedded fuzz testing is a
+viable alternative to existing verification methods, a comparison of the cost
+effectiveness of conducting embedded fuzzing with other verification techniques
+is required.
+% ENDCUT
+
+% CUT?
+The design and implementation of embedded software and its verification is
+highly coupled to hardware. The nordic semiconductor NRF52 family of
+microcontrollers are a common choice for IOT devices. NRF52s are based on the
+ARM Cortex-M architecture, and include embedded radio peripherals, such as
+bluetooth low energy and wifi (amongst others). Another common IOT radio
+microcontroller is the ESP32, for which Borsig et al. previously developed a
+fuzzing framework \citep{Borsig_2020}. Furthermore, Yun suggested the need for
+further research into emulation of specific architectures and devices
+\citep{Yun_2022}. An NRF52 was used by Beckmann for on-target coverage guided
+fuzzing of a bare metal ARM Cortex-M system using instruction tracing over a
+single wire output (SWO) interface \citep{Beckmann_2023}. Additionally, Behrang
+outlines a method for using the unicorn cpu emulator to execute NRF52 based
+bare-metal radio firmware \citep{Behrang_2023}. The desktop fuzzer AFL++
+includes an implementation called "unicorn\_mode" which allows the unicorn
+engine to be built with AFL++ support \citep{UnicornMode}. Maier develops the
+Unicorefuzz framework and presents an example use of AFL++ Unicorn Mode for
+fuzzing kernel modules, which have similar challenges to embedded systems
+\citep{Maier_2019}.
+% ENDCUT?
+
+\end{document}
