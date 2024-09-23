@@ -1,329 +1,248 @@
-\documentclass[11pt]{article}
-\usepackage[utf8]{inputenc}
-\usepackage{graphicx}
-% \usepackage[figuresleft]{rotating}
-\usepackage{pdflscape}
-\usepackage{pdfpages}
-\usepackage{float}
-\usepackage{caption}
-\usepackage{subcaption}
-\usepackage{longtable}
-\graphicspath{ {images/} }
+% Modified by Alessio Guglielmi, 3 February 2021
 
-\setlength{\parindent}{0em}
-\setlength{\parskip}{1em}
+\documentclass[12pt,a4paper]{report}
+% This document template assumes you will use pdflatex.  If you are using
+% latex and dvipdfmx to translate to pdf, insert dvipdfmx into the options.
 
-% Set up nicer table spacing
-\setlength{\arrayrulewidth}{0.5mm}
-\setlength{\tabcolsep}{18pt}
-\renewcommand{\arraystretch}{1.5}
-
-\usepackage{natbib}
-\newcommand*{\urlprefix}{Available from: }
-\newcommand*{\urldateprefix}{Accessed }
-\bibliographystyle{bathx}
-
-\usepackage{geometry}
-\geometry{
-  a4paper,
-  total={170mm,257mm},
-  left=20mm,
-  top=20mm,
-}
-% \geometry{
-%   a4paper,
-% }
-\DeclareCaptionFormat{custom}
-{%
-    \textbf{#1#2}#3
-}
-\captionsetup{format=custom}
-\captionsetup{width=0.8\textwidth}
-
-\usepackage{csquotes}
-\usepackage[hidelinks]{hyperref}
-\newcommand{\refreq}[1]{\textbf{\hyperlink{req#1}{UR#1}}}
-\newcommand{\definereq}[1]{\hypertarget{req#1}{UR#1}}
-
-% Gantt Chart package
-\usepackage{pgfgantt}
-
+\usepackage{Bath-CS-Dissertation}
 \usepackage{subfiles}
 
-\title{An Analysis of Emulation based Fuzz Testing for NRF52 Embedded Software Verification}
+\title{\bf $\langle$Dissertation Title$\rangle$}
 \author{Rowan Saunders}
+\date{MSc $\langle$EngD$\rangle$ in Computer Science\\
+                                 % E.g.: Bachelor of Science in Computer Science
+                                 %       Master of Science in Data Science
+      The University of Bath\\
+      2024}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
 
-% A Comparison of Fuzzing-based Verification techniques for the development of NRF52 based embedded systems
+\hypersetup{pageanchor=false}
 
-% - Emulation: coverage-guided unicorn-afl fuzzing
-% - Target: Black-box fuzzing
-% - Target: coverage-buided Trace based fuzzing
-% - Target/Emulation: Manual Test Scripts
+% Set this to the language you want to use in your code listings (if any)
+\lstset{language=Java,breaklines,breakatwhitespace,basicstyle=\small}
+
+\setcounter{page}{0}
+\pagenumbering{roman}
 
 \maketitle
+\newpage
 
-% Title
-% - Detailed description of the problem you will seek to address in the project and methodologies (3 pages)
-% - Objectives and deliverables for the project (1 - 2 pages)
-% - Detailed project plan using appropriate techniques (Gantt Chart) (1-3 pages)
-% -- Tasks to undertake, time allocation for the tasks, and dependencies
-% - List of required resources to complete the project, their availibility, and alternatives if not available.
-% - Attach Ethics Checklist
+% Set this to the number of years consultation prohibition, or 0 if no limit
+\consultation{0}
+\newpage
 
-% TODO:
-% - Ethics Checklist (Complete)
-% - Read methodology content
-% - clarify approach referencing Borsig_2020 esp32 but with nrf52. plus focus on emulation using unicorn.
-% - Read Beckmann_2023 (plus 10 other relevent papers)
-% - Gantt Chart
+\declaration{$\langle$Dissertation Title$\rangle$}{Rowan Saunders}
+\newpage
 
-% Brief
-% - Description of the problem you will seek to address in the project (1 to 2 pages plus references)
-% - Identification of the main objectives and deliverables for the project (one page)
-% - An outline of the project plan (one page) that identifies the tasks you will undertake and the initial time allocation for those tasks.
+\hypersetup{pageanchor=true}
 
-% Introduction
-% - What is Fuzzing?
-% -- Existing Uses: Cybersecurity, systems programs (Browsers)
-% -- Comparison with other verification methodologies
-% - What is Embedded Software (IOT)?
-% - Why Fuzzing for embedded software?
-% -- Context for Embedded Software development
-% -- Current state of embedded software fuzzing (Yun_2022, Eisele_2022)
-% --- Outline from these papers areas to work in (coverage guided fuzzing on target or with emulation)
-% -- Challenges with fuzzing embedded systems
-% --- Constraints of testing embedded software
-% ---- Time
-% ---- Money
-% -- Cybersecurity risks in IOT
-% --- Use of insecure languages with memory errors (C/C++)
-% - Introduce NRF52 as common chip for wireless applications
-% -- Beckmann_2023 uses simple baremetal NRF52 application (and complex rtos on STM32) using hardware coverage guided testing over SWO interface.
+\abstract
 
+\subfile{sections/abstract}
 
+\newpage
 
-% - Difficulty Testing Embedded Software, IOT, etc.
-% - What is Fuzzing? Fuzz testing. Existing Use cases
-% - Minimal use of fuzzing for testing IOT/Embedded devices
-% - Challenges specific to fuzzing embedded devices
-%   - Coverage/Feedback to the Fuzzer
-%   - Interfaces/Harnesses
-%   - Emulation/Use of hardware
+\tableofcontents
+\newpage
 
-% Identify the Data needed to demonstrate project objectives have been achieved.
-% Use a project data table:
-% - Objective, How will you prove the objective is achieved, What data is necessarry, How can you obtain the data.
-% - | Objective | Proof of achievement? | What data needed? | Method to obtain data? |
+\listoffigures
+\newpage
 
-% Show a process for fuzz testing the NRF52
-% - Develop a Unicorn-AFL based test harness for fuzz testing the example application
-% - Develop a Unicorn Emulator for targeted (manual) testing of example application
-% - Disscus viability of manual testing vs fuzz testing
+\listoftables
+\newpage
 
-% Emulate NRF52 using Unicorn
-% Integrate NRF52 Unicorn Emulation with AFL++ unicorn_mode
-% Build on work done in https://github.com/befoulad/nrf52_radio_emu (emulating nrf52 to run bare metal radio firmware)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter*{Acknowledgements}
 
-% Maier_Unicorefuzz makes use of unicorn emulation to fuzz test an operating system kernel
-% README for afl++ unicorn_mode https://github.com/AFLplusplus/AFLplusplus/blob/stable/unicorn_mode/README.md
-% FIRMCORN builds on unicorn to develop their own fuzzer that detects function calls
+\subfile{sections/acknowledgements}
+Add any acknowledgements here.
 
-% - Detailed project plan using appropriate techniques (Gantt Chart) (1-3 pages)
-% -- Tasks to undertake, time allocation for the tasks, and dependencies
-% - List of required resources to complete the project, their availibility, and alternatives if not available.
+\newpage
+\setcounter{page}{1}
+\pagenumbering{arabic}
 
-% - Pilot study
-% -- Simple system (few to no peripherals to model in unicorn)
-% -- identify test corpus
-% -- identify manual testing method (emulation)
-% -- identify manual testing methodd (on-target)
-% -- identify black-box testing method
-
-\section{Abstract}
-
-\section{Acknowledgements}
-
-% contents page
-
-\section{Introduction}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Introduction}
 
 \subfile{sections/introduction}
 
-\section{Description of Work} \label{sec:1}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Example Section}
 
-\section{Analysis}
+Like all chapters, it will have a number of sections \dots
 
-\section{Conclusions and Future Work}
+%-------------------------------------------------------------------------------
+\subsection{Example Subsection}
+\dots\ and subsections \dots
 
+\subsubsection{Example Sub-subsection}
+\dots\ and sub-subsections.
 
+\section[Short Section Title]{Another Section With a Long Title and Whose Title Is Abbreviated in the Table of Contents}
 
+%-------------------------------------------------------------------------------
+\begin{table}[htb]
+\caption{An example table}
+\bigskip
+\begin{center}
+\label{Example-Table}
+\begin{tabular}{|l|l|}
+\hline
+Items & Values \\
+\hline
+\hline
+Item 1 & Value 1 \\
+Item 2 & Value 2 \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
 
-% Research Question
-% 1. Verification of Real Time Embedded Systems through Fuzz Testing: A Case Study
-% 1.1 What Embbeded System?
-% - Simple IOT data logger
-% - Simple Robot with a couple of sensors and an actuator
-% - Synth/dsp device?
-% 2. Replacing unit tests with fuzz testing: Automated Software Verification of an Embedded System.
+Another section, just for good measure. You can reference a table, figure or equation using \verb|\ref|, just like this reference to Table \ref{Example-Table}.
 
-\section{Project Objectives and Deliverables} \label{sec:2}
-This research project aims to investigate the perceived difficulty of fuzzing
-an embedded system with currently available tooling, and make a comparison
-between different fuzzing and other verification methods with regards to that
-difficulty. The project will outline the procedure for configuring and
-executing the different verification methodologies, and gather data about the
-effectiveness, time/effort, and reuseability. The objective of the study is to
-prove that applying fuzz testing methodologies during embedded systems
-development provides a strong benefit, despite any time/effort costs. The
-expectation is that fuzz testing may outperform traditional verification
-methods with respect to cost, such as manual systems testing, and prove to have
-higher reuseability.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Example Lists}
 
-To do this, an example bare-metal embedded system will be developed based on
-the NRF52 chip, with sufficient features to be representative of a real device.
-Test harnesses required for manual and fuzz testing will be developed, and the
-time and tasks to produce these will be tracked. The example firmware will then
-be tested with each verification method, and the number of errors discovered,
-and time taken to discover them, will be recorded. These quantitive data will
-be compared and discussed, along with qualititative anecdotal information
-regarding challenges encountered with each proposed method.
+%-------------------------------------------------------------------------------
+\subsection{Enumerated}
 
-% The main objective of the study is to measure and compare the
-% cost-effectiveness of emulation based coverage guided fuzzing as a verification
-% methodology for an IOT bare metal embedded system with other verification
-% methodologies, such as manual testing, black-box fuzzing, and on-target
-% coverage guided fuzzing.
-% Cost-effectiveness will be explored through measuring
-% the time and difficulty of implementing and executing each verification
-% technique, alongside the quantity and type of errors identified by the method.
+\begin{enumerate}
+\item Example enumerated list:
+  \begin{itemize}
+  \item a nested enumerated list item;
+  \item and another one.
+  \end{itemize}
+\item Second item in the list.
+\end{enumerate}
 
-To meet this objective, and based on the work outlined in \textit{Section
-\ref{sec:1}}, a unicorn based emulator for the example NRF52 based system will
-be developed, with test harnesses for fuzzing with AFL++ UnicornMode. Required
-NRF52 hardware peripherals will be modeled in the unicorn based emulator.
-Manual test scripts derived from software requirements for the embedded system
-will be created, and also run on the emulator. Furthermore, a simple black box
-fuzzer will be developed to run on the emulator. The core deliverables will be:
+%-------------------------------------------------------------------------------
+\subsection{Itemised}
 
 \begin{itemize}
-\item A literature review outlining and comparing embedded fuzz testing methodologies
-\item The design and implementation of an example NRF52 based embedded system
-\item A set of system test scripts for manually testing the example system
-\item The implementation of a unicorn NRF52 emulator, with appropriate peripherals modeled
-\item A set of error reports and bug investigations resulting from testing the example system with a black-box fuzzer on the unicorn emulator
-\item A set of error reports and bug investigations resulting from running the test scripts against the example system on the unicorn emulator
-\item A set of error reports and bug investigations resulting from testing the example system with unicorn-afl
-\item A discussion comparing each emulation based verification methodology, considering cost effectiveness
+\item Example itemised list.
+  \begin{itemize}
+  \item A nested itemised list item.
+  \end{itemize}
+\item Second item in the list.
 \end{itemize}
 
-The main objective outlined will be supplemented with additional extension
-objectives. One potential extension to the main objective would include an
-additional investigation and comparison with hardware based verification
-techniques. Coverage guided fuzzing based on Beckmann's tracing based work
-\citep{Beckmann_2023} could be implemented, along with developing a test
-harness to execute the manual test scripts and apply the black-box fuzzer on
-the target hardware. The deliverables for this extended objective would be as follows:
+%-------------------------------------------------------------------------------
+\subsection{Description}
 
-\begin{itemize}
-\item The development of test harnesses for on target verification of the embedded system
-\item Tooling, Instrumentation and Harnesses required for on target coverage guided fuzzing of the example system
-\item A set of error reports and bug investigations resulting from testing the example system with a black-box fuzzer on the target hardware
-\item A set of error reports and bug investigations resulting from running the test scripts against the example system on the target hardware
-\item A set of error reports and bug investigations resulting from testing the example system with a coverage guided hardware fuzzer
-\item A discussion comparing each hardware based verification methodology, considering cost effectiveness
-\end{itemize}
+\begin{description}
+\item[Item 1]First item in the list.
+\item[Item 2]Second item in the list.
+\end{description}
 
-An alternative extension objective would be to measure the effect of system
-complexity on the cost effectiveness of each verification methodology.
-The example system can be updated to use common IOT peripherals, such as wifi
-or bluetooth, and model these in the unicorn emulator. The ease of emulating
-and fuzzing an embedded system may be correlated with the complexity of that
-system, and using a wireless protocol should improve the relevence of the
-results of the study to IOT devices. The deliverables for this extended objective would be as follows:
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Literature and Technology Survey}
 
-\begin{itemize}
-\item The design and implmentation of an expanded NRF52 based embedded system, including the use of a wireless communication peripheral
-\item The implementation of a unicorn NRF52 emulator with wireless peripherals modeled
-\item A set of expanded system test scripts for manually testing the updated example system
-\item A set of error reports and bug investigations resulting from testing the expanded example system with a black-box fuzzer on the unicorn emulator
-\item A set of error reports and bug investigations resulting from running the test scripts against the example system on the unicorn emulator
-\item A set of error reports and bug investigations resulting from testing the expanded example system with unicorn-afl
-\item A discussion comparing each emulation based verification methodology, considering cost effectiveness and software complexity
-\end{itemize}
+\subfile{sections/literature-review}
 
+This is the chapter for your Literature and Technology Survey.
 
-\pagebreak
-\section{Project Plan} \label{sec:3}
+You will wish to cite authors like \citep{Yun_2022} or \citep{Yun_2022}. Alternate
+commands are used to cite \citet{Yun_2022} as a noun, or add text to the citation, \citep[\emph{e.g.},][]{Yun_2022}.
 
-\textit{Figure \ref{fig:top}} shows a top level gantt chart for the duration of
-the project. The timeframe in \textit{Figure \ref{fig:top}} is scoped in terms
-of week increments (i.e. 5 working days each). The expected duration of the
-project of 13 working weeks is equivilent to 65 working days. Given an expected
-average working rate of 8 working days per calendar month, an overall estimate
-of the expected timeline can be calculated at around 8 months. This aligns with
-the chosen completion period.
+%% NOTE Replace the following with chapters that are appropriate for your
+%%      style of project.  It is unlikely these will fit your project perfectly.
 
-The project will initially begin with an extended literature
-review, gathering and investigating more literature and developing on ideas
-outlined in \textit{Section \ref{sec:1}}. This will lead into a pilot study,
-where a basic version of the study will be completed. A detailed work breakdown
-for the pilot study is shown in \textit{Figure \ref{fig:pilot}}.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Requirements}
 
-% TODO explain content of pilot study
-The focus of the pilot study will be a comparison of emulation based fuzzing
-with manual testing and black box fuzzing techniques. The initial example system will
-be a simplistic IOT device, using few hardware peripherals. A serial interface
-will be used to communicate to the device, which will be simple to integrate
-with the unicorn-afl fuzzer.
+If you are doing a primarily software development project, this is the chapter in which you review the requirements decisions and critique the requirements process.
 
-The work conducted in the pilot study will then be revised and built upon for a
-more indepth extended study. There are several potential avenues for
-investigation in the extended study, and the direction taken at this point will
-depend on the output of the literature review and pilot study. The extended
-study will aim to meet at least one of the extension objectives in
-\textit{Section \ref{sec:2}}. Two alternative detailed plans are shown for the
-extended study in \textit{Figure \ref{fig:ext1}} and \textit{Figure
-\ref{fig:ext2}}.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Design}
 
-The extended study detailed in \textit{Figure \ref{fig:ext1}} expands the
-firmware developed in the pilot study to use more peripherals. The serial
-interface will be modified to use a wireless protocol, such as wifi or
-bluetooth, which is more common for IOT devices. Comparing test methodologies
-for a simple and a more complex system may also show that cost effectiveness of
-a test methodology is a function of cost effectiveness, as well as exploring
-the ease of modification and reusability of the emulator based test
-techniques.
+This is the chapter in which you review your design decisions at various
+levels and critique the design process.
 
-The extended study detailed in \textit{Figure \ref{fig:ext2}} configures a
-suite of hardware based verification techniques with the example system
-developed in the pilot study. It is anticipated that tooling and harnesses
-developed in the pilot study for emulated black-box and manual testing will be
-able to be easily adapted to their hardware based equivilents. As such, the
-main focus of this work will be on implementing the coverage guided hardware
-fuzzing tooling and instrumentation. Currently, time estimates for these tasks
-are somewhat uncertain, and so performing the coverage guided hardware fuzzing
-last out of the three techniques will at least allow a comparison with the
-hardware based manual and black box fuzzing if the coverage guided fuzzing
-cannot be completed in the time frame.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Implementation and Testing}
 
-% TODO write about each alternative extension (perhaps in objectives section?):
-% - Emulation of Bluetooth system for fuzzing
-% - Compare Target hardware fuzz testing with emulation fuzz testing
+This is the chapter in which you review the implementation and testing decisions and issues, and critique these processes.
 
-% TODO: List of required resources to complete the project, their availibility, and alternatives if not available.
-The work outlined in this plan can be completed with a linux based computer.
-The outlined work can be fully completed with open source tools, and where
-tooling is not available, this will be created as part of the study. Running
-the fuzz tests may require leaving a computer for an extended period, or may
-require access to a computer with more powerful hardware (e.g. more RAM). If
-this is the case, a Virtual Private Server (VPS) can be purchased with the
-required capability for executing the fuzz tests. Some tasks in the extended
-study may require access to an NRF52 development kit. This has already been
-procured, as it may also be useful for experimenting with during the pilot study.
+Code can be output inline using \verb@\lstinline|some code|@.  For example, this code is inline: \lstinline|public static int example = 0;| (we have used the character \verb@|@ as a delimiter, but any non-reserved character not in the code text can be used.)
 
-\pagebreak
-\bibliography{report.bib}
+Code snippets can be output using the \verb|\begin{lstlisting} ... \end{lstlisting}|
+environment with the code given in the environment. For example, consider listing \ref{Example-Code}, below.
 
+\begin{lstlisting}[breaklines,breakatwhitespace,caption={Example code},label=Example-Code]
+public static void main() {
+
+  System.out.println("Hello World");
+
+}
+\end{lstlisting}
+
+Code listings are produced using the package `listings'.  This has many useful options, so have a look at the package documentation for further ideas.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Results}
+
+This is the chapter in which you review the outcomes, and critique the outcomes process. You may include user evaluation here too.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Conclusions}
+
+%%
+%% Now we are back to the standard project contents that you should include
+%%
+
+This is the chapter in which you review the major achievements in the light of your original objectives, critique the process, critique your own learning and identify possible future work.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliography{report}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+
+%%
+%% Use the appendix for major chunks of detailed work, such as these. Tailor
+%% these to your own requirements
+%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Design Diagrams}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{User Documentation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Raw Results Output}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Code}
+
+%% NOTE For this to typeset correctly, ensure you use the pdflatex
+%%      command in preference to the latex command.  If you do not have
+%%      the pdflatex command, you will need to remove the landscape and
+%%      multicols tags and just make do with single column listing output
+
+% \begin{landscape}
+% \begin{multicols}{2}
+% \section{File: yourCodeFile.java}
+% \lstinputlisting[basicstyle=\scriptsize]{yourCodeFile.java}
+% \end{multicols}
+% \end{landscape}
 
 \end{document}

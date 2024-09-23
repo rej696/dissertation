@@ -238,20 +238,21 @@ FUNCTION {either.or.check}
   if$
 }
 FUNCTION {is.online}
-{ url empty$ doi empty$ and
-    { type$ "online" =
+{ type$ "software" =
+    { #0 }
+    { url empty$ doi empty$ and
+        { type$ "online" =
+            { #1 }
+            { #0 }
+          if$
+        }
         { #1 }
-        { #0 }
       if$
     }
-    { #1 }
   if$
 }
 FUNCTION {bbl.and}
 { "and"}
-
-FUNCTION {bbl.byeditor}
-{ "Ed. by" }
 
 FUNCTION {bbl.etal}
 { "et~al." }
@@ -484,14 +485,6 @@ FUNCTION {format.names.ed}
 FUNCTION {format.authors}
 { author "author" format.names
 }
-FUNCTION {format.byeditors}
-{ editor "editor" format.names.ed duplicate$ empty$ 'skip$
-    { bbl.byeditor
-      " " *
-      swap$ *
-    }
-  if$
-}
 FUNCTION {get.bbl.editor}
 { editor num.names$ #1 > 'bbl.editors 'bbl.editor if$ }
 FUNCTION {format.editors}
@@ -668,70 +661,46 @@ FUNCTION {get.title.addenda}
   continue.clause
   format.titleaddon output
   continue.clause
+  library empty$
+  type$ "image" =
+  or
   is.online
+  and
   journal empty$
   and
-    booktitle empty$
-      type$ "inreference" =
-      author empty$
-      and
-    or
-  and
-    library empty$
-    type$ "image" =
-    or
-  and
-  type$ "software" = not
-  and
-    type empty$
-      type$ "booklet" = not
-      type$ "audio" = not
-      and
-      type$ "video" = not
-      and
-      type$ "music" = not
-      and
-      type$ "movie" = not
-      and
+  type empty$
+    type$ "booklet" = not
+    type$ "audio" = not
+    and
+    type$ "video" = not
+    and
+    type$ "music" = not
+    and
+    type$ "movie" = not
+    and
     or
   and
     { bbl.online output }
     'skip$
   if$
   continue.clause
-  type$ "reference" =
-    { format.byeditors output }
-    'skip$
-  if$
   format.translators output
 }
 FUNCTION {word.in}
 { bbl.in capitalize
   ":" *
   " " * }
-FUNCTION {format.label.booktitle}
+FUNCTION {format.booktitle}
 { booktitle
   duplicate$ empty$ 'skip$
     { "t" change.case$ }
   if$
   "booktitle" bibinfo.check
-}
-FUNCTION {format.booktitle}
-{ format.label.booktitle
   emphasize
 }
 FUNCTION {format.in.ed.booktitle}
-{ format.booktitle
-  duplicate$ empty$
-    'skip$
-    {
-      is.online
-        { " " *
-          bbl.online *
-        }
-        'skip$
-      if$
-      editor "editor" format.names.ed duplicate$ empty$ 'pop$
+{ format.booktitle duplicate$ empty$ 'skip$
+    { editor "editor" format.names.ed duplicate$ empty$ 'pop$
         { "," *
           " " *
           get.bbl.editor add.period$
@@ -1587,17 +1556,13 @@ FUNCTION {book}
 { output.bibitem
   author empty$
     { editor empty$
-      type$ "reference" =
-      or
-        { type$ "reference" =
-            { format.title "title" output.check }
-            { format.btitle "title" output.check }
-          if$
+        { format.btitle "title" output.check
           format.date "year" output.check
           year empty$ 'skip$ { date.block } if$
           get.title.addenda
         }
         { format.editors "author and editor" output.check
+          editor format.key output
           format.date "year" output.check
           date.block
           format.btitle "title" output.check
@@ -1683,8 +1648,6 @@ FUNCTION {inbook}
   date.block
   format.btitle "title" output.check
   get.title.addenda
-  new.block
-  format.edition output
   crossref missing$
     { format.publisher.address output
       format.bvolume output
@@ -1698,6 +1661,7 @@ FUNCTION {inbook}
       format.book.crossref output.nonnull
     }
   if$
+  format.edition output
   new.block
   format.note output
   new.block
@@ -1707,49 +1671,22 @@ FUNCTION {inbook}
 }
 FUNCTION {incollection}
 { output.bibitem
-  author empty$
-    { type$ "inreference" =
-        { format.label.booktitle output }
-        { format.title "title" output.check }
-      if$
-      format.date "year" output.check
-      year empty$ 'skip$ { date.block } if$
-      type$ "inreference" =
-        'skip$
-        { get.title.addenda }
-      if$
-    }
-    { format.authors output.nonnull
-      format.date "year" output.check
-      date.block
-      format.title "title" output.check
-      get.title.addenda
-    }
-  if$
+  format.authors "author" output.check
+  author format.key output
+  format.date "year" output.check
+  date.block
+  format.title "title" output.check
+  get.title.addenda
   new.block
   crossref missing$
-    { type$ "inreference" =
-      author empty$
-      and
-        { format.byeditors output }
-        { format.in.ed.booktitle "booktitle" output.check }
-      if$
+    { format.in.ed.booktitle "booktitle" output.check
       new.block
-      format.edition output
-      new.block
-      type$ "inreference" =
-      author empty$
-      and
-        { format.btitle "title" output.check
-          get.title.addenda
-          new.block
-        }
-        'skip$
-      if$
       format.publisher.address output
       format.bvolume output
       format.number.series output
       format.chapter.pages output
+      new.sentence
+      format.edition output
     }
     { format.incoll.inproc.crossref output.nonnull
       format.chapter.pages output
@@ -2165,9 +2102,6 @@ FUNCTION {letter}
     'article
   if$
 }
-FUNCTION {collection} { book }
-FUNCTION {reference} { book }
-FUNCTION {inreference} { incollection }
 FUNCTION {audio} { booklet }
 FUNCTION {movie} { booklet }
 FUNCTION {music} { booklet }
@@ -2277,28 +2211,18 @@ FUNCTION {editor.key.label}
 FUNCTION {author.key.label}
 { author empty$
     { key empty$
-        { type$ "inreference" =
-          booktitle empty$ not
-          and
-            { booktitle }
-            { title empty$
-                { cite$ #1 #3 substring$ }
-                { title
-                  type$ "article" =
-                  type$ "incollection" =
-                  or
-                  type$ "inproceedings" =
-                  or
-                    type$ "reference" =
-                    author empty$
-                    and
-                  or
-                  type$ "misc" =
-                  or
-                    'skip$
-                    { emphasize }
-                  if$
-                }
+        { title empty$
+            { cite$ #1 #3 substring$ }
+            { title
+              type$ "article" =
+              type$ "incollection" =
+              or
+              type$ "inproceedings" =
+              or
+              type$ "misc" =
+              or
+                'skip$
+                { emphasize }
               if$
             }
           if$
@@ -2409,21 +2333,15 @@ FUNCTION {editor.sort}
 }
 FUNCTION {author.sort}
 { author empty$
-    { type$ "inreference" =
-      booktitle empty$ not
-      and
-        { booktitle sort.format.title }
-        { title empty$
-            { key empty$
-                { "to sort, need author, title, or key in " cite$ * warning$
-                  ""
-                }
-                { key sortify }
-              if$
+    { title empty$
+        { key empty$
+            { "to sort, need author, title, or key in " cite$ * warning$
+              ""
             }
-            { title sort.format.title }
+            { key sortify }
           if$
         }
+        { title sort.format.title }
       if$
     }
     { author sort.format.names }
@@ -2557,6 +2475,6 @@ FUNCTION {end.bib}
 }
 EXECUTE {end.bib}
 %% 
-%% Copyright (C) 2016-2021 by University of Bath
+%% Copyright (C) 2020 by University of Bath
 %%
 %% End of file `bathx.bst'.
