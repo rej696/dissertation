@@ -90,9 +90,9 @@ void rtos_run(void)
 {
     rtos_on_startup();
 
-    __disable_irq();
+    disable_irq();
     rtos_schedule();
-    __enable_irq();
+    enable_irq();
 
     /* the following should never execute */
 #if 0 /* TODO resolve assertions */

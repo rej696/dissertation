@@ -26,4 +26,12 @@ typedef enum {
 
 #include "core_cm4.h"
 
+static inline void enable_irq(void) {
+    asm volatile ("cpsie i\n\t");
+}
+
+static inline void disable_irq(void) {
+    asm volatile ("cpsid i\n\t");
+}
+
 #endif /* STM32F4_BLACKPILL_H */

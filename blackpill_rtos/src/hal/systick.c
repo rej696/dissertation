@@ -50,14 +50,13 @@ bool systick_timer_expired(uint32_t *const timer, uint32_t const period, uint32_
 void rtos_on_startup(void)
 {
     systick_init(CLOCK_FREQ / 1000); /* tick every ms */
-    uart_init(UART1, 9600);
 }
 
 
 void SysTick_Handler(void) {
     s_ticks++;
 
-    __enable_irq();
+    disable_irq();
     rtos_schedule();
-    __disable_irq();
+    enable_irq();
 }

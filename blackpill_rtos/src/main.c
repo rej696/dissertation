@@ -28,8 +28,6 @@ void blinky_handler(void) {
     gpio_set_mode(led, GPIO_MODE_OUTPUT);
     uint32_t timer = 0;
     uint32_t period = 500; /* Toggle LEDs every 500 ms */
-    uart_write_str(UART1, "blinky_handler_started\r\n");
-
 
     /* Loop */
     for (;;) {
@@ -47,10 +45,8 @@ rtos_thread_t uart_thread = {0};
 uint32_t uart_stack[UART_STACK_SIZE] = {0};
 
 void uart_handler(void) {
-    /* Setup Uart */
     uint32_t timer = 0;
-    uint32_t period = 500; /* Toggle LEDs every 500 ms */
-    uart_write_str(UART1, "uart_handler_started\r\n");
+    uint32_t period = 1500; /* Toggle UART every 1500 ms */
 
     for (;;) {
         if (systick_timer_expired(&timer, period, systick_get_ticks())) {
