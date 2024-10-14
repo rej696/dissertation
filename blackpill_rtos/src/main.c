@@ -5,12 +5,15 @@
 
 #include "rtos/thread.h"
 
+#include "utils/cbuf.h"
+#include "utils/status.h"
+
 #include <stdbool.h>
 #include <stddef.h>
 
 
-#define BLINKY_STACK_SIZE 40
-#define UART_STACK_SIZE 40
+#define BLINKY_STACK_SIZE 512
+#define UART_STACK_SIZE 512
 
 /**
  * RTOS Threads
@@ -45,15 +48,45 @@ rtos_thread_t uart_thread = {0};
 uint32_t uart_stack[UART_STACK_SIZE] = {0};
 
 void uart_handler(void) {
+#ifndef TICKTOCK
     uint32_t timer = 0;
     uint32_t period = 1500; /* Toggle UART every 1500 ms */
+#endif
+
+#ifndef UART_READ
+    uint8_t buf[CBUF_SIZE] = {0};
+    cbuf_t cbuf = {0};
+    cbuf_init(&cbuf);
+#endif
 
     for (;;) {
+#ifndef TICKTOCK
         if (systick_timer_expired(&timer, period, systick_get_ticks())) {
             static bool on = true;
             uart_write_str(UART1, on ? "tick\r\n" : "tock\r\n");
             on = !on;
         }
+#endif
+
+#ifndef UART_READ
+        if (uart_read_ready(UART1)) {
+            uint8_t byte = uart_read_byte(UART1);
+            cbuf_put(&cbuf, byte);
+            continue;
+        }
+
+        size_t size = cbuf_size(&cbuf);
+        if (size > 0) {
+            status_t status = cbuf_read(&cbuf, size, &buf[0]);
+            if (status != STATUS_OK) {
+                /* TOOD handle this error */
+                uart_write_str(UART1, "Invalid Status");
+                continue;
+            }
+            uart_write_buf(UART1, size, &buf[0]);
+        }
+#endif
+
 
 #if 0
         /* Modify speed of the timer based on uart1 input */

@@ -46,5 +46,14 @@ dump: $(TARGET).elf
 disasm: $(TARGET).elf
 	$(GDB) -q $< -ex "set pagination off" -ex "disas /s $(SYMBOL)" -ex quit
 
+emu: $(TARGET).bin emu_install
+	. venv/bin/activate; python3 -m emu $<
+
+emu_install: requirements.txt venv
+	. venv/bin/activate; pip install -r requirements.txt
+
+venv:
+	python3 -m venv venv
+
 clean:
 	rm -rf build
