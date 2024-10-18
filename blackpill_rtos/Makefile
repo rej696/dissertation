@@ -1,8 +1,9 @@
 
-CC := arm-none-eabi-gcc
-OBJCOPY := arm-none-eabi-objcopy
-OBJDUMP := arm-none-eabi-objdump
-GDB := arm-none-eabi-gdb
+PREFIX ?= arm-none-eabi
+CC ?= $(PREFIX)-gcc
+OBJCOPY ?= $(PREFIX)-objcopy
+OBJDUMP ?= $(PREFIX)-objdump
+GDB ?= $(PREFIX)-gdb
 
 SYMBOL ?= main
 
@@ -23,7 +24,7 @@ TARGET := $(BUILD)/firmware
 SOURCES := $(shell find $(SRC) -name '*.c')
 OBJECTS := $(SOURCES:$(SRC)/%.c=$(BUILD)/%.o)
 
-.PHONY: build dump clean emu
+.PHONY: build dump clean emu gdb disasm
 
 build: $(TARGET).bin
 
@@ -42,6 +43,9 @@ flash: $(TARGET).bin
 
 dump: $(TARGET).elf
 	$(OBJDUMP) -dh $<
+
+gdb: $(TARGET).elf
+	$(GDB) $<
 
 disasm: $(TARGET).elf
 	$(GDB) -q $< -ex "set pagination off" -ex "disas /s $(SYMBOL)" -ex quit
