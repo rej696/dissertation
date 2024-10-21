@@ -6,6 +6,15 @@ from unicorn import *
 UART1_START_ADDRESS = 0x4001_1000
 UART_MEM_SIZE = 0x0000_0400
 
+def byte2str(value):
+    if chr(value) == "\n":
+        char = r"\n"
+    elif chr(value) == "\r":
+        char = r"\r"
+    else:
+        char = chr(value)
+
+    return char
 
 class UartDataReg(MmioReg):
     def __init__(self, addr, parent):
@@ -14,13 +23,14 @@ class UartDataReg(MmioReg):
         self.write_data = []
 
     def read_cb(self, uc: Uc, addr, size, user_data):
-        return self.read_data
+        return self.read_data.pop(0)
+        # return self.value
 
     def write_cb(self, uc: Uc, addr, size, value, user_data):
         # assert self.addr == addr
         # assert size == 4
         self.write_data.append(value)
-        self.value = value
+        # self.value = value
 
 
 class Uart(Peripheral):
@@ -34,8 +44,10 @@ class Uart(Peripheral):
         "GTPR": (24, MmioReg),
     }
 
-    def __init__(self, uc, base_addr):
-        super().__init__(uc, base_addr)
+    def __init__(self, uc, base_addr, name, debug=False):
+        super().__init__(uc, base_addr, debug)
+        self.debug = debug
+        self.name = name
         self.reg_init()
         # self.uc = uc
         # self.base = base_addr
@@ -52,18 +64,22 @@ class Uart(Peripheral):
     #         return self.regs[id]
 
     def read_cb(self, uc, addr, size, user_data):
+        if len(self.reg("DR").read_data) == 0:
+            self.reg("SR").clr_bit(5)
+        else:
+            self.reg("SR").set_bit(5)
+
         value = self.reg(addr).read_cb(uc, addr, size, user_data)
+
         if addr != 0:
             if self.REG["DR"][0] == addr:
-                if chr(value) == "\n":
-                    char = r"\\\n"
-                else:
-                    char = chr(value)
+                char = byte2str(value)
 
-                print(f"UART MMIO {hex(addr)} read returning value {
+                self.print(f"UART {self.name} MMIO {hex(addr)} read returning value {
                       hex(value)} (" + char + ")")
+                self.reg("SR").clr_bit(5)
             else:
-                print(f"UART MMIO {
+                self.print(f"UART {self.name} MMIO {
                       hex(addr)} read returning value {hex(value)}")
 
         return value
@@ -71,18 +87,37 @@ class Uart(Peripheral):
     def write_cb(self, uc, addr, size, value, user_data):
         # if write to data register, set sr txe bit
         if self.REG["DR"][0] == addr:
-            if chr(value) == "\n":
-                char = r"\\\n"
-            else:
-                char = chr(value)
-            print(f"UART MMIO {hex(addr)} written with value {hex(value)} ("
+            char = byte2str(value)
+            self.print(f"UART {self.name} MMIO {hex(addr)} written with value {hex(value)} ("
                   + char + ")")
-            self.reg("SR").set_bit(7, 1)
+            self.reg("SR").set_bit(7)
         else:
-            print(f"UART MMIO {hex(addr)} written with value {hex(value)}")
+            self.print(f"UART {self.name} MMIO {hex(addr)} written with value {hex(value)}")
 
         self.reg(addr).write_cb(uc, addr, size, value, user_data)
 
     def put_byte(self, byte):
-        self.dr.value = byte & 0xFF
-        self.sr.set_bit(5, 1)
+        # self.reg("DR").value = byte & 0xFF
+        # self.reg("SR").set_bit(5)
+        # self.reg("SR").get_bit(5)
+        self.reg("DR").read_data.append(byte & 0xFF)
+
+    def put_buf(self, buf):
+        for byte in buf:
+            self.put_byte(byte)
+
+    def get_byte(self):
+        return self.reg("DR").write_data.pop(0)
+        # if len(self.reg("DR").write_data) != 0:
+        #     return self.reg("DR").write_data.pop(0)
+        # else:
+        #     return "\0"
+
+    def print_buf(self):
+        if self.reg("SR").get_bit(7):
+            string = []
+            for value in self.reg("DR").write_data:
+                string.append(byte2str(value))
+            print(f"Uart {self.name} says: {''.join(string)}")
+            self.reg("DR").write_data = []
+            self.reg("SR").clr_bit(7)

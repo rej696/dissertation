@@ -1,4 +1,5 @@
 import struct
+import random
 from collections import OrderedDict
 
 from capstone import (
@@ -17,11 +18,75 @@ from unicorn import (
     UC_MILISECOND_SCALE,
     UC_HOOK_CODE,
     UC_HOOK_INTR,
+    UC_HOOK_BLOCK,
 )
-from unicorn.arm_const import UC_ARM_REG_PC, UC_ARM_REG_LR, UC_ARM_REG_MSP, UC_ARM_REG_IPSR
+from unicorn.arm_const import (
+    UC_ARM_REG_R0,
+    UC_ARM_REG_R1,
+    UC_ARM_REG_R2,
+    UC_ARM_REG_R3,
+    UC_ARM_REG_R12,
+    UC_ARM_REG_XPSR,
+    UC_ARM_REG_PC,
+    UC_ARM_REG_LR,
+    UC_ARM_REG_SP,
+    UC_ARM_REG_MSP,
+    UC_ARM_REG_PSP,
+    UC_ARM_REG_CONTROL,
+    UC_ARM_REG_IPSR,
+    UC_ARM_REG_FPSCR,
+    UC_ARM_REG_S15,
+    UC_ARM_REG_S14,
+    UC_ARM_REG_S13,
+    UC_ARM_REG_S12,
+    UC_ARM_REG_S11,
+    UC_ARM_REG_S10,
+    UC_ARM_REG_S9,
+    UC_ARM_REG_S8,
+    UC_ARM_REG_S7,
+    UC_ARM_REG_S6,
+    UC_ARM_REG_S5,
+    UC_ARM_REG_S4,
+    UC_ARM_REG_S3,
+    UC_ARM_REG_S2,
+    UC_ARM_REG_S1,
+    UC_ARM_REG_S0,
+
+)
 
 from emu.uart import Uart
 from emu.cortex_m.core import CorePeripherals
+
+ARM_CONTEXT_REGISTERS = [
+    UC_ARM_REG_XPSR,
+    UC_ARM_REG_PC,
+    UC_ARM_REG_LR,
+    UC_ARM_REG_R12,
+    UC_ARM_REG_R3,
+    UC_ARM_REG_R2,
+    UC_ARM_REG_R1,
+    UC_ARM_REG_R0,
+]
+ARM_FLOAT_CONTEXT_REGISTERS = [
+    UC_ARM_REG_FPSCR,
+    UC_ARM_REG_S15,
+    UC_ARM_REG_S14,
+    UC_ARM_REG_S13,
+    UC_ARM_REG_S12,
+    UC_ARM_REG_S11,
+    UC_ARM_REG_S10,
+    UC_ARM_REG_S9,
+    UC_ARM_REG_S8,
+    UC_ARM_REG_S7,
+    UC_ARM_REG_S6,
+    UC_ARM_REG_S5,
+    UC_ARM_REG_S4,
+    UC_ARM_REG_S3,
+    UC_ARM_REG_S2,
+    UC_ARM_REG_S1,
+    UC_ARM_REG_S0,
+]
+
 
 FLASH_START_ADDRESS = 0x0800_0000
 FLASH_SIZE = 0x0008_0000  # 512k
@@ -36,7 +101,8 @@ RCC_START_ADDRESS = 0x4002_3800
 RCC_SIZE = 0x0000_0400
 
 UART1_START_ADDRESS = 0x4001_1000
-UART1_SIZE = 0x0000_0400
+UART2_START_ADDRESS = 0x4000_4400
+UART_SIZE = 0x0000_0400
 
 SYSTICK_START_ADDRESS = 0xE000_E010
 
@@ -90,7 +156,9 @@ def skip_instruction(uc, addr, size):
 
 
 class Emulator:
-    def __init__(self, firmware_path, base_addr) -> None:
+    def __init__(self, firmware_path, base_addr, debug=False) -> None:
+        self.debug = debug
+        self.input_string = [ord(c) for c in "Smelly Boy!\r\n"]
         self.uc = Uc(UC_ARCH_ARM, UC_MODE_LITTLE_ENDIAN)
         self.cs = Cs(
             CS_ARCH_ARM, CS_MODE_THUMB | CS_MODE_MCLASS | CS_MODE_LITTLE_ENDIAN
@@ -120,61 +188,211 @@ class Emulator:
         # self.uc.mem_map(CORTEX_M_INT_PERIPH_START_ADDR,
         #                 CORTEX_M_INT_PERIPH_SIZE)
 
+        # Special Value for EXEC_RETURN
+        self.uc.mem_map(0xFFFFF000, 0x1000)
+
         # TODO setup uc hooks
         self.print_instr = False
         self.uc.hook_add(UC_HOOK_CODE, self.uc_code_cb)
         self.uc.hook_add(UC_HOOK_INTR, self.uc_intr_cb)
+        self.uc.hook_add(UC_HOOK_BLOCK, self.uc_mem_block_cb,
+                         begin=0xFFFFF000, end=0xFFFFFFFF)
 
         self.cortex_m = CorePeripherals(self.uc)
-        self.uart1 = Uart(self.uc, UART1_START_ADDRESS)
+        self.uart1 = Uart(self.uc, UART1_START_ADDRESS, 1)
+        self.uart2 = Uart(self.uc, UART2_START_ADDRESS, 2)
 
     def uc_intr_cb(self, uc, exc_no):
         print(f"INTERRUPT {exc_no}")
 
-    def handle_interrupt(self, isr):
+    def save_context(self, uc, spsel, fpca):
+        sp_reg = UC_ARM_REG_MSP
+        if spsel:
+            sp_reg = UC_ARM_REG_PSP
+
+        sp = uc.reg_read(sp_reg)
+        if fpca:
+            for reg in ARM_FLOAT_CONTEXT_REGISTERS:
+                val = uc.reg_read(reg)
+                sp -= 4
+                uc.mem_write(sp, val.to_bytes(4, 'little'))
+
+        for reg in ARM_CONTEXT_REGISTERS:
+            val = uc.reg_read(reg)
+            sp -= 4
+            uc.mem_write(sp, val.to_bytes(4, 'little'))
+
+        uc.reg_write(UC_ARM_REG_SP, sp)
+
+    def restore_context(self, uc, spsel, fpca):
+        sp_reg = UC_ARM_REG_MSP
+        if spsel:
+            sp_reg = UC_ARM_REG_PSP
+
+        sp = uc.reg_read(sp_reg)
+        for reg in ARM_CONTEXT_REGISTERS[::-1]:
+            data = uc.mem_read(sp, 4)
+            val = struct.unpack('<I', data)[0]
+            sp += 4
+            uc.reg_write(reg, val)
+        if fpca:
+            for reg in ARM_FLOAT_CONTEXT_REGISTERS[::-1]:
+                data = uc.mem_read(sp, 4)
+                val = struct.unpack('<I', data)[0]
+                sp += 4
+                uc.reg_write(reg, val)
+                val = uc.reg_read(reg)
+
+        uc.reg_write(UC_ARM_REG_SP, sp)
+
+    def handle_interrupt(self, uc, isr):
         # TODO make this better
         if not self.interrupt_enabled:
             return
         isr_addr = self.vector_table[isr]
-        if isr != "systick_handler":
-            print(hex(isr_addr))
+        # print(f"Entering ISR {isr}")
+        control = uc.reg_read(UC_ARM_REG_CONTROL)
+        spsel = bool(control & 0b10)  # which stack pointer is active?
+        fpca = bool(control & 0b100)  # floating point context?
+        self.save_context(uc, spsel, fpca)
         pc = isr_addr
         lr = 0xffffffe9
-        self.uc.reg_write(UC_ARM_REG_LR, lr)
-        self.uc.reg_write(UC_ARM_REG_IPSR, 15)
-        self.uc.reg_write(UC_ARM_REG_PC, pc)
+        if spsel:
+            lr |= 0b100
+        if not fpca:
+            lr |= 0b10000
+        uc.reg_write(UC_ARM_REG_LR, lr)
+        uc.reg_write(UC_ARM_REG_IPSR, 15)
+        uc.reg_write(UC_ARM_REG_PC, pc)
         self.interrupt_context = True
         # TODO implement interrupt context switch
 
+    def return_from_interrupt(self, uc):
+        lr = self.uc.reg_read(UC_ARM_REG_LR)
+        irq_num = self.uc.reg_read(UC_ARM_REG_IPSR)
+        if not self.interrupt_enabled or not self.interrupt_context:
+            print("ERROR")
+            return
+        if ((lr & 0xffffff00) == 0xffffff00):
+            spsel = bool(lr & 0b100)
+            fpca = not bool(lr & 0b10000)
+            self.restore_context(uc, spsel, fpca)
+            pc = uc.reg_read(UC_ARM_REG_PC)
+            sp = uc.reg_read(UC_ARM_REG_SP)
+            control = 0
+            if spsel:
+                control |= 0b10
+            if fpca:
+                control |= 0b100
+            uc.reg_write(UC_ARM_REG_CONTROL, control)
+        else:
+            control = uc.reg_read(UC_ARM_REG_CONTROL)
+            spsel = bool(control & 0b10)
+            fcpa = bool(control & 0b100)
+            pc = uc.reg_read(UC_ARM_REG_PC)
+            sp = uc.reg_read(UC_ARM_REG_SP)
+            self.restore_context(uc, spsel, fcpa)
+            pc = uc.reg_read(UC_ARM_REG_PC)
+            sp = uc.reg_read(UC_ARM_REG_SP)
+
+        if self.debug:
+            if pc >= 0x0800_0634 and pc <= 0x0800_0670:
+                print(f"Returning to Blinky Handler pc = {
+                      hex(pc)}, sp = {hex(sp)}")
+            elif pc >= 0x0800_0674 and pc <= 0x0800_0730:
+                print(f"Returning to Uart Handler pc = {
+                      hex(pc)}, sp = {hex(sp)}")
+            else:
+                print(f"Returning from Interrupt pc = {
+                      hex(pc)}, sp = {hex(sp)}")
+
+        self.interrupt_context = False
+
+    def uc_mem_block_cb(self, uc, address, size, data):
+        irq_num = uc.reg_read(UC_ARM_REG_IPSR)
+        # print(f"Return from ISR {irq_num}")
+        self.return_from_interrupt(uc)
+
     def uc_code_cb(self, uc: Uc, addr, size, user_data):
         # This hook just prints the instruction being executed
+        print_instr = False
         if self.cortex_m.systick.tick():
-            # If SysTick enabled, context switch
-            print("SYSTICK Triggered")
-            self.handle_interrupt("systick_handler")
+            self.handle_interrupt(uc, "systick_handler")
 
-        if self.cortex_m.scb.pendsv_triggered:
-            print("PendSV Triggered")
-            self.print_instr = True
-            self.handle_interrupt("pendsv_handler")
+        elif not self.interrupt_context and self.cortex_m.scb.pendsv_triggered:
+            if self.debug:
+                pc = uc.reg_read(UC_ARM_REG_PC)
+                sp = uc.reg_read(UC_ARM_REG_SP)
+                if pc >= 0x0800_0634 and pc <= 0x0800_0670:
+                    print(f"Switching from Blinky Handler pc = {
+                          hex(pc)}, sp = {hex(sp)}")
+                elif pc >= 0x0800_0674 and pc <= 0x0800_0730:
+                    print(f"Switching from Uart Handler pc = {
+                          hex(pc)}, sp = {hex(sp)}")
+                else:
+                    print(f"Context Switching from pc = {
+                          hex(pc)}, sp = {hex(sp)}")
+            self.handle_interrupt(uc, "pendsv_handler")
 
-        elif addr >= 0x0800_06e7 and addr <= 0x0800_0747:
-            self.print_instr = True
-        # else:
-        #     self.print_instr = False
+        if addr >= 0x0800_05fc and addr <= 0x0800_0630:
+            # print_instr = True
+            pass
+
+        if addr >= 0x0800_06e7 and addr <= 0x0800_0747:
+            # print_instr = True
+            pass
+
+        if addr == 0x0800_0634:
+            print("Entered Blinky Handler")
+
+        if addr >= 0x0800_0634 and addr <= 0x0800_0670:
+            pass
+            # print("Executing Blinky Handler")
+
+        if addr == 0x0800_0674:
+            print("Entered UART Handler")
+
+        if addr >= 0x0800_0674 and addr <= 0x0800_0730:
+            pass
+            # print("Executing UART Handler")
+
+        if addr >= 0x0800_03ac and addr <= 0x0800_03c8:
+            pass
+            # print_instr = True
+
+        if addr == 0x0800_03de:
+            # end of uart handler loop
+            self.uart2.print_buf()
+
+        if random.randint(0, 0xFFFFF) == 255:
+            s = input("Uart 1 Input: ")
+            self.uart1.put_buf([ord(c) for c in s])
+        if len(self.input_string) != 0:
+            self.uart1.put_byte(self.input_string.pop(0))
+        # if addr == 0x0800_06d2:
+        #     if len(self.input_string) != 0:
+        #         self.uart1.put_byte(self.input_string.pop(0))
+            # self.uart1.put_buf(self.input_string)
+            # calling uart read ready in uart handler
+            # if random.choice([True, False]):
+            #     # self.uart1.put_byte(random.randrange(0, 128))
+            #     self.uart1.put_byte(random.randrange(96, 110))
 
         code = uc.mem_read(addr, size)
-        if code == bytearray((0x72,0xb6)):
-            print("cspid")
+        # if code == bytearray((0x70, 0x47)):
+        #     # bx instruction, check if lr is interrupt context
+        #     lr = uc.reg_read(UC_ARM_REG_LR)
+
+        if code == bytearray((0x72, 0xb6)):
             self.interrupt_enabled = False
             skip_instruction(uc, addr, size)
 
-        if code == bytearray((0x62,0xb6)):
-            print("cspie")
+        if code == bytearray((0x62, 0xb6)):
             self.interrupt_enabled = True
             skip_instruction(uc, addr, size)
 
-        if self.print_instr and addr != 0x80004ba:
+        # print_instr = True
+        if print_instr:  # and addr != 0x80004ba:
             for instruction in self.cs.disasm(code, addr, 1):
                 print(f"{hex(addr)}\t {instruction.mnemonic} {
                       instruction.op_str}")
@@ -186,7 +404,8 @@ class Emulator:
             self.uc.emu_start(
                 self.vector_table["reset_handler"],
                 self.fw_size + self.base_addr,
-                1500 * UC_MILISECOND_SCALE,
+                # 200_000 * UC_MILISECOND_SCALE,
+                15000 * UC_MILISECOND_SCALE,
                 0,
             )
         except Exception as e:

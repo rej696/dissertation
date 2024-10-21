@@ -12,8 +12,8 @@ class SysTick(Peripheral):
         "CALIB": (12, MmioReg),
     }
 
-    def __init__(self, uc, base_addr):
-        super().__init__(uc, base_addr)
+    def __init__(self, uc, base_addr, debug=False):
+        super().__init__(uc, base_addr, debug)
         self.reg_init()
         self.enabled = False
         # self.regs = {
@@ -24,11 +24,11 @@ class SysTick(Peripheral):
 
     def read_cb(self, uc, addr, size, user_data):
         value = self.reg(addr).read_cb(uc, addr, size, user_data)
-        print(f"SysTick MMIO {hex(addr)} read returning value {value}")
+        self.print(f"SysTick MMIO {hex(addr)} read returning value {value}")
         return value
 
     def write_cb(self, uc, addr, size, value, user_data):
-        print(f"SysTick MMIO {hex(addr)} written with value {value}")
+        self.print(f"SysTick MMIO {hex(addr)} written with value {value}")
         self.reg(addr).write_cb(uc, addr, size, value, user_data)
         if self.reg(addr).get_bit(0):
             self.enabled = True

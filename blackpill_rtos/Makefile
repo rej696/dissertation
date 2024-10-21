@@ -1,8 +1,8 @@
 
 PREFIX ?= arm-none-eabi
-CC ?= $(PREFIX)-gcc
-OBJCOPY ?= $(PREFIX)-objcopy
-OBJDUMP ?= $(PREFIX)-objdump
+CC = $(PREFIX)-gcc
+OBJCOPY = $(PREFIX)-objcopy
+OBJDUMP = $(PREFIX)-objdump
 GDB ?= $(PREFIX)-gdb
 
 SYMBOL ?= main
@@ -16,6 +16,8 @@ CFLAGS  ?=  -W -Wall -Wextra -Werror -Wundef -Wshadow -Wdouble-promotion \
             -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 $(EXTRA_CFLAGS)
 LDFLAGS ?= -Tstm32f411xx.ld -nostartfiles -nostdlib --specs nano.specs -lc -lgcc -Wl,--gc-sections -Wl,-Map=$@.map
 
+USB ?= 0
+
 BUILD := build
 SRC := src
 INC := inc
@@ -24,7 +26,7 @@ TARGET := $(BUILD)/firmware
 SOURCES := $(shell find $(SRC) -name '*.c')
 OBJECTS := $(SOURCES:$(SRC)/%.c=$(BUILD)/%.o)
 
-.PHONY: build dump clean emu gdb disasm
+.PHONY: build dump clean emu gdb disasm debug io
 
 build: $(TARGET).bin
 
@@ -45,7 +47,14 @@ dump: $(TARGET).elf
 	$(OBJDUMP) -dh $<
 
 gdb: $(TARGET).elf
-	$(GDB) $<
+	# st-util &> /dev/null &
+	$(GDB) $< -iex "target extended-remote localhost:4242" --tui
+
+io:
+	tio /dev/ttyUSB$(USB) -b 9600 -m ONLCRNL
+
+debug:
+	tio /dev/ttyUSB$(USB) -b 9600
 
 disasm: $(TARGET).elf
 	$(GDB) -q $< -ex "set pagination off" -ex "disas /s $(SYMBOL)" -ex quit

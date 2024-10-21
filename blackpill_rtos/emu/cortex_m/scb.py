@@ -9,18 +9,18 @@ class Scb(Peripheral):
         "SHPR3": (0x20, MmioReg),
     }
 
-    def __init__(self, uc, base_addr):
-        super().__init__(uc, base_addr)
+    def __init__(self, uc, base_addr, debug=False):
+        super().__init__(uc, base_addr, debug)
         self._pendsv_triggered = False
         self.reg_init()
 
     def read_cb(self, uc, addr, size, user_data):
         value = self.reg(addr).read_cb(uc, addr, size, user_data)
-        print(f"SCB MMIO {hex(addr)} read returning value {hex(value)}")
+        self.print(f"SCB MMIO {hex(addr)} read returning value {hex(value)}")
         return value
 
     def write_cb(self, uc, addr, size, value, user_data):
-        print(f"SCB MMIO {hex(addr)} written with value {hex(value)}")
+        self.print(f"SCB MMIO {hex(addr)} written with value {hex(value)}")
         if addr == 0x04 and value & (1 << 28):
             self._pendsv_triggered = True
 

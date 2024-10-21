@@ -63,7 +63,7 @@ void uart_handler(void) {
 #ifndef TICKTOCK
         if (systick_timer_expired(&timer, period, systick_get_ticks())) {
             static bool on = true;
-            uart_write_str(UART1, on ? "tick\r\n" : "tock\r\n");
+            uart_write_str(UART2, on ? "tick\r\n" : "tock\r\n");
             on = !on;
         }
 #endif
@@ -80,10 +80,11 @@ void uart_handler(void) {
             status_t status = cbuf_read(&cbuf, size, &buf[0]);
             if (status != STATUS_OK) {
                 /* TOOD handle this error */
-                uart_write_str(UART1, "Invalid Status");
+                uart_write_str(UART2, "Invalid Status");
                 continue;
             }
             uart_write_buf(UART1, size, &buf[0]);
+            uart_write_buf(UART2, size, &buf[0]);
         }
 #endif
 
@@ -112,12 +113,13 @@ int main(void)
 {
     rtos_init();
     uart_init(UART1, 9600);
-    uart_write_str(UART1, "boot\r\n");
+    uart_init(UART2, 9600);
+    uart_write_str(UART2, "boot\r\n");
 
     rtos_thread_create(&blinky_thread, &blinky_handler, blinky_stack, sizeof(blinky_stack));
     rtos_thread_create(&uart_thread, &uart_handler, uart_stack, sizeof(uart_stack));
 
-    uart_write_str(UART1, "threads created\r\n");
+    uart_write_str(UART2, "threads created\r\n");
 
     rtos_run();
 

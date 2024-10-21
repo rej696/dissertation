@@ -6,7 +6,8 @@ class Peripheral:
         "UNKNOWN": (0, MmioReg)
     }
 
-    def __init__(self, uc, base_addr):
+    def __init__(self, uc, base_addr, debug=False):
+        self.debug = debug
         self.uc = uc
         self.base = base_addr
         self.regs = dict()
@@ -28,3 +29,7 @@ class Peripheral:
 
     def write_cb(self, uc, addr, size, value, user_data):
         self.reg(addr).write_cb(uc, addr, size, value, user_data)
+
+    def print(self, string):
+        if self.debug:
+            print(string)

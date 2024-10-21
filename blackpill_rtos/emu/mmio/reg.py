@@ -21,5 +21,8 @@ class MmioReg:
     def get_bit(self, n):
         return (self.value >> n) & 0x01
 
-    def set_bit(self, n, value):
-        self.value |= ((0x01 & value) << n)
+    def set_bit(self, n):
+        self.value |= (0x01 << n)
+
+    def clr_bit(self, n):
+        self.value &= ~(0x01 << n)
