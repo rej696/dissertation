@@ -3,4 +3,7 @@ TODO add submodules to interesting projects
 TODO investigate fuzzware
 DONE work through bare-metal-programming-guide with blackpill (2024-03-10 18:57)
 TODO implement unicorn emulator for blackpill
-TODO work through returning from an interrupt
+DONE work through returning from an interrupt (2024-10-21 22:42)
+TODO integrate afl-unicorn-fuzz
+TODO write branches for inputs
+TODO write embedded spacepacket parser
