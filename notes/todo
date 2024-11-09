@@ -7,3 +7,7 @@ DONE work through returning from an interrupt (2024-10-21 22:42)
 TODO integrate afl-unicorn-fuzz
 TODO write branches for inputs
 TODO write embedded spacepacket parser
+TODO handle application repsonses
+TODO create hello action
+TODO create queue for communicating between threads
+TODO integrate spacepacket grammar into emu

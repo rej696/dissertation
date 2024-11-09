@@ -17,7 +17,7 @@ void cbuf_init(cbuf_t *const self)
 status_t cbuf_put(cbuf_t *const self, uint8_t const value)
 {
     if (((self->write + 1) % CBUF_SIZE) == self->read) {
-        return STATUS_CBUF_FULL;
+        return CBUF_STATUS_CBUF_FULL;
     }
     self->buf[self->write] = value;
     self->write = (self->write + 1) % CBUF_SIZE;
@@ -27,7 +27,7 @@ status_t cbuf_put(cbuf_t *const self, uint8_t const value)
 status_t cbuf_get(cbuf_t *const self, uint8_t *const value)
 {
     if (self->write == self->read) {
-        return STATUS_CBUF_EMPTY;
+        return CBUF_STATUS_CBUF_EMPTY;
     }
     *value = self->buf[self->read];
     self->read = (self->read + 1) % CBUF_SIZE;
@@ -45,7 +45,7 @@ size_t cbuf_size(cbuf_t const *const self)
 status_t cbuf_read(cbuf_t *const self, size_t const size, uint8_t dest[size])
 {
     if (size > cbuf_size(self)) {
-        return STATUS_BUFFER_OVERFLOW;
+        return CBUF_STATUS_BUFFER_OVERFLOW;
     }
 
     if (self->read < self->write) {
@@ -64,7 +64,7 @@ status_t cbuf_read(cbuf_t *const self, size_t const size, uint8_t dest[size])
 status_t cbuf_write(cbuf_t *const self, size_t const size, uint8_t const dest[size])
 {
     if (size > (CBUF_SIZE - cbuf_size(self))) {
-        return STATUS_BUFFER_OVERFLOW;
+        return CBUF_STATUS_BUFFER_OVERFLOW;
     }
 
     if (self->write + size < CBUF_SIZE) {

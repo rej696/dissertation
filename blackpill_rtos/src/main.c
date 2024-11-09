@@ -1,19 +1,18 @@
+#include "app/spacepacket.h"
 #include "hal/gpio.h"
 #include "hal/pinutils.h"
 #include "hal/systick.h"
 #include "hal/uart.h"
-
 #include "rtos/thread.h"
-
 #include "utils/cbuf.h"
 #include "utils/status.h"
 
 #include <stdbool.h>
 #include <stddef.h>
 
-
-#define BLINKY_STACK_SIZE 512
-#define UART_STACK_SIZE 512
+#define BLINKY_STACK_SIZE        (512)
+#define PACKET_THREAD_STACK_SIZE (2048)
+#define UART_STACK_SIZE          (512)
 
 /**
  * RTOS Threads
@@ -25,7 +24,8 @@
 rtos_thread_t blinky_thread = {0};
 uint32_t blinky_stack[BLINKY_STACK_SIZE] = {0};
 
-void blinky_handler(void) {
+void blinky_handler(void)
+{
     /* Setup Blinky */
     uint16_t led = PIN('C', 13);
     gpio_set_mode(led, GPIO_MODE_OUTPUT);
@@ -42,12 +42,33 @@ void blinky_handler(void) {
     }
 }
 
+/* Packet Thread */
+rtos_thread_t packet_thread = {0};
+uint32_t packet_thread_stack[PACKET_THREAD_STACK_SIZE] = {0};
+
+void packet_thread_handler(void)
+{
+    /* recieve a buffer of data in a queue and process it */
+    for (;;) {
+        if (queue_is_empty()) {
+            continue;
+        }
+
+        size_t size = 0;
+        uint8_t buffer[256] = {0};
+
+        queue_pop(&size, buffer);
+        spacepacket_process(size, buffer);
+        /* handle response? */
+    }
+}
 
 /* UART Thread */
 rtos_thread_t uart_thread = {0};
 uint32_t uart_stack[UART_STACK_SIZE] = {0};
 
-void uart_handler(void) {
+void uart_handler(void)
+{
 #ifndef TICKTOCK
     uint32_t timer = 0;
     uint32_t period = 1500; /* Toggle UART every 1500 ms */
@@ -83,11 +104,11 @@ void uart_handler(void) {
                 uart_write_str(UART2, "Invalid Status");
                 continue;
             }
+            /* TODO push the buffer that has been read into the queue */
             uart_write_buf(UART1, size, &buf[0]);
             uart_write_buf(UART2, size, &buf[0]);
         }
 #endif
-
 
 #if 0
         /* Modify speed of the timer based on uart1 input */
@@ -118,6 +139,11 @@ int main(void)
 
     rtos_thread_create(&blinky_thread, &blinky_handler, blinky_stack, sizeof(blinky_stack));
     rtos_thread_create(&uart_thread, &uart_handler, uart_stack, sizeof(uart_stack));
+    rtos_thread_create(
+        &packet_thread,
+        &packet_thread_handler,
+        packet_thread_stack,
+        sizeof(packet_thread_stack));
 
     uart_write_str(UART2, "threads created\r\n");
 
