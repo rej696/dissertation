@@ -39,7 +39,9 @@ void uart_init(uart_id_t const uart_id, uint32_t const baud);
 bool uart_read_ready(uart_id_t const uart_id);
 uint8_t uart_read_byte(uart_id_t const uart_id);
 void uart_write_byte(uart_id_t const uart_id, uint8_t const byte);
+void uart_write_hex_byte(uart_id_t const uart_id, uint8_t const byte);
 void uart_write_str(uart_id_t const uart_id, char const *const str);
 void uart_write_buf(uart_id_t const uart_id, uint32_t const size, uint8_t const buf[size]);
+void uart_write_hex_buf(uart_id_t const uart_id, uint32_t const size, uint8_t const buf[size]);
 
 #endif /* UART_H_ */

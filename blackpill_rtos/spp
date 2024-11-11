@@ -1,0 +1,71 @@
+#!/usr/bin/env python
+import serial
+import click
+from spacepackets.ccsds.spacepacket import SpacePacketHeader, PacketType
+
+ACTION_APID = 0
+GET_PARAM_APID = 1
+SET_PARAM_APID = 2
+TELEM_APID = 3
+
+
+def setup_serial() -> serial.Serial:
+    return serial.Serial('/dev/ttyUSB1')
+
+
+def send_packet(ser, packet: bytes):
+    print(bytearray(packet).hex(" "))
+    ser.write(packet)
+
+
+def create_packet(apid: int, data: list) -> bytes:
+    data_bytes = serial.to_bytes(data)
+    seq_count = 0
+    sph = SpacePacketHeader(
+        packet_type=PacketType.TC, apid=apid, seq_count=seq_count, data_len=len(data) - 1)
+    return sph.pack() + data_bytes
+
+
+@click.group()
+@click.pass_context
+def cli(ctx):
+    ctx.ensure_object(dict)
+    ctx.obj['serial'] = setup_serial()
+
+
+
+@cli.command()
+@click.argument('action_id', type=int)
+@click.pass_context
+def action(ctx, action_id):
+    send_packet(ctx.obj['serial'], create_packet(ACTION_APID, [action_id]))
+    # TODO read status code in response and print
+
+
+@cli.command()
+@click.argument('param_id', type=int)
+@click.pass_context
+def get_param(ctx, param_id):
+    send_packet(ctx.obj['serial'], create_packet(GET_PARAM_APID, [param_id]))
+    # TODO read response and status code and print
+
+
+@cli.command()
+@click.argument('param_id', type=int)
+@click.argument('data')
+@click.pass_context
+def set_param(ctx, param_id, data):
+    send_packet(ctx.obj['serial'], create_packet(SET_PARAM_APID, [param_id, data]))
+    # TODO read status code in response and print
+
+
+@cli.command()
+@click.argument('tlm_id', type=int)
+@click.pass_context
+def tlm(ctx, tlm_id):
+    send_packet(ctx.obj['serial'], create_packet(TELEM_APID, tlm_id))
+    # TODO read response and statuc code and print
+
+
+if __name__ == "__main__":
+    cli(obj={})

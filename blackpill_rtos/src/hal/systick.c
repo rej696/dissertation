@@ -2,9 +2,8 @@
 
 #include "hal/pinutils.h"
 #include "hal/rcc.h"
-#include "hal/uart.h"
 #include "hal/stm32f4_blackpill.h"
-
+#include "hal/uart.h"
 #include "rtos/thread.h"
 
 #include <stdbool.h>
@@ -49,12 +48,24 @@ bool systick_timer_expired(uint32_t *const timer, uint32_t const period, uint32_
 
 void rtos_on_startup(void)
 {
-    systick_init(CLOCK_FREQ / 1000); /* tick every ms */
+    /* tick every ms */
+    systick_init(CLOCK_FREQ / 1000);
 }
 
+void rtos_on_idle(void)
+{
+#if 0
+    /* Wait for interrupt (not sure if this works with unicorn */
+    __WFI();
+#else
+    (void)0;
+#endif
+}
 
-void SysTick_Handler(void) {
+void SysTick_Handler(void)
+{
     s_ticks++;
+    rtos_tick();
 
     disable_irq();
     rtos_schedule();

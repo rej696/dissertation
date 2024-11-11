@@ -1,8 +1,11 @@
 #ifndef STM32F4_BLACKPILL_H
 #define STM32F4_BLACKPILL_H
 
-/* TODO These would be defined in the stm32f4xx.h header file
+/* TODO These would be defined in the stm32f4xx.h header file e.g.
+ * https://github.com/wangyeee/STM32F4-FreeRTOS/blob/master/Libraries/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h
  * Consider including this header */
+/* The blackpill is an stm32F411xC/xE */
+#define STM32F411xE
 #define __CM4_REV 0x0001
 #define __FPU_PRESENT 1
 #define __MPU_PRESENT 1
@@ -22,6 +25,12 @@ typedef enum {
   PendSV_IRQn                   =  -2,              /*!<  14  Pendable request for system service                              */
   SysTick_IRQn                  =  -1,              /*!<  15  System Tick Timer                                                */
 /* -------------------  TODO Specific Interrupt Numbers  ------------------ */
+
+/* Selected STM32F411xE IRQn values */
+  USART1_IRQn = 37,
+  USART2_IRQn = 38,
+  USART6_IRQn = 71,
+
 } IRQn_Type;
 
 #include "core_cm4.h"

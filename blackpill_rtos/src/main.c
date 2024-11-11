@@ -5,24 +5,40 @@
 #include "hal/uart.h"
 #include "rtos/thread.h"
 #include "utils/cbuf.h"
+#include "utils/debug.h"
 #include "utils/status.h"
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
+/**
+ * RTOS Threads
+ * - Idle Thread
+ * - Blink LED?
+ * - Read/Write from UART
+ * - Process Space Packets
+ */
+
+#define IDLE_THREAD_STACK_SIZE   (40)
 #define BLINKY_STACK_SIZE        (512)
 #define PACKET_THREAD_STACK_SIZE (2048)
 #define UART_STACK_SIZE          (512)
 
-/**
- * RTOS Threads
- * - Blink LED
- * - Print to UART
- */
+/* Idle Thread */
+uint32_t idle_thread_stack[IDLE_THREAD_STACK_SIZE] = {0};
 
 /* Blinky Thread */
 rtos_thread_t blinky_thread = {0};
 uint32_t blinky_stack[BLINKY_STACK_SIZE] = {0};
+
+/* Packet Thread */
+rtos_thread_t packet_thread = {0};
+uint32_t packet_thread_stack[PACKET_THREAD_STACK_SIZE] = {0};
+
+/* UART Thread */
+rtos_thread_t uart_thread = {0};
+uint32_t uart_stack[UART_STACK_SIZE] = {0};
 
 void blinky_handler(void)
 {
@@ -42,34 +58,55 @@ void blinky_handler(void)
     }
 }
 
-/* Packet Thread */
-rtos_thread_t packet_thread = {0};
-uint32_t packet_thread_stack[PACKET_THREAD_STACK_SIZE] = {0};
+/* FIXME replace with rtos aware queue */
+cbuf_t packet_buffer = {0};
+bool packet_buffer_ready = false;
+bool packet_buffer_lock = false;
 
 void packet_thread_handler(void)
 {
+    cbuf_init(&packet_buffer);
+
     /* recieve a buffer of data in a queue and process it */
     for (;;) {
-        if (queue_is_empty()) {
+        if (!packet_buffer_ready) {
             continue;
         }
 
-        size_t size = 0;
-        uint8_t buffer[256] = {0};
+        /* FIXME replace with rtos aware queue/mutex */
+        /* Mutex, if packet buffer is locked, delay and retry */
+        while (packet_buffer_lock) {
+            rtos_delay(2);
+        }
+        packet_buffer_lock = true;
 
-        queue_pop(&size, buffer);
-        spacepacket_process(size, buffer);
-        /* handle response? */
+        size_t size = cbuf_size(&packet_buffer);
+        uint8_t buffer[256] = {0};
+        status_t status = cbuf_read(&packet_buffer, size, buffer);
+        if (status != STATUS_OK) {
+            DEBUG("Failed to read packet buffer", status);
+
+            packet_buffer_ready = false;
+            cbuf_init(&packet_buffer);
+            /* Release mutex lock */
+            packet_buffer_lock = false;
+            continue;
+        }
+        /* Release mutex lock */
+        packet_buffer_lock = false;
+
+        /* Process buffer */
+        status = spacepacket_process(size, buffer);
+        if (status != STATUS_OK) {
+            DEBUG("Failed to process spacepacket", status);
+        }
+        /* TODO handle response? */
     }
 }
 
-/* UART Thread */
-rtos_thread_t uart_thread = {0};
-uint32_t uart_stack[UART_STACK_SIZE] = {0};
-
 void uart_handler(void)
 {
-#ifndef TICKTOCK
+#ifdef TICKTOCK
     uint32_t timer = 0;
     uint32_t period = 1500; /* Toggle UART every 1500 ms */
 #endif
@@ -81,19 +118,20 @@ void uart_handler(void)
 #endif
 
     for (;;) {
-#ifndef TICKTOCK
+#ifdef TICKTOCK
         if (systick_timer_expired(&timer, period, systick_get_ticks())) {
             static bool on = true;
-            uart_write_str(UART2, on ? "tick\r\n" : "tock\r\n");
+            debug_str(on ? "tick" : "tock");
             on = !on;
         }
 #endif
 
 #ifndef UART_READ
-        if (uart_read_ready(UART1)) {
+        while (uart_read_ready(UART1)) {
             uint8_t byte = uart_read_byte(UART1);
             cbuf_put(&cbuf, byte);
-            continue;
+            rtos_delay(1);
+            /* continue; */
         }
 
         size_t size = cbuf_size(&cbuf);
@@ -101,12 +139,31 @@ void uart_handler(void)
             status_t status = cbuf_read(&cbuf, size, &buf[0]);
             if (status != STATUS_OK) {
                 /* TOOD handle this error */
-                uart_write_str(UART2, "Invalid Status");
+                DEBUG("Failed to read from uart buffer", status);
                 continue;
             }
+            debug_hex(size, &buf[0]);
             /* TODO push the buffer that has been read into the queue */
-            uart_write_buf(UART1, size, &buf[0]);
-            uart_write_buf(UART2, size, &buf[0]);
+            /* FIXME replace with rtos aware queue/mutex */
+            /* Mutex, if packet buffer is locked, delay and retry */
+            while (packet_buffer_lock) {
+                rtos_delay(2);
+            }
+            packet_buffer_lock = true;
+            status = cbuf_write(&packet_buffer, size, buf);
+            if (status != STATUS_OK) {
+                DEBUG("Failed to write uart data to packet buffer", status);
+                cbuf_init(&packet_buffer);
+                packet_buffer_ready = false;
+                /* Release packet buffer mutex */
+                packet_buffer_lock = false;
+                continue;
+            }
+
+            /* Mark packet buffer as ready */
+            packet_buffer_ready = true;
+            /* Release packet buffer mutex */
+            packet_buffer_lock = false;
         }
 #endif
 
@@ -132,10 +189,10 @@ void uart_handler(void)
 
 int main(void)
 {
-    rtos_init();
+    rtos_init(idle_thread_stack, sizeof(idle_thread_stack));
     uart_init(UART1, 9600);
-    uart_init(UART2, 9600);
-    uart_write_str(UART2, "boot\r\n");
+    debug_init(UART2, 9600);
+    debug_str("boot");
 
     rtos_thread_create(&blinky_thread, &blinky_handler, blinky_stack, sizeof(blinky_stack));
     rtos_thread_create(&uart_thread, &uart_handler, uart_stack, sizeof(uart_stack));
@@ -145,7 +202,7 @@ int main(void)
         packet_thread_stack,
         sizeof(packet_thread_stack));
 
-    uart_write_str(UART2, "threads created\r\n");
+    debug_str("threads created");
 
     rtos_run();
 

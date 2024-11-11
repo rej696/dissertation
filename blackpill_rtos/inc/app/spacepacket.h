@@ -22,7 +22,7 @@ typedef struct __attribute__((packed)) {
     uint16_t data_length : 16;
 } spacepacket_hdr_t;
 
-#define APID_HANDLER_MAP_SIZE (255)
+#define APID_HANDLER_MAP_SIZE (256)
 
 typedef status_t (*apid_handler_t)(size_t, uint8_t const *const, size_t *, uint8_t *const);
 extern apid_handler_t apid_handler_map[APID_HANDLER_MAP_SIZE];

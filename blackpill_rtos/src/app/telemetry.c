@@ -6,7 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-static telemetry_handler_t telemetry_map[255] = {0};
+static telemetry_handler_t telemetry_map[256] = {0};
 
 status_t telemetry_register(uint8_t id, telemetry_handler_t handler)
 {

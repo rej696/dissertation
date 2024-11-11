@@ -32,6 +32,7 @@ void assert_failed(char const *file, int line) {
     /* TODO: handle a fault */
     (void)file;
     (void)line;
+    /* *((uint32_t *)0x40004404) = 'd'; */
     NVIC_SystemReset();
 }
 
@@ -57,6 +58,11 @@ void SVC_Handler(void) __attribute__((weak, alias("Default_Handler")));
 void DebugMon_Handler(void) __attribute__((weak, alias("Default_Handler")));
 void PendSV_Handler(void) __attribute__((weak, alias("Default_Handler")));
 void SysTick_Handler(void) __attribute__((weak, alias("Default_Handler")));
+
+/* Device IRQ Handlers */
+void USART1_IRQHandler(void) __attribute__((weak, alias("Default_Handler")));
+void USART2_IRQHandler(void) __attribute__((weak, alias("Default_Handler")));
+void USART6_IRQHandler(void) __attribute__((weak, alias("Default_Handler")));
 
 /* end of stack pointer */
 extern void __stack_end__(void);
@@ -120,8 +126,8 @@ vector_table_t tab = {
     [50] = Default_Handler,
     [51] = Default_Handler,
     [52] = Default_Handler,
-    [53] = Default_Handler,
-    [54] = Default_Handler,
+    [53] = USART1_IRQHandler,
+    [54] = USART2_IRQHandler,
     [55] = Default_Handler,
     [56] = Default_Handler,
     [57] = Default_Handler,
@@ -154,7 +160,7 @@ vector_table_t tab = {
     [84] = Default_Handler,
     [85] = Default_Handler,
     [86] = Default_Handler,
-    [87] = Default_Handler,
+    [87] = USART6_IRQHandler,
     [88] = Default_Handler,
     [89] = Default_Handler,
     [90] = Default_Handler,

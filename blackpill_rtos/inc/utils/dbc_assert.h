@@ -88,7 +88,7 @@
  *
  * @param[in] label_ numeric label of the assertion (unique within the module)
  */
-#define DBC_ERROR DBC_fault_handler(__FILE__, __LINE__)
+#define DBC_ERROR() DBC_fault_handler(__FILE__, __LINE__)
 
 /*! Assertion for checking preconditions.
  *

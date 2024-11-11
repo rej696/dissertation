@@ -6,7 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-static action_handler_t action_map[255] = {0};
+static action_handler_t action_map[256] = {0};
 
 status_t action_register(uint8_t id, action_handler_t handler)
 {

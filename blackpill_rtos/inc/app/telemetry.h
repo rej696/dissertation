@@ -6,7 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef status_t telemetry_handler_t(size_t *const, uint8_t *const);
+typedef status_t (*telemetry_handler_t)(size_t *const, uint8_t *const);
 status_t telemetry_register(uint8_t id, telemetry_handler_t handler);
 status_t telemetry_handler(
     size_t input_size,
