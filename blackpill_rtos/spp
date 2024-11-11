@@ -33,7 +33,6 @@ def cli(ctx):
     ctx.obj['serial'] = setup_serial()
 
 
-
 @cli.command()
 @click.argument('action_id', type=int)
 @click.pass_context
@@ -52,10 +51,16 @@ def get_param(ctx, param_id):
 
 @cli.command()
 @click.argument('param_id', type=int)
-@click.argument('data')
+# @click.argument('data', type=lambda x: bytes(.from, encoding="utf-8"))
+@click.argument(
+    'data',
+    type=lambda x: bytes(eval(x)),
+)
 @click.pass_context
 def set_param(ctx, param_id, data):
-    send_packet(ctx.obj['serial'], create_packet(SET_PARAM_APID, [param_id, data]))
+    """data: pass a list of integer literals (uint8), e.g. [0xAB, 3, 0xFF]"""
+    send_packet(ctx.obj['serial'], create_packet(
+        SET_PARAM_APID, [param_id] + list(data)))
     # TODO read status code in response and print
 
 

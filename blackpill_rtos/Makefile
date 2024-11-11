@@ -26,7 +26,7 @@ TARGET := $(BUILD)/firmware
 SOURCES := $(shell find $(SRC) -name '*.c')
 OBJECTS := $(SOURCES:$(SRC)/%.c=$(BUILD)/%.o)
 
-.PHONY: build dump clean emu gdb disasm debug io
+.PHONY: build dump clean emu gdb disasm debug io emu_install
 
 build: $(TARGET).bin
 
@@ -59,14 +59,14 @@ debug:
 disasm: $(TARGET).elf
 	$(GDB) -q $< -ex "set pagination off" -ex "disas /s $(SYMBOL)" -ex quit
 
-emu: $(TARGET).bin emu_install
+emu: $(TARGET).bin venv
 	. venv/bin/activate; python3 -m emu $<
 
-emu_install: requirements.txt venv
-	. venv/bin/activate; pip install -r requirements.txt
+emu_install: venv
 
-venv:
+venv: requirements.txt
 	python3 -m venv venv
+	. venv/bin/activate; pip install -r requirements.txt
 
 clean:
 	rm -rf build
