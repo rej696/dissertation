@@ -39,6 +39,18 @@ void debug_str(char const *const msg)
     uart_write_str(debug_uart_id, "\r\n");
 }
 
+void debug_int(uint32_t value)
+{
+    uart_write_str(debug_uart_id, "0x");
+    /* uart_write_hex_byte(debug_uart_id, (uint8_t) value); */
+    for (int i = 3; i >= 0; --i) {
+        uint8_t byte = (((uint32_t)value) >> (i * 8)) & 0xFF;
+        uart_write_hex_byte(debug_uart_id, byte);
+    }
+
+    uart_write_str(debug_uart_id, "\r\n");
+}
+
 void debug_hex(uint32_t const size, uint8_t const buf[size])
 {
     DBC_REQUIRE(size > 0U);

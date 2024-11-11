@@ -1,12 +1,17 @@
+#include "app/action.h"
+#include "app/parameter.h"
 #include "app/spacepacket.h"
+#include "app/telemetry.h"
 #include "hal/gpio.h"
 #include "hal/pinutils.h"
+#include "hal/stm32f4_blackpill.h"
 #include "hal/systick.h"
 #include "hal/uart.h"
 #include "rtos/thread.h"
 #include "utils/cbuf.h"
 #include "utils/debug.h"
 #include "utils/status.h"
+#include "utils/endian.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -94,6 +99,7 @@ void packet_thread_handler(void)
         }
         /* Release mutex lock */
         packet_buffer_lock = false;
+        packet_buffer_ready = false;
 
         /* Process buffer */
         status = spacepacket_process(size, buffer);
@@ -106,43 +112,24 @@ void packet_thread_handler(void)
 
 void uart_handler(void)
 {
-#ifdef TICKTOCK
-    uint32_t timer = 0;
-    uint32_t period = 1500; /* Toggle UART every 1500 ms */
-#endif
-
-#ifndef UART_READ
     uint8_t buf[CBUF_SIZE] = {0};
-    cbuf_t cbuf = {0};
-    cbuf_init(&cbuf);
-#endif
+    cbuf_t *cbuf = uart_cbuf_get(UART1);
+    cbuf_init(cbuf);
 
     for (;;) {
-#ifdef TICKTOCK
-        if (systick_timer_expired(&timer, period, systick_get_ticks())) {
-            static bool on = true;
-            debug_str(on ? "tick" : "tock");
-            on = !on;
-        }
-#endif
-
-#ifndef UART_READ
-        while (uart_read_ready(UART1)) {
-            uint8_t byte = uart_read_byte(UART1);
-            cbuf_put(&cbuf, byte);
-            rtos_delay(1);
-            /* continue; */
-        }
-
-        size_t size = cbuf_size(&cbuf);
+        size_t size = cbuf_size(cbuf);
         if (size > 0) {
-            status_t status = cbuf_read(&cbuf, size, &buf[0]);
+            disable_irq();
+            status_t status = cbuf_read(cbuf, size, &buf[0]);
+            enable_irq();
             if (status != STATUS_OK) {
                 /* TOOD handle this error */
                 DEBUG("Failed to read from uart buffer", status);
                 continue;
             }
+#if 0 /* Debug uart read */
             debug_hex(size, &buf[0]);
+#endif
             /* TODO push the buffer that has been read into the queue */
             /* FIXME replace with rtos aware queue/mutex */
             /* Mutex, if packet buffer is locked, delay and retry */
@@ -153,7 +140,6 @@ void uart_handler(void)
             status = cbuf_write(&packet_buffer, size, buf);
             if (status != STATUS_OK) {
                 DEBUG("Failed to write uart data to packet buffer", status);
-                cbuf_init(&packet_buffer);
                 packet_buffer_ready = false;
                 /* Release packet buffer mutex */
                 packet_buffer_lock = false;
@@ -165,26 +151,64 @@ void uart_handler(void)
             /* Release packet buffer mutex */
             packet_buffer_lock = false;
         }
-#endif
-
-#if 0
-        /* Modify speed of the timer based on uart1 input */
-        if (uart_read_ready(UART1)) {
-            uint8_t byte = uart_read_byte(UART1);
-            char *string = "Invalid!\r\n";
-            if (byte == '+') {
-                period >>= 1;
-                string = "+\r\n";
-            } else if (byte == '-') {
-                period <<= 1;
-                string = "-\r\n";
-            } else if (byte == '\0') {
-                string[sizeof(string)] = '0';
-            }
-            uart_write_str(UART1, string);
-        }
-#endif
+        rtos_delay(100);
     }
+}
+
+static status_t print_hello(void)
+{
+    debug_str("Good news, Everyone!");
+    return STATUS_OK;
+}
+
+uint8_t u8_param = 0;
+
+static status_t get_u8_param(size_t *const size, uint8_t *const output)
+{
+    *size = 1;
+    *output = u8_param;
+    return STATUS_OK;
+}
+
+static status_t set_u8_param(size_t size, uint8_t const *const input)
+{
+    if (size != 1) {
+        DEBUG("Invalid arguments for test_param", PARAMETER_STATUS_INVALID_PAYLOAD_SIZE);
+        return PARAMETER_STATUS_INVALID_PAYLOAD_SIZE;
+    }
+    u8_param = *input;
+    return STATUS_OK;
+}
+
+static status_t print_u8_param(void)
+{
+    debug_int(u8_param);
+    return STATUS_OK;
+}
+
+uint32_t u32_param = 0;
+
+static status_t get_u32_param(size_t *const size, uint8_t *const output)
+{
+    *size = 1;
+    endian_u32_to_network(u32_param, output);
+    return STATUS_OK;
+}
+
+static status_t set_u32_param(size_t size, uint8_t const *const input)
+{
+    if (size != 4) {
+        DEBUG("Invalid arguments for test_param", PARAMETER_STATUS_INVALID_PAYLOAD_SIZE);
+        return PARAMETER_STATUS_INVALID_PAYLOAD_SIZE;
+    }
+    endian_u32_from_network(input, &u32_param);
+    return STATUS_OK;
+}
+
+static status_t print_u32_param(void)
+{
+    debug_int(u32_param);
+    return STATUS_OK;
 }
 
 int main(void)
@@ -203,6 +227,15 @@ int main(void)
         sizeof(packet_thread_stack));
 
     debug_str("threads created");
+
+    /* Register actions/parameters/tlms */
+    action_register(0, print_hello);
+
+    action_register(1, print_u8_param);
+    action_register(2, print_u32_param);
+    parameter_register(1, (parameter_handler_t) {.set = set_u8_param, .get = get_u8_param});
+    parameter_register(2, (parameter_handler_t) {.set = set_u32_param, .get = get_u32_param});
+
 
     rtos_run();
 

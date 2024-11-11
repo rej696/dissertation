@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "utils/cbuf.h"
 
 typedef struct uart {
     volatile uint32_t SR;
@@ -43,5 +44,8 @@ void uart_write_hex_byte(uart_id_t const uart_id, uint8_t const byte);
 void uart_write_str(uart_id_t const uart_id, char const *const str);
 void uart_write_buf(uart_id_t const uart_id, uint32_t const size, uint8_t const buf[size]);
 void uart_write_hex_buf(uart_id_t const uart_id, uint32_t const size, uint8_t const buf[size]);
+
+/* Retrieve a pointer to the cbuf used to receive data in the isr */
+cbuf_t *uart_cbuf_get(uart_id_t const uart_id);
 
 #endif /* UART_H_ */

@@ -12,6 +12,7 @@
 #define SPACEPACKET_SEC_HDR_DISABLED (0)
 #define SPACEPACKET_SEC_HDR_ENABLED  (1)
 
+#if 0
 typedef struct __attribute__((packed)) {
     uint8_t version : 3;
     uint8_t type : 1;
@@ -20,6 +21,16 @@ typedef struct __attribute__((packed)) {
     uint8_t sequence_flags : 2;
     uint16_t sequence_count : 14;
     uint16_t data_length : 16;
+} spacepacket_hdr_t;
+#endif
+typedef struct {
+    uint8_t version;
+    uint8_t type;
+    uint8_t sec_hdr;
+    uint16_t apid;
+    uint8_t sequence_flags;
+    uint16_t sequence_count;
+    uint16_t data_length;
 } spacepacket_hdr_t;
 
 #define APID_HANDLER_MAP_SIZE (256)

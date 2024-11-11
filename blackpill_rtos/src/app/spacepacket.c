@@ -3,11 +3,47 @@
 
 #include "app/app_config.h"
 #include "utils/dbc_assert.h"
-#include "utils/status.h"
 #include "utils/debug.h"
+#include "utils/status.h"
 
 #include <stddef.h>
 #include <stdint.h>
+
+static status_t parse_hdr(
+    size_t const size,
+    uint8_t const buffer[size],
+    spacepacket_hdr_t *const hdr)
+{
+    DBC_REQUIRE(buffer != NULL);
+    DBC_REQUIRE(hdr != NULL);
+
+    if (size < 6) {
+        DEBUG("Spacepacket buffer too short", SPACEPACKET_STATUS_BUFFER_UNDERFLOW);
+        return SPACEPACKET_STATUS_BUFFER_UNDERFLOW;
+    }
+
+    hdr->version = (buffer[0] >> 5) & 0x7;
+    hdr->type = (buffer[0] >> 4) & 0x1;
+    hdr->sec_hdr = (buffer[0] >> 3) & 0x1;
+    hdr->apid = (uint16_t)(((buffer[0] & 0x7) << 8) | buffer[1]);
+    hdr->sequence_flags = (buffer[2] >> 6) & 0x3;
+    hdr->sequence_count = (uint16_t)(((buffer[2] & 0x3F) << 8) | buffer[3]);
+    hdr->data_length = (uint16_t)((buffer[4] << 8) | buffer[5]);
+
+#if 0 /* Debug Spacepacket Header */
+    uint8_t debug_buf[] = {
+        hdr->version,
+        hdr->type,
+        hdr->sec_hdr,
+        (uint8_t)hdr->apid,
+        hdr->sequence_flags,
+        (uint8_t)hdr->sequence_count,
+        (uint8_t)hdr->data_length,
+    };
+    debug_hex(sizeof(debug_buf), debug_buf);
+#endif
+    return STATUS_OK;
+}
 
 static status_t validate_hdr(spacepacket_hdr_t const *const hdr)
 {
@@ -15,6 +51,7 @@ static status_t validate_hdr(spacepacket_hdr_t const *const hdr)
         return SPACEPACKET_STATUS_INVALID_VERSION;
     }
     if (hdr->type != SPACEPACKET_TYPE_TC) {
+        DEBUG("Invalid spacepacket type", (status_t)hdr->type);
         return SPACEPACKET_STATUS_INVALID_TYPE;
     }
     if (hdr->sec_hdr != SPACEPACKET_SEC_HDR_DISABLED) {
@@ -34,21 +71,23 @@ static status_t validate_hdr(spacepacket_hdr_t const *const hdr)
 status_t spacepacket_process(size_t const size, uint8_t const buffer[size])
 {
     DBC_REQUIRE(buffer != NULL);
-    if (size < 6) {
-        DEBUG("Spacepacket buffer too short", SPACEPACKET_STATUS_BUFFER_UNDERFLOW);
+
+    spacepacket_hdr_t hdr = {0};
+    status_t status = parse_hdr(size, &buffer[0], &hdr);
+    if (status != STATUS_OK) {
+        DEBUG("Unable to parse spacepacket header", status);
+        return status;
     }
 
-    spacepacket_hdr_t const *const hdr = (spacepacket_hdr_t const *const)&buffer[0];
-
     // Validate Packet Header
-    status_t status = validate_hdr(hdr);
+    status = validate_hdr(&hdr);
     if (status != STATUS_OK) {
         DEBUG("Invalid spacepacket header", status);
         return status;
     }
 
     // handle application data
-    apid_handler_t apid_handler = apid_handler_map[hdr->apid];
+    apid_handler_t apid_handler = apid_handler_map[hdr.apid];
     if (apid_handler == NULL) {
         DEBUG("No handler for APID", SPACEPACKET_STATUS_INVALID_APID_HANDLER);
         return SPACEPACKET_STATUS_INVALID_APID_HANDLER;

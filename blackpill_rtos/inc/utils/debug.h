@@ -23,4 +23,7 @@ void debug_str(char const *const msg);
 /* Print an array of bytes as space seperated hex characters */
 void debug_hex(uint32_t const size, uint8_t const buf[size]);
 
+/* Print an integer value (32-bit) */
+void debug_int(uint32_t value);
+
 #endif /* DEBUG_H_ */

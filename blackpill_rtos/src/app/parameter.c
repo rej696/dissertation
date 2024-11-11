@@ -50,7 +50,7 @@ status_t set_parameter_handler(
 {
     DBC_REQUIRE(input_buffer != NULL);
     DBC_REQUIRE(output_buffer != NULL);
-    if (input_size < 1) {
+    if (input_size < 2) {
         return PARAMETER_STATUS_INVALID_PAYLOAD_SIZE;
     }
 
@@ -61,5 +61,5 @@ status_t set_parameter_handler(
     }
 
     *output_size = 0;
-    return parameter_map[id].set(input_size, input_buffer);
+    return parameter_map[id].set(input_size - 1, &input_buffer[1]);
 }
