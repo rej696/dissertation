@@ -8,6 +8,10 @@ TODO integrate afl-unicorn-fuzz
 TODO write branches for inputs
 TODO write embedded spacepacket parser
 TODO handle application repsonses
-TODO create hello action
+DONE create hello action (2024-11-12 00:21)
 TODO create queue for communicating between threads
 TODO integrate spacepacket grammar into emu
+TODO implement space data link layer in blackpill
+TODO make emu work with uart interrupt
+TODO document emulator magic numbers
+TODO investigate emu unmapped memory
