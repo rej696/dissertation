@@ -323,52 +323,58 @@ class Emulator:
             if self.debug:
                 pc = uc.reg_read(UC_ARM_REG_PC)
                 sp = uc.reg_read(UC_ARM_REG_SP)
-                if pc >= 0x0800_0634 and pc <= 0x0800_0670:
-                    print(f"Switching from Blinky Handler pc = {
-                          hex(pc)}, sp = {hex(sp)}")
-                elif pc >= 0x0800_0674 and pc <= 0x0800_0730:
-                    print(f"Switching from Uart Handler pc = {
-                          hex(pc)}, sp = {hex(sp)}")
-                else:
-                    print(f"Context Switching from pc = {
-                          hex(pc)}, sp = {hex(sp)}")
+                # if pc >= 0x0800_0634 and pc <= 0x0800_0670:
+                #     print(f"Switching from Blinky Handler pc = {
+                #           hex(pc)}, sp = {hex(sp)}")
+                # elif pc >= 0x0800_0674 and pc <= 0x0800_0730:
+                #     print(f"Switching from Uart Handler pc = {
+                #           hex(pc)}, sp = {hex(sp)}")
+                # else:
+                #     print(f"Context Switching from pc = {
+                #           hex(pc)}, sp = {hex(sp)}")
             self.handle_interrupt(uc, "pendsv_handler")
+        elif not self.interrupt_context:
+            print_instr = True
 
-        if addr >= 0x0800_05fc and addr <= 0x0800_0630:
+
+        # if addr >= 0x0800_05fc and addr <= 0x0800_0630:
             # print_instr = True
-            pass
+            # pass
 
-        if addr >= 0x0800_06e7 and addr <= 0x0800_0747:
+        # if addr >= 0x0800_06e7 and addr <= 0x0800_0747:
             # print_instr = True
-            pass
+            # pass
 
-        if addr == 0x0800_0634:
-            print("Entered Blinky Handler")
+        # if addr == 0x0800_0634:
+            # print("Entered Blinky Handler")
 
-        if addr >= 0x0800_0634 and addr <= 0x0800_0670:
-            pass
+        # if addr >= 0x0800_0634 and addr <= 0x0800_0670:
+            # pass
             # print("Executing Blinky Handler")
 
-        if addr == 0x0800_0674:
-            print("Entered UART Handler")
+        # if addr == 0x0800_0674:
+            # print("Entered UART Handler")
 
-        if addr >= 0x0800_0674 and addr <= 0x0800_0730:
-            pass
+        # if addr >= 0x0800_0674 and addr <= 0x0800_0730:
+            # pass
             # print("Executing UART Handler")
 
-        if addr >= 0x0800_03ac and addr <= 0x0800_03c8:
-            pass
+        # if addr >= 0x0800_03ac and addr <= 0x0800_03c8:
+            # pass
             # print_instr = True
 
-        if addr == 0x0800_03de:
+        # if addr == 0x0800_03de:
             # end of uart handler loop
+            # self.uart2.print_buf()
+        if self.uart2.ready_to_print:
             self.uart2.print_buf()
 
-        if random.randint(0, 0xFFFFF) == 255:
-            s = input("Uart 1 Input: ")
-            self.uart1.put_buf([ord(c) for c in s])
-        if len(self.input_string) != 0:
-            self.uart1.put_byte(self.input_string.pop(0))
+        if False:
+            if random.randint(0, 0xFFFFF) == 255:
+                s = input("Uart 1 Input: ")
+                self.uart1.put_buf([ord(c) for c in s])
+            if len(self.input_string) != 0:
+                self.uart1.put_byte(self.input_string.pop(0))
         # if addr == 0x0800_06d2:
         #     if len(self.input_string) != 0:
         #         self.uart1.put_byte(self.input_string.pop(0))
@@ -391,11 +397,13 @@ class Emulator:
             self.interrupt_enabled = True
             skip_instruction(uc, addr, size)
 
-        # print_instr = True
-        if print_instr:  # and addr != 0x80004ba:
+        if print_instr and addr not in [0x80006d2, 0x80003de, 0x80006d6]: #idle loop
             for instruction in self.cs.disasm(code, addr, 1):
                 print(f"{hex(addr)}\t {instruction.mnemonic} {
                       instruction.op_str}")
+
+        self.cortex_m.last_pc = uc.reg_read(UC_ARM_REG_PC)
+        self.cortex_m.last_sp = uc.reg_read(UC_ARM_REG_MSP)
 
     def start(self):
         self.uc.reg_write(
@@ -405,8 +413,10 @@ class Emulator:
                 self.vector_table["reset_handler"],
                 self.fw_size + self.base_addr,
                 # 200_000 * UC_MILISECOND_SCALE,
-                15000 * UC_MILISECOND_SCALE,
-                0,
+                # 20000 * UC_MILISECOND_SCALE,
+                # 0,
             )
         except Exception as e:
+            print(f"PC: {hex(self.cortex_m.last_pc)}")
+            print(f"SP: {hex(self.cortex_m.last_sp)}")
             print(e)

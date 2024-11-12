@@ -11,6 +11,7 @@ class CorePeripherals:
     PERIPH = {
         "ACTLR": ((0x0008, 0x0010), Peripheral),
         "SYSTICK": ((0x0010, 0x0020), SysTick),
+        "NVIC": ((0x0100, 0x0D00), Nvic),
         "SCB": ((0x0D00, 0x0D40), Scb),
     }
 
@@ -25,6 +26,9 @@ class CorePeripherals:
 
         uc.mmio_map(self.base, CORE_PERIPHERALS_MEM_SIZE,
                     self.read_cb, None, self.write_cb, None)
+
+        self.last_pc = 0
+        self.last_sp = 0
 
     def periph(self, addr):
         for k in self.periphs.keys():
@@ -45,3 +49,4 @@ class CorePeripherals:
         p, offset = self.periph(addr)
         # print(f"CorePeripheral {hex(addr)} written with value {value}")
         p.write_cb(uc, offset, size, value, user_data)
+

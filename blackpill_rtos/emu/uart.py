@@ -48,6 +48,7 @@ class Uart(Peripheral):
         super().__init__(uc, base_addr, debug)
         self.debug = debug
         self.name = name
+        self.ready_to_print = False
         self.reg_init()
         # self.uc = uc
         # self.base = base_addr
@@ -95,6 +96,9 @@ class Uart(Peripheral):
             self.print(f"UART {self.name} MMIO {hex(addr)} written with value {hex(value)}")
 
         self.reg(addr).write_cb(uc, addr, size, value, user_data)
+        if value == '\n':
+            print("newline")
+            self.ready_to_print = True
 
     def put_byte(self, byte):
         # self.reg("DR").value = byte & 0xFF
@@ -121,3 +125,4 @@ class Uart(Peripheral):
             print(f"Uart {self.name} says: {''.join(string)}")
             self.reg("DR").write_data = []
             self.reg("SR").clr_bit(7)
+            self.ready_to_print = False
