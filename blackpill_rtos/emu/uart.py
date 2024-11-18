@@ -78,7 +78,7 @@ class Uart(Peripheral):
 
                 self.print(f"UART {self.name} MMIO {hex(addr)} read returning value {
                       hex(value)} (" + char + ")")
-                self.reg("SR").clr_bit(5)
+                self.reg("SR").clr_bit(5) # FIXME Figure out where to clear this bit
             else:
                 self.print(f"UART {self.name} MMIO {
                       hex(addr)} read returning value {hex(value)}")
@@ -91,24 +91,24 @@ class Uart(Peripheral):
             char = byte2str(value)
             self.print(f"UART {self.name} MMIO {hex(addr)} written with value {hex(value)} ("
                   + char + ")")
-            self.reg("SR").set_bit(7)
+            self.reg("SR").set_bit(7) # keep bit 7 of SR always set to indicate that it has been sent
         else:
             self.print(f"UART {self.name} MMIO {hex(addr)} written with value {hex(value)}")
 
         self.reg(addr).write_cb(uc, addr, size, value, user_data)
-        if value == '\n':
-            print("newline")
+        if value == 0x0A:
             self.ready_to_print = True
 
     def put_byte(self, byte):
         # self.reg("DR").value = byte & 0xFF
-        # self.reg("SR").set_bit(5)
         # self.reg("SR").get_bit(5)
         self.reg("DR").read_data.append(byte & 0xFF)
+        self.reg("SR").set_bit(5)
 
     def put_buf(self, buf):
         for byte in buf:
             self.put_byte(byte)
+        self.reg("SR").set_bit(5)
 
     def get_byte(self):
         return self.reg("DR").write_data.pop(0)
@@ -119,10 +119,10 @@ class Uart(Peripheral):
 
     def print_buf(self):
         if self.reg("SR").get_bit(7):
+            self.ready_to_print = False
             string = []
-            for value in self.reg("DR").write_data:
+            for _ in range(len(self.reg("DR").write_data)):
+                value = self.reg("DR").write_data.pop(0)
                 string.append(byte2str(value))
             print(f"Uart {self.name} says: {''.join(string)}")
-            self.reg("DR").write_data = []
-            self.reg("SR").clr_bit(7)
-            self.ready_to_print = False
+            # self.reg("DR").write_data = []

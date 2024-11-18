@@ -27,9 +27,6 @@ class CorePeripherals:
         uc.mmio_map(self.base, CORE_PERIPHERALS_MEM_SIZE,
                     self.read_cb, None, self.write_cb, None)
 
-        self.last_pc = 0
-        self.last_sp = 0
-
     def periph(self, addr):
         for k in self.periphs.keys():
             if addr in range(*k):
