@@ -24,13 +24,9 @@ class UartDataReg(MmioReg):
 
     def read_cb(self, uc: Uc, addr, size, user_data):
         return self.read_data.pop(0)
-        # return self.value
 
     def write_cb(self, uc: Uc, addr, size, value, user_data):
-        # assert self.addr == addr
-        # assert size == 4
         self.write_data.append(value)
-        # self.value = value
 
 
 class Uart(Peripheral):
@@ -49,20 +45,10 @@ class Uart(Peripheral):
         self.debug = debug
         self.name = name
         self.ready_to_print = False
+        self._irq_pending = 0
         self.reg_init()
-        # self.uc = uc
-        # self.base = base_addr
-        # self.regs = {
-        #     v[0]: v[1](self.base + v[0], self) for v in self.REG.values()
-        # }
         uc.mmio_map(self.base, UART_MEM_SIZE, self.read_cb,
                     None, self.write_cb, None)
-
-    # def reg(self, id):
-    #     if type(id) == str:
-    #         return self.regs[self.REG[id][0]]
-    #     if type(id) == int:
-    #         return self.regs[id]
 
     def read_cb(self, uc, addr, size, user_data):
         if len(self.reg("DR").read_data) == 0:
@@ -102,8 +88,9 @@ class Uart(Peripheral):
     def put_byte(self, byte):
         # self.reg("DR").value = byte & 0xFF
         # self.reg("SR").get_bit(5)
-        self.reg("DR").read_data.append(byte & 0xFF)
-        self.reg("SR").set_bit(5)
+        self.reg("DR").read_data.append(byte)
+        self._irq_pending += 1
+        # self.reg("SR").set_bit(5)
 
     def put_buf(self, buf):
         for byte in buf:
@@ -126,3 +113,9 @@ class Uart(Peripheral):
                 string.append(byte2str(value))
             print(f"Uart {self.name} says: {''.join(string)}")
             # self.reg("DR").write_data = []
+    @property
+    def irq_pending(self):
+        if self._irq_pending == 0:
+            return False
+        self._irq_pending -= 1
+        return True

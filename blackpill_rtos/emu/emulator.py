@@ -1,6 +1,8 @@
 import struct
 import random
 import sys
+import os
+import signal
 from collections import OrderedDict
 
 from capstone import (
@@ -12,14 +14,25 @@ from capstone import (
 )
 
 # from capstone.arm_const import
-from unicorn import (
+from unicornafl import (
     Uc,
+    UcError,
     UC_ARCH_ARM,
     UC_MODE_LITTLE_ENDIAN,
     UC_MILISECOND_SCALE,
     UC_HOOK_CODE,
     UC_HOOK_INTR,
     UC_HOOK_BLOCK,
+    UC_ERR_INSN_INVALID,
+    UC_ERR_READ_UNMAPPED,
+    UC_ERR_READ_PROT,
+    UC_ERR_READ_UNALIGNED,
+    UC_ERR_WRITE_UNMAPPED,
+    UC_ERR_WRITE_PROT,
+    UC_ERR_WRITE_UNALIGNED,
+    UC_ERR_FETCH_UNMAPPED,
+    UC_ERR_FETCH_PROT,
+    UC_ERR_FETCH_UNALIGNED,
 )
 from unicorn.arm_const import (
     UC_ARM_REG_R0,
@@ -57,6 +70,7 @@ from unicorn.arm_const import (
 
 from emu.uart import Uart
 from emu.cortex_m.core import CorePeripherals
+from emu.spacepacket_handler import SpacepacketHandler
 
 ARM_CONTEXT_REGISTERS = [
     UC_ARM_REG_XPSR,
@@ -111,6 +125,9 @@ CORTEX_M_INT_PERIPH_START_ADDR = 0xE000_0000
 CORTEX_M_INT_PERIPH_SIZE = 0x0010_0000
 
 
+class EmulatorException(Exception):
+    errno = None
+
 class VectorTable(OrderedDict):
     __vtable_entries = {
         "initial_stack_pointer": 0,
@@ -130,6 +147,8 @@ class VectorTable(OrderedDict):
         "pendsv_handler": 56,
         "systick_handler": 60,
         # "irq_handler": 64, # No Custom IRQ's included at the moment
+        "uart1_handler": 212,
+        "uart2_handler": 216,
     }
 
     def __repr__(self) -> str:
@@ -167,7 +186,9 @@ class Emulator:
         self.cs.detail = True
         self.base_addr = base_addr
         self.interrupt_enabled = True
-        # self.interrupt_context = [False]
+        self.spp_handler = SpacepacketHandler()
+        self.packet = None
+        self.interrupt_context = ["None"]
 
         # TODO Load registers from an SVD file?
 
@@ -207,7 +228,6 @@ class Emulator:
         self.uart1 = Uart(self.uc, UART1_START_ADDRESS, 1)
         self.uart2 = Uart(self.uc, UART2_START_ADDRESS, 2)
         self.uart2.debug = False
-
 
     def save_context(self, uc, spsel, fpca):
         if self.debug:
@@ -278,9 +298,8 @@ class Emulator:
             uc.reg_write(UC_ARM_REG_LR, lr)
             uc.reg_write(UC_ARM_REG_IPSR, 15)
             uc.reg_write(UC_ARM_REG_PC, pc)
-            # self.interrupt_context = True
-            # self.interrupt_context.append(True)
-            # print(f"Entering ISR @ {hex(isr_addr)}, IRQ stack {self.interrupt_context}")
+            self.interrupt_context.append(isr)
+            print(f"Entering ISR @ {hex(isr_addr)}, IRQ stack {self.interrupt_context}")
             if self.debug:
                 print(f"Entering ISR @ {hex(isr_addr)}")
                 self.dump_reg()
@@ -295,10 +314,11 @@ class Emulator:
     def return_from_interrupt(self):
         lr = self.uc.reg_read(UC_ARM_REG_LR)
         irq_num = self.uc.reg_read(UC_ARM_REG_IPSR)
-        # print(f"Returning from ISR Interrupt_Stack {self.interrupt_context}")
-        # interrupt_context = self.interrupt_context.pop()
-        if not self.interrupt_enabled: # or not interrupt_context:
-            print("ERROR: attempting to return from interrupt while interrupts are disabled?")
+        print(f"Returning from ISR Interrupt_Stack {self.interrupt_context}")
+        interrupt_context = self.interrupt_context.pop()
+        if not self.interrupt_enabled:  # or not interrupt_context:
+            print(
+                "ERROR: attempting to return from interrupt while interrupts are disabled?")
             return
 
         if ((lr & 0xffffff00) == 0xffffff00):
@@ -353,12 +373,21 @@ class Emulator:
         # (so systick won't tick while interrupts are in progress)
         # This doesn't work because the trampoline handlers exit the interrupt context before pre-empting the interrupts
         # maybe get handle interrupt to insert isr handlers infront of the next trampoline handler?
-        if self.interrupt_enabled: # and not self.interrupt_context:
-            if self.cortex_m.systick.systick_pending:
+        if self.interrupt_enabled:  # and not self.interrupt_context:
+            if self.interrupt_context[-1] != "systick_handler" and self.cortex_m.systick.systick_pending:
+                # FIXME only send spacepacket on systick
+                self.packet = self.spp_handler.send_packet()
                 self.handle_interrupt(uc, "systick_handler")
 
-            elif self.cortex_m.scb.pendsv_pending:
+            elif self.interrupt_context[-1] != "pendsv_handler" and self.cortex_m.scb.pendsv_pending:
                 self.handle_interrupt(uc, "pendsv_handler")
+
+            elif self.interrupt_context[-1] != "uart1_handler" and self.uart1.irq_pending:
+                self.handle_interrupt(uc, "uart1_handler")
+
+        if self.packet:
+            self.uart1.put_buf(self.packet)
+            self.packet = None
 
         if self.uart2.ready_to_print:
             def uart2_trampoline_handler():
@@ -413,6 +442,33 @@ class Emulator:
                     print("Trampoline Handler:")
                     self.dump_reg()
                 handler()
+        except UcError as e:
+            print(f"Exception {e}:")
+            self.dump_reg()
+            force_crash(e)
         except Exception as e:
             print(f"Exception {e}:")
             self.dump_reg()
+            raise e
+            # force_crash(EmulatorException(e))
+
+
+def force_crash(uc_error):
+    mem_errors = [
+        UC_ERR_READ_UNMAPPED,
+        UC_ERR_READ_PROT,
+        UC_ERR_READ_UNALIGNED,
+        UC_ERR_WRITE_UNMAPPED,
+        UC_ERR_WRITE_PROT,
+        UC_ERR_WRITE_UNALIGNED,
+        UC_ERR_FETCH_UNMAPPED,
+        UC_ERR_FETCH_PROT,
+        UC_ERR_FETCH_UNALIGNED,
+    ]
+    if uc_error.errno in mem_errors:
+        os.kill(os.getpid(), signal.SIGSEGV)
+    elif uc_error.errno == UC_ERR_INSN_INVALID:
+        os.kill(os.getpid(), signal.SIGILL)
+    else:
+        # Not sure what happened
+        os.kill(os.getpid(), signal.SIGABRT)
