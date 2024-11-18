@@ -16,11 +16,7 @@ class SysTick(Peripheral):
         super().__init__(uc, base_addr, debug)
         self.reg_init()
         self.enabled = False
-        # self.regs = {
-        #     v[0]: v[1](self.base + v[0], self) for v in self.REG.values()
-        # }
-        # uc.mmio_map(self.base, SYSTICK_MEM_SIZE,
-        #             self.read_cb, None, self.write_cb, None)
+        self._systick_pending = False
 
     def read_cb(self, uc, addr, size, user_data):
         value = self.reg(addr).read_cb(uc, addr, size, user_data)
@@ -35,11 +31,16 @@ class SysTick(Peripheral):
         else:
             self.enabled = False
 
-    def tick(self) -> bool:
+    def tick(self):
         if self.enabled:
             self.reg("VAL").value += 1
             if self.reg("VAL").value >= self.reg("LOAD").value and self.reg("LOAD") != 0:
                 # Trigger SysTick Interrupt
+                self._systick_pending = True
                 self.reg("VAL").value = 0
-                return True
-        return False
+
+    @property
+    def systick_pending(self) -> bool:
+        value = self._systick_pending
+        self._systick_pending = False
+        return value

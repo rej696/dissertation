@@ -14,7 +14,7 @@ class Scb(Peripheral):
 
     def __init__(self, uc, base_addr, debug=False):
         super().__init__(uc, base_addr, debug)
-        self._pendsv_triggered = False
+        self._pendsv_pending = False
         self.reg_init()
 
     def read_cb(self, uc, addr, size, user_data):
@@ -24,13 +24,14 @@ class Scb(Peripheral):
 
     def write_cb(self, uc, addr, size, value, user_data):
         self.print(f"SCB MMIO {hex(addr)} written with value {hex(value)}")
+        # trigger pendsv on write to pendsv bit
         if addr == 0x04 and value & (1 << 28):
-            self._pendsv_triggered = True
+            self._pendsv_pending = True
 
         self.reg(addr).write_cb(uc, addr, size, value, user_data)
 
     @property
-    def pendsv_triggered(self) -> bool:
-        value = self._pendsv_triggered
-        self._pendsv_triggered = False
+    def pendsv_pending(self) -> bool:
+        value = self._pendsv_pending
+        self._pendsv_pending = False
         return value

@@ -167,7 +167,7 @@ class Emulator:
         self.cs.detail = True
         self.base_addr = base_addr
         self.interrupt_enabled = True
-        self.interrupt_context = False
+        # self.interrupt_context = [False]
 
         # TODO Load registers from an SVD file?
 
@@ -192,6 +192,9 @@ class Emulator:
 
         # Special Value for EXEC_RETURN
         self.uc.mem_map(0xFFFFF000, 0x1000)
+        # Enable/Disable Exits
+        self.uc.ctl_exits_enabled(True)
+        self.uc.ctl_set_exits([0xFFFFFFF8])
 
         # TODO setup uc hooks
         self.print_instr = False
@@ -275,7 +278,9 @@ class Emulator:
             uc.reg_write(UC_ARM_REG_LR, lr)
             uc.reg_write(UC_ARM_REG_IPSR, 15)
             uc.reg_write(UC_ARM_REG_PC, pc)
-            self.interrupt_context = True
+            # self.interrupt_context = True
+            # self.interrupt_context.append(True)
+            # print(f"Entering ISR @ {hex(isr_addr)}, IRQ stack {self.interrupt_context}")
             if self.debug:
                 print(f"Entering ISR @ {hex(isr_addr)}")
                 self.dump_reg()
@@ -283,16 +288,19 @@ class Emulator:
                 isr_addr,
                 0xFFFFFFF8)
 
-        self.trampoline_handlers.append(isr_handler)
-        self.trampoline_handlers.append(self.return_from_interrupt)
+        self.trampoline_handlers.insert(0, self.return_from_interrupt)
+        self.trampoline_handlers.insert(0, isr_handler)
         self.uc.emu_stop()
 
     def return_from_interrupt(self):
         lr = self.uc.reg_read(UC_ARM_REG_LR)
         irq_num = self.uc.reg_read(UC_ARM_REG_IPSR)
-        if not self.interrupt_enabled or not self.interrupt_context:
-            print("ERROR")
+        # print(f"Returning from ISR Interrupt_Stack {self.interrupt_context}")
+        # interrupt_context = self.interrupt_context.pop()
+        if not self.interrupt_enabled: # or not interrupt_context:
+            print("ERROR: attempting to return from interrupt while interrupts are disabled?")
             return
+
         if ((lr & 0xffffff00) == 0xffffff00):
             spsel = bool(lr & 0b100)
             fpca = not bool(lr & 0b10000)
@@ -315,7 +323,6 @@ class Emulator:
             pc = self.uc.reg_read(UC_ARM_REG_PC)
             sp = self.uc.reg_read(UC_ARM_REG_SP)
 
-        self.interrupt_context = False
         if self.debug:
             print(f"Returning from ISR to PC {hex(pc)}, SP {hex(sp)}")
         self.uc.emu_start(
@@ -338,16 +345,19 @@ class Emulator:
         if code == bytearray((0x62, 0xb6)):
             self.interrupt_enabled = True
 
+        # Tick systick peripheral
+        self.cortex_m.systick.tick()
+
         # handle interrupts
         # TODO not interrupt context blocks interrupts from being called inside other interrupts
         # (so systick won't tick while interrupts are in progress)
         # This doesn't work because the trampoline handlers exit the interrupt context before pre-empting the interrupts
         # maybe get handle interrupt to insert isr handlers infront of the next trampoline handler?
-        if self.interrupt_enabled and not self.interrupt_context:
-            if self.cortex_m.systick.tick():
+        if self.interrupt_enabled: # and not self.interrupt_context:
+            if self.cortex_m.systick.systick_pending:
                 self.handle_interrupt(uc, "systick_handler")
 
-            elif self.cortex_m.scb.pendsv_triggered:
+            elif self.cortex_m.scb.pendsv_pending:
                 self.handle_interrupt(uc, "pendsv_handler")
 
         if self.uart2.ready_to_print:
@@ -358,7 +368,7 @@ class Emulator:
                     pc + 1,
                     self.fw_size + self.base_addr,
                 )
-            self.trampoline_handlers.append(uart2_trampoline_handler)
+            self.trampoline_handlers.insert(0, uart2_trampoline_handler)
             self.uc.emu_stop()
 
         # check for DBC exception being raised
@@ -403,10 +413,6 @@ class Emulator:
                     print("Trampoline Handler:")
                     self.dump_reg()
                 handler()
-
-        except KeyboardInterrupt:
-            sys.exit(0)
         except Exception as e:
-            print("Exception:")
+            print(f"Exception {e}:")
             self.dump_reg()
-            print(e)
