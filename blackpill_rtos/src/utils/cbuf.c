@@ -44,6 +44,9 @@ size_t cbuf_size(cbuf_t const *const self)
 
 status_t cbuf_read(cbuf_t *const self, size_t const size, uint8_t dest[size])
 {
+    if (self->write == self->read) {
+        return CBUF_STATUS_CBUF_EMPTY;
+    }
     if (size > cbuf_size(self)) {
         return CBUF_STATUS_BUFFER_OVERFLOW;
     }

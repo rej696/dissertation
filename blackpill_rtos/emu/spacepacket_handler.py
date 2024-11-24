@@ -91,8 +91,10 @@ class SpacepacketHandler:
 
     def send_packet(self):
         self.counter += 1
-        if len(self.packets) <= 0 and self.counter > 255:
-            raise OutOfPacketsException("Ran out of Spacepackets to send")
+        if len(self.packets) <= 0:
+            if self.counter > 1024:
+                raise OutOfPacketsException("Ran out of Spacepackets to send")
+            return None
         if self.packets[0].trigger >= self.counter:
             self.counter = 0
             # FIXME handle sending packet using uart?

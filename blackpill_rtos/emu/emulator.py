@@ -23,6 +23,8 @@ from unicornafl import (
     UC_HOOK_CODE,
     UC_HOOK_INTR,
     UC_HOOK_BLOCK,
+    UC_HOOK_MEM_READ,
+    UC_HOOK_MEM_WRITE,
     UC_ERR_INSN_INVALID,
     UC_ERR_READ_UNMAPPED,
     UC_ERR_READ_PROT,
@@ -39,6 +41,14 @@ from unicorn.arm_const import (
     UC_ARM_REG_R1,
     UC_ARM_REG_R2,
     UC_ARM_REG_R3,
+    UC_ARM_REG_R4,
+    UC_ARM_REG_R5,
+    UC_ARM_REG_R6,
+    UC_ARM_REG_R7,
+    UC_ARM_REG_R8,
+    UC_ARM_REG_R9,
+    UC_ARM_REG_R10,
+    UC_ARM_REG_R11,
     UC_ARM_REG_R12,
     UC_ARM_REG_XPSR,
     UC_ARM_REG_PC,
@@ -178,7 +188,6 @@ def skip_instruction(uc, addr, size):
 class Emulator:
     def __init__(self, firmware_path, base_addr, debug=False) -> None:
         self.debug = debug
-        self.input_string = [ord(c) for c in "Smelly Boy!\r\n"]
         self.uc = Uc(UC_ARCH_ARM, UC_MODE_LITTLE_ENDIAN)
         self.cs = Cs(
             CS_ARCH_ARM, CS_MODE_THUMB | CS_MODE_MCLASS | CS_MODE_LITTLE_ENDIAN
@@ -222,12 +231,28 @@ class Emulator:
         self.uc.hook_add(UC_HOOK_CODE, self.uc_code_cb)
         # self.uc.hook_add(UC_HOOK_BLOCK, self.uc_mem_block_cb,
         #                  begin=0xFFFFF000, end=0xFFFFFFFF)
+        # self.debug_mem = (0x20003ed8, 0x20003edc)
+        # self.uc.hook_add(UC_HOOK_MEM_READ, self.uc_debug_read_cb,
+        #                  begin=self.debug_mem[0], end=self.debug_mem[1])
+        # self.uc.hook_add(UC_HOOK_MEM_WRITE, self.uc_debug_write_cb,
+        #                  begin=self.debug_mem[0], end=self.debug_mem[1])
 
         self.cortex_m = CorePeripherals(self.uc)
         self.cortex_m.scb.debug = False
         self.uart1 = Uart(self.uc, UART1_START_ADDRESS, 1)
         self.uart2 = Uart(self.uc, UART2_START_ADDRESS, 2)
+        self.uart1.debug = False
         self.uart2.debug = False
+
+    def uc_debug_read_cb(self, uc, access, addr, size, value, user_data):
+        print(f"Reading memory @ {hex(addr)}[{hex(size)}]")
+        print(f"{access}, {addr}, {size}, {value}")
+        self.dump_mem(addr, size)
+
+    def uc_debug_write_cb(self, uc, access, addr, size, value, user_data):
+        print(f"Writing memory @ {hex(addr)}[{hex(size)}]")
+        print(f"{access}, {addr}, {size}, {value}")
+        self.dump_mem(addr, size)
 
     def save_context(self, uc, spsel, fpca):
         if self.debug:
@@ -299,9 +324,8 @@ class Emulator:
             uc.reg_write(UC_ARM_REG_IPSR, 15)
             uc.reg_write(UC_ARM_REG_PC, pc)
             self.interrupt_context.append(isr)
-            print(f"Entering ISR @ {hex(isr_addr)}, IRQ stack {self.interrupt_context}")
             if self.debug:
-                print(f"Entering ISR @ {hex(isr_addr)}")
+                print(f"Entering ISR @ {hex(isr_addr)}, IRQ stack {self.interrupt_context}")
                 self.dump_reg()
             self.uc.emu_start(
                 isr_addr,
@@ -314,7 +338,7 @@ class Emulator:
     def return_from_interrupt(self):
         lr = self.uc.reg_read(UC_ARM_REG_LR)
         irq_num = self.uc.reg_read(UC_ARM_REG_IPSR)
-        print(f"Returning from ISR Interrupt_Stack {self.interrupt_context}")
+        # print(f"Returning from ISR Interrupt_Stack {self.interrupt_context}")
         interrupt_context = self.interrupt_context.pop()
         if not self.interrupt_enabled:  # or not interrupt_context:
             print(
@@ -374,7 +398,9 @@ class Emulator:
         # This doesn't work because the trampoline handlers exit the interrupt context before pre-empting the interrupts
         # maybe get handle interrupt to insert isr handlers infront of the next trampoline handler?
         if self.interrupt_enabled:  # and not self.interrupt_context:
-            if self.interrupt_context[-1] != "systick_handler" and self.cortex_m.systick.systick_pending:
+            # if self.self.cortex_m.systick.systick_pending:
+            # if len(self.interrupt_context) > 2 and self.interrupt_context[-1] != "systick_handler" and self.cortex_m.systick.systick_pending:
+            if (not (self.interrupt_context[-1] == "systick_handler" and len(self.interrupt_context) > 2)) and self.cortex_m.systick.systick_pending:
                 # FIXME only send spacepacket on systick
                 self.packet = self.spp_handler.send_packet()
                 self.handle_interrupt(uc, "systick_handler")
@@ -386,6 +412,8 @@ class Emulator:
                 self.handle_interrupt(uc, "uart1_handler")
 
         if self.packet:
+            if self.debug:
+                print(f"Putting packet {self.packet}")
             self.uart1.put_buf(self.packet)
             self.packet = None
 
@@ -401,15 +429,38 @@ class Emulator:
             self.uc.emu_stop()
 
         # check for DBC exception being raised
-        if addr in range(0x8000284, 0x800029d):
+        if addr in range(0x800028c, 0x80002a8):
             print("DBC_Exception")
             raise Exception("DBC_Exception")
 
+        idle_task_instr = (0x80003de, 0x80006d0, 0x80006d2, 0x80006d6)
+        memcpy_instr = tuple(range(0x8000f4a, 0x8000f66, 0x1))
+        # mem = self.uc.mem_read(0x20003ed8, 0x4)
+        # if mem == bytearray(b"\xfe\xca\xbe\xba"):
+        #     raise EmulatorException("BABECAFE")
         print_instr = False
-        if print_instr and (addr not in [0x80006d2, 0x80003de, 0x80006d6] or addr not in [0x8000856, 0x8000858, 0x8000888, 0x800088c]):  # idle loop
+        if print_instr and (addr not in idle_task_instr and addr not in memcpy_instr and addr not in [0x8000856, 0x8000858, 0x8000888, 0x800088c]):  # idle loop
             for instruction in self.cs.disasm(code, addr, 1):
                 print(f"{hex(addr)}\t {instruction.mnemonic} {
                       instruction.op_str}")
+            # self.dump_mem(0x20003ed8, 0x4)
+            # self.dump_reg()
+
+    def dump_mem(self, addr, size):
+        def chunks(l, n):
+            for i in range(0, len(l), n):
+                yield l[i:i + n]
+
+        print(f"\tMemory: @ {hex(addr)}")
+        mem = self.uc.mem_read(addr, size)
+
+        for row in chunks(mem, 16):
+            half_rows = tuple(chunks(row, 8))
+            if len(half_rows) < 2:
+                print(f"\t\t{hex(addr)}: {half_rows[0].hex(" ")}")
+            else:
+                print(f"\t\t{hex(addr)}: {half_rows[0].hex(" ")}    {half_rows[1].hex(" ")}")
+            addr += 16
 
     def dump_reg(self):
         print("\tRegister Dump:")
@@ -420,7 +471,18 @@ class Emulator:
         print(f"\t\tR1: {hex(self.uc.reg_read(UC_ARM_REG_R1))}")
         print(f"\t\tR2: {hex(self.uc.reg_read(UC_ARM_REG_R2))}")
         print(f"\t\tR3: {hex(self.uc.reg_read(UC_ARM_REG_R3))}")
+        print(f"\t\tR4: {hex(self.uc.reg_read(UC_ARM_REG_R4))}")
+        print(f"\t\tR5: {hex(self.uc.reg_read(UC_ARM_REG_R5))}")
+        print(f"\t\tR6: {hex(self.uc.reg_read(UC_ARM_REG_R6))}")
+        print(f"\t\tR7: {hex(self.uc.reg_read(UC_ARM_REG_R7))}")
+        print(f"\t\tR8: {hex(self.uc.reg_read(UC_ARM_REG_R8))}")
+        print(f"\t\tR9: {hex(self.uc.reg_read(UC_ARM_REG_R9))}")
+        print(f"\t\tR10: {hex(self.uc.reg_read(UC_ARM_REG_R10))}")
+        print(f"\t\tR11: {hex(self.uc.reg_read(UC_ARM_REG_R11))}")
         print(f"\t\tR12: {hex(self.uc.reg_read(UC_ARM_REG_R12))}")
+        sp = self.uc.reg_read(UC_ARM_REG_SP)
+        print(f"\tStack: @ {hex(sp)}")
+        self.dump_mem(sp - 0x40, 0x40)
 
     def reset_handler(self):
         self.uc.emu_start(
