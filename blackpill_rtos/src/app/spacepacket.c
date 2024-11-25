@@ -68,12 +68,25 @@ static status_t validate_hdr(spacepacket_hdr_t const *const hdr)
     return STATUS_OK;
 }
 
-status_t spacepacket_process(size_t const size, uint8_t const buffer[size])
+/* status_t spacepacket_process(size_t const size, uint8_t const buffer[size]) */
+status_t spacepacket_process(cbuf_t *const cbuf)
 {
-    DBC_REQUIRE(buffer != NULL);
+    DBC_REQUIRE(cbuf != NULL);
+
+    if (cbuf_size(cbuf) < SPACEPACKET_HDR_SIZE) {
+        DEBUG("Not enough bytes in buffer for spacepacket header", SPACEPACKET_STATUS_BUFFER_UNDERFLOW);
+        return SPACEPACKET_STATUS_BUFFER_UNDERFLOW;
+    }
+
+    uint8_t hdr_buf[SPACEPACKET_HDR_SIZE] = {0};
+    status_t status = cbuf_read(cbuf, SPACEPACKET_HDR_SIZE, hdr_buf);
+    if (status != STATUS_OK) {
+        DEBUG("Falied to read spacepacket header from cbuf", status);
+        return status;
+    }
 
     spacepacket_hdr_t hdr = {0};
-    status_t status = parse_hdr(size, &buffer[0], &hdr);
+    status = parse_hdr(SPACEPACKET_HDR_SIZE, &hdr_buf[0], &hdr);
     if (status != STATUS_OK) {
         DEBUG("Unable to parse spacepacket header", status);
         return status;
@@ -86,6 +99,19 @@ status_t spacepacket_process(size_t const size, uint8_t const buffer[size])
         return status;
     }
 
+    /* Validate data size */
+    if (cbuf_size(cbuf) <= hdr.data_length) {
+        DEBUG("Not enough bytes in buffer for spacepacket data", SPACEPACKET_STATUS_BUFFER_UNDERFLOW);
+        return SPACEPACKET_STATUS_BUFFER_UNDERFLOW;
+    }
+
+    uint8_t data_buf[SPACEPACKET_DATA_MAX_SIZE] = {0};
+    status = cbuf_read(cbuf, hdr.data_length + 1, data_buf);
+    if (status != STATUS_OK) {
+        DEBUG("Falied to read spacepacket data from cbuf", status);
+        return status;
+    }
+
     // handle application data
     apid_handler_t apid_handler = apid_handler_map[hdr.apid];
     if (apid_handler == NULL) {
@@ -95,7 +121,7 @@ status_t spacepacket_process(size_t const size, uint8_t const buffer[size])
 
     size_t output_size = 0;
     uint8_t output_buffer[256] = {0};
-    status = apid_handler(size - 6, &buffer[6], &output_size, output_buffer);
+    status = apid_handler(hdr.data_length + 1, data_buf, &output_size, output_buffer);
 
     // TODO build up output buffer and telemetry space packet
 

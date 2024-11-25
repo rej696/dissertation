@@ -71,6 +71,8 @@ bool packet_buffer_lock = false;
 
 void packet_thread_handler(void)
 {
+    cbuf_t cbuf = {0};
+    cbuf_init(&cbuf);
 
     /* recieve a buffer of data in a queue and process it */
     for (;;) {
@@ -92,8 +94,8 @@ void packet_thread_handler(void)
 #endif
 
         size_t size = cbuf_size(&packet_buffer);
-        uint8_t buffer[256] = {0};
-        status_t status = cbuf_read(&packet_buffer, size, buffer);
+        uint8_t tmp_buf[256] = {0};
+        status_t status = cbuf_read(&packet_buffer, size, tmp_buf);
 #if 0
         debug_str("packet data read from cbuf");
 #endif
@@ -119,10 +121,19 @@ void packet_thread_handler(void)
         debug_str("processing packet data");
 #endif
 
-        /* Process buffer */
-        status = spacepacket_process(size, buffer);
+        /* Place contents of buffer into data cbuf */
+        status = cbuf_write(&cbuf, size, tmp_buf);
         if (status != STATUS_OK) {
-            DEBUG("Failed to process spacepacket", status);
+            DEBUG("Failed to write tmp buf to spacepacket cbuf", status);
+            cbuf_init(&cbuf);
+        }
+
+        while (cbuf_size(&cbuf) > 0) {
+            /* Process buffer */
+            status = spacepacket_process(&cbuf);
+            if (status != STATUS_OK) {
+                DEBUG("Failed to process spacepacket", status);
+            }
         }
         /* TODO handle response? */
     }
@@ -211,6 +222,7 @@ static status_t set_u8_param(size_t size, uint8_t const *const input)
 
 static status_t print_u8_param(void)
 {
+    debug_str("Printing u8 param:");
     debug_int(u8_param);
     return STATUS_OK;
 }
@@ -236,6 +248,7 @@ static status_t set_u32_param(size_t size, uint8_t const *const input)
 
 static status_t print_u32_param(void)
 {
+    debug_str("Printing u32 param:");
     debug_int(u32_param);
     return STATUS_OK;
 }
