@@ -26,7 +26,7 @@ TARGET := $(BUILD)/firmware
 SOURCES := $(shell find $(SRC) -name '*.c')
 OBJECTS := $(SOURCES:$(SRC)/%.c=$(BUILD)/%.o)
 
-.PHONY: build dump clean emu gdb disasm debug io emu_install
+.PHONY: build dump clean emu gdb disasm debug io emu_install addr dbc
 
 build: $(TARGET).bin
 
@@ -59,14 +59,33 @@ debug:
 disasm: $(TARGET).elf
 	$(GDB) -q $< -ex "set pagination off" -ex "disas /s $(SYMBOL)" -ex quit
 
-emu: $(TARGET).bin venv
-	. venv/bin/activate; python3 -m emu $<
+addr: $(TARGET).elf
+	@readelf $<  -s | awk '/$(SYMBOL)/ { printf("%x ", strtonum("0x"$$2) - 1); printf("%x\n", (strtonum("0x"$$2) + $$3 - 1)) }'
+
+dbc: $(TARGET).elf
+	@make --no-print-directory SYMBOL=DBC_fault_handler addr
+
+emu: $(TARGET).bin
+	venv/bin/python3 -m emu $<
+
+emu-grammar: $(TARGET).bin
+	venv/bin/python3 -m emu -g $<
+
+fuzz: $(TARGET).bin
+	@mkdir -p fuzz_outputs
+	AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 afl-fuzz -U -i raw_fuzz_inputs -o fuzz_outputs venv/bin/python3 -m emu $< -i @@
+
+fuzz-grammar: $(TARGET).bin
+	@mkdir -p fuzz_outputs
+	export AFL_SKIP_CPUFREQ=1
+	export AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1
+	afl-fuzz -U -i grammar_fuzz_inputs -o fuzz_outputs venv/bin/python3 -m emu $< -g -i @@
 
 emu_install: venv
 
 venv: requirements.txt
 	python3 -m venv venv
-	. venv/bin/activate; pip install -r requirements.txt
+	venv/bin/pip3 install -r requirements.txt
 
 clean:
 	rm -rf build

@@ -80,7 +80,7 @@ from unicorn.arm_const import (
 
 from emu.uart import Uart
 from emu.cortex_m.core import CorePeripherals
-from emu.spacepacket_handler import SpacepacketHandler
+from emu.spacepacket_handler import SpacepacketHandler, OutOfPacketsException
 
 ARM_CONTEXT_REGISTERS = [
     UC_ARM_REG_XPSR,
@@ -138,6 +138,12 @@ CORTEX_M_INT_PERIPH_SIZE = 0x0010_0000
 class EmulatorException(Exception):
     errno = None
 
+
+class DbcException(Exception):
+    errno = None
+    pass
+
+
 class VectorTable(OrderedDict):
     __vtable_entries = {
         "initial_stack_pointer": 0,
@@ -186,8 +192,9 @@ def skip_instruction(uc, addr, size):
 
 
 class Emulator:
-    def __init__(self, firmware_path, base_addr, debug=False) -> None:
+    def __init__(self, firmware_path, base_addr, debug=False, dbc_addr_range=range(0x800028d, 0x80002a9)) -> None:
         self.debug = debug
+        self.dbc_addr_range = dbc_addr_range
         self.uc = Uc(UC_ARCH_ARM, UC_MODE_LITTLE_ENDIAN)
         self.cs = Cs(
             CS_ARCH_ARM, CS_MODE_THUMB | CS_MODE_MCLASS | CS_MODE_LITTLE_ENDIAN
@@ -325,7 +332,8 @@ class Emulator:
             uc.reg_write(UC_ARM_REG_PC, pc)
             self.interrupt_context.append(isr)
             if self.debug:
-                print(f"Entering ISR @ {hex(isr_addr)}, IRQ stack {self.interrupt_context}")
+                print(f"Entering ISR @ {hex(isr_addr)}, "
+                      + f"IRQ stack {self.interrupt_context}")
                 self.dump_reg()
             self.uc.emu_start(
                 isr_addr,
@@ -429,9 +437,8 @@ class Emulator:
             self.uc.emu_stop()
 
         # check for DBC exception being raised
-        if addr in range(0x800028c, 0x80002a8):
-            print("DBC_Exception")
-            raise Exception("DBC_Exception")
+        if addr in self.dbc_addr_range:
+            raise DbcException("DBC_Exception triggered")
 
         idle_task_instr = (0x80003de, 0x80006d0, 0x80006d2, 0x80006d6)
         memcpy_instr = tuple(range(0x8000f4a, 0x8000f66, 0x1))
@@ -439,7 +446,8 @@ class Emulator:
         # if mem == bytearray(b"\xfe\xca\xbe\xba"):
         #     raise EmulatorException("BABECAFE")
         print_instr = False
-        if print_instr and (addr not in idle_task_instr and addr not in memcpy_instr and addr not in [0x8000856, 0x8000858, 0x8000888, 0x800088c]):  # idle loop
+        # idle loop
+        if print_instr and (addr not in idle_task_instr and addr not in memcpy_instr and addr not in [0x8000856, 0x8000858, 0x8000888, 0x800088c]):
             for instruction in self.cs.disasm(code, addr, 1):
                 print(f"{hex(addr)}\t {instruction.mnemonic} {
                       instruction.op_str}")
@@ -459,7 +467,8 @@ class Emulator:
             if len(half_rows) < 2:
                 print(f"\t\t{hex(addr)}: {half_rows[0].hex(" ")}")
             else:
-                print(f"\t\t{hex(addr)}: {half_rows[0].hex(" ")}    {half_rows[1].hex(" ")}")
+                print(f"\t\t{hex(addr)}: {half_rows[0].hex(" ")}    {
+                      half_rows[1].hex(" ")}")
             addr += 16
 
     def dump_reg(self):
@@ -508,8 +517,19 @@ class Emulator:
             print(f"Exception {e}:")
             self.dump_reg()
             force_crash(e)
+        # TODO handle execeptions for afl correctly (i.e. which are crashes and which just the end of execution
+        except EmulatorException as e:
+            print(f"Emulator Exception {e}:")
+            self.dump_reg()
+            force_crash(e)
+        except DbcException as e:
+            print(f"DBC Exception {e}:")
+            self.dump_reg()
+            force_crash(e)
+        except OutOfPacketsException as e:
+            print(f"OutOfPacketsException: {e}")
         except Exception as e:
-            print(f"Exception {e}:")
+            print(f"Unhandled Exception {e}:")
             self.dump_reg()
             raise e
             # force_crash(EmulatorException(e))

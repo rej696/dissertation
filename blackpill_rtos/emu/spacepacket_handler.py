@@ -7,6 +7,7 @@ VCID_LIST = list(range(4))
 # Length of data is max size of frame minus headers and trailers
 DATA_LEN_MAX = 0x3FF - 5 - 2 - 6
 
+
 def take(iter, n):
     for _ in range(n):
         yield next(iter)
@@ -64,9 +65,13 @@ class OutOfPacketsException(Exception):
     pass
 
 
+class SpacepacketInvalidInputException(Exception):
+    pass
+
+
 class SpacepacketEntry:
-    def __init__(self, trigger, packet_bytes):
-        self.trigger = trigger
+    def __init__(self, trigger, packet_bytes: bytearray):
+        self.trigger = trigger + 1
         self.packet: bytearray = packet_bytes
 
 
@@ -77,6 +82,9 @@ class SpacepacketHandler:
         self.counter = 0
 
     def set_input(self, input_bytes):
+        """
+        Read from a iterable bytes object through the spacepacket grammar into the packet queue
+        """
         self.input_bytes = copy.deepcopy(input_bytes)
 
         def input_iter():
@@ -89,13 +97,22 @@ class SpacepacketHandler:
                 bytearray(
                     spacepackets2bytes([(spp, data)]))))
 
+    def set_raw_input(self, input_bytes):
+        """Insert a raw bytes object into the packet queue with a trigger"""
+        if len(input_bytes) < 2:
+            raise SpacepacketInvalidInputException
+
+        self.packets.append(SpacepacketEntry(
+            int(input_bytes[0]),
+            bytearray(input_bytes[1:])))
+
     def send_packet(self):
         self.counter += 1
         if len(self.packets) <= 0:
             if self.counter > 1024:
                 raise OutOfPacketsException("Ran out of Spacepackets to send")
             return None
-        if self.packets[0].trigger >= self.counter:
+        if self.packets[0].trigger << 2 >= self.counter:
             self.counter = 0
             # FIXME handle sending packet using uart?
             return self.packets.pop(0).packet
