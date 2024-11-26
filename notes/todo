@@ -1,20 +1,26 @@
-TODO setup dissertation repository
-TODO add submodules to interesting projects
-TODO investigate fuzzware
+DONE setup dissertation repository (2024-11-24 13:41)
+DONE add submodules to interesting projects (2024-11-24 13:41)
+DONE investigate fuzzware (2024-11-24 13:41)
 DONE work through bare-metal-programming-guide with blackpill (2024-03-10 18:57)
-TODO implement unicorn emulator for blackpill
+DONE implement unicorn emulator for blackpill (2024-11-26 17:53)
 DONE work through returning from an interrupt (2024-10-21 22:42)
-TODO integrate afl-unicorn-fuzz
+DONE integrate afl-unicorn-fuzz (2024-11-26 17:53)
 TODO write branches for inputs
-TODO write embedded spacepacket parser
+DONE write embedded spacepacket parser (2024-11-24 13:40)
 TODO handle application repsonses
 DONE create hello action (2024-11-12 00:21)
 TODO create queue for communicating between threads
-TODO integrate spacepacket grammar into emu
+DONE integrate spacepacket grammar into emu (2024-11-25 14:03)
 TODO implement space data link layer in blackpill
-TODO make emu work with uart interrupt
+DONE make emu work with uart interrupt (2024-11-25 14:03)
 TODO document emulator magic numbers
 DONE investigate emu unmapped memory (2024-11-18 10:41)
 TODO emulate gpio peripheral to show writes to led pin
 TODO fix interrupt preemption based on priority
 TODO fix sending spacepackets in emulator
+TODO write spacepacket downlink in stm32
+TODO improve fuzzer performance by performing startup sequence before forkserver
+TODO implement more interesting logic in application for fuzzer
+TODO fuzz blackpill application with fuzzware/hoedur?
+TODO clean up emulator/application code
+TODO run fuzzer on server
