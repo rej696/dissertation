@@ -1,5 +1,6 @@
 from unicorn import Uc
 
+
 class MmioReg:
     def __init__(self, addr, parent):
         self.parent = parent
@@ -22,7 +23,7 @@ class MmioReg:
         return (self.value >> n) & 0x01
 
     def set_bit(self, n):
-        self.value |= (0x01 << n)
+        self.value |= 0x01 << n
 
     def clr_bit(self, n):
         self.value &= ~(0x01 << n)

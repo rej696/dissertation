@@ -1,4 +1,3 @@
-
 from emu.mmio.reg import MmioReg
 from emu.mmio.peripheral import Peripheral
 
@@ -6,7 +5,10 @@ from emu.mmio.peripheral import Peripheral
 class Scb(Peripheral):
     REG = {
         "ICSR": (0x04, MmioReg),  # used to trigger pendsv
-        "AIRCR": (0x0C, MmioReg),  # used in NVIC_SetPriorityGrouping (we can ignore this?)
+        "AIRCR": (
+            0x0C,
+            MmioReg,
+        ),  # used in NVIC_SetPriorityGrouping (we can ignore this?)
         "SHPR1": (0x18, MmioReg),
         "SHPR2": (0x1C, MmioReg),
         "SHPR3": (0x20, MmioReg),

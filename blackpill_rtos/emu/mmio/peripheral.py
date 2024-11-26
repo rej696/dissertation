@@ -1,10 +1,8 @@
-
 from emu.mmio.reg import MmioReg
 
+
 class Peripheral:
-    REG = {
-        "UNKNOWN": (0, MmioReg)
-    }
+    REG = {"UNKNOWN": (0, MmioReg)}
 
     def __init__(self, uc, base_addr, debug=False):
         self.debug = debug
@@ -13,14 +11,12 @@ class Peripheral:
         self.regs = dict()
 
     def reg_init(self):
-        self.regs = {
-            v[0]: v[1](self.base + v[0], self) for v in self.REG.values()
-        }
+        self.regs = {v[0]: v[1](self.base + v[0], self) for v in self.REG.values()}
 
     def reg(self, id):
-        if type(id) == str:
+        if type(id) is str:
             return self.regs[self.REG[id][0]]
-        if type(id) == int:
+        if type(id) is int:
             return self.regs[id]
 
     def read_cb(self, uc, addr, size, user_data):

@@ -4,6 +4,7 @@ CC = $(PREFIX)-gcc
 OBJCOPY = $(PREFIX)-objcopy
 OBJDUMP = $(PREFIX)-objdump
 GDB ?= $(PREFIX)-gdb
+PYTHON ?= python
 
 SYMBOL ?= main
 
@@ -65,21 +66,20 @@ addr: $(TARGET).elf
 dbc: $(TARGET).elf
 	@make --no-print-directory SYMBOL=DBC_fault_handler addr
 
-emu: $(TARGET).bin
+emu-raw: $(TARGET).bin
 	venv/bin/python3 -m emu $<
 
-emu-grammar: $(TARGET).bin
+emu: $(TARGET).bin
 	venv/bin/python3 -m emu -g $<
 
-fuzz: $(TARGET).bin
-	@mkdir -p fuzz_outputs
-	AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 afl-fuzz -U -i raw_fuzz_inputs -o fuzz_outputs venv/bin/python3 -m emu $< -i @@
+fuzz-raw: $(TARGET).bin
+	AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 afl-fuzz -U -t +50000 -i raw_fuzz_inputs -o fuzz_outputs $(PYTHON) -m emu $< -i @@F
 
-fuzz-grammar: $(TARGET).bin
-	@mkdir -p fuzz_outputs
-	export AFL_SKIP_CPUFREQ=1
-	export AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1
-	afl-fuzz -U -i grammar_fuzz_inputs -o fuzz_outputs venv/bin/python3 -m emu $< -g -i @@
+fuzz-raw-debug: $(TARGET).bin
+	AFL_DEBUG=1 AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 afl-fuzz -U -t +50000 -i raw_fuzz_inputs -o raw_fuzz_outputs $(PYTHON) -m emu $< -i @@F
+
+fuzz: $(TARGET).bin
+	AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 afl-fuzz -U -t +50000 -i grammar_fuzz_inputs -o grammar_fuzz_outputs $(PYTHON) -m emu $< -g -i @@
 
 emu_install: venv
 
@@ -89,3 +89,30 @@ venv: requirements.txt
 
 clean:
 	rm -rf build
+
+.PHONY: docker-build docker-fuzz docker-bash docker-logs docker-attach docker-stop chown docker-rm
+docker-build:
+	docker build -t rej696/afl:latest .
+
+docker-fuzz: $(TARGET).bin
+	docker run --rm -it -d --name afl-fuzz -v $$(pwd):/src rej696/afl bash -c "make PYTHON=python3 fuzz"
+
+docker-bash: $(TARGET).bin
+	docker run --rm -it -d --name afl-fuzz -v $$(pwd):/src rej696/afl bash
+
+docker-logs:
+	docker logs afl-fuzz -f
+
+docker-attach:
+	docker attach afl-fuzz
+
+docker-stop:
+	@make --no-print-directory chown
+	docker stop afl-fuzz
+
+chown:
+	sudo chown -R $$USER:$$USER fuzz_outputs
+
+docker-rm:
+	@make --no-print-directory chown
+	docker rm afl-fuzz

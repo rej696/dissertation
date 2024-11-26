@@ -1,4 +1,4 @@
-from emu.emulator import Emulator, FLASH_START_ADDRESS
+from emu.emulator import Emulator, FLASH_START_ADDRESS, fuzz_start
 from unicornafl import uc_afl_fuzz_custom
 from functools import partial
 import sys
@@ -26,23 +26,33 @@ def fuzz_handler(filename, fuzz_input_filename, grammar, debug, dbc_addr):
 
     # The most likely solution will be to use uc_afl_fuzz_custom, which takes a fuzzing_callback function, which could be our emu.start() function
     # FIXME need right arguments
-    def input_cb() -> bool:
+    def input_cb(uc, input_bs, persisent_round, emu) -> bool:
         # # read fuzzing input data
         # while not os.path.isfile(fuzz_input_filename):
         #     print("waiting for file")
         #     time.sleep(1)
-        fuzz_input = b""
-        with open(fuzz_input_filename, "rb") as f:
-            fuzz_input = f.read()
+        # fuzz_input = b""
+        # with open(fuzz_input_filename, "rb") as f:
+        #     fuzz_input = f.read()
         # store fuzzing input data somewhere to go into uart?
+        fuzz_input = bytearray(input_bs)
         if grammar:
             emu.spp_handler.set_input(fuzz_input)
         else:
             emu.spp_handler.set_raw_input(fuzz_input)
 
-    uc_afl_fuzz_custom(emu.uc, input_file=fuzz_input_filename,
-                       place_input_callback=input_cb, fuzzing_callback=emu.start)
+    def validate_crash_cb():
+        print("Validation")
 
+    uc_afl_fuzz_custom(
+        emu.uc,
+        input_file=fuzz_input_filename,
+        place_input_callback=input_cb,
+        fuzzing_callback=fuzz_start,
+        validate_crash_callback=validate_crash_cb,
+        always_validate=True,
+        data=emu,
+    )
 
     # # start emulator
     # emu.start()
@@ -53,34 +63,31 @@ def spp_grammer_input_cb(emu):
     emu.spp_handler.set_input(b"\x05\x00\x01\x00")
 
     # Set u8 parameter
-    emu.spp_handler.set_input(b"\x07\x80\x02\x01\xA5")
+    emu.spp_handler.set_input(b"\x07\x80\x02\x01\xa5")
     # Print u8 Parameter
     emu.spp_handler.set_input(b"\x00\x00\x01\x01")
 
     # Set u32 parameter
-    emu.spp_handler.set_input(b"\xFF\x80\x05\x02\xDE\xAD\xBE\xEF")
+    emu.spp_handler.set_input(b"\xff\x80\x05\x02\xde\xad\xbe\xef")
     # Print u8 Parameter
     emu.spp_handler.set_input(b"\x32\x00\x01\x02")
 
 
 def spp_raw_input_cb(emu):
     # Print hello world
-    emu.spp_handler.set_raw_input(
-        bytearray(b'\x05\x10\x00\xc0\x00\x00\x00\x00'))
+    emu.spp_handler.set_raw_input(bytearray(b"\x05\x10\x00\xc0\x00\x00\x00\x00"))
 
     # Set u8 parameter
-    emu.spp_handler.set_raw_input(
-        bytearray(b'\x07\x10\x02\xc0\x00\x00\x01\x01\xa5'))
+    emu.spp_handler.set_raw_input(bytearray(b"\x07\x10\x02\xc0\x00\x00\x01\x01\xa5"))
     # Print u8 Parameter
-    emu.spp_handler.set_raw_input(
-        bytearray(b'\x00\x10\x00\xc0\x00\x00\x00\x01'))
+    emu.spp_handler.set_raw_input(bytearray(b"\x00\x10\x00\xc0\x00\x00\x00\x01"))
 
     # Set u32 parameter
     emu.spp_handler.set_raw_input(
-        bytearray(b'\xFF\x10\x02\xc0\x00\x00\x04\x02\xde\xad\xbe\xef'))
-    # Print u8 Parameter
-    emu.spp_handler.set_raw_input(
-        bytearray(b'\x32\x10\x00\xc0\x00\x00\x00\x02'))
+        bytearray(b"\xff\x10\x02\xc0\x00\x00\x04\x02\xde\xad\xbe\xef")
+    )
+    # Print u32 Parameter
+    emu.spp_handler.set_raw_input(bytearray(b"\x32\x10\x00\xc0\x00\x00\x00\x02"))
 
 
 def emu_handler(filename, grammar, debug, dbc_range):
@@ -99,28 +106,23 @@ def sigint_handler(sig, frame):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Emulator for blackpill rtos firmware")
+    parser = argparse.ArgumentParser(description="Emulator for blackpill rtos firmware")
 
-    parser.add_argument(
-        "firmware",
-        type=str,
-        help="Path to the binary firmware"
-    )
+    parser.add_argument("firmware", type=str, help="Path to the binary firmware")
 
     parser.add_argument(
         "-i",
         "--input",
         type=str,
         default="",
-        help="Path to the file containing the mutated input to load"
+        help="Path to the file containing the mutated input to load",
     )
 
     parser.add_argument(
         "--elf",
         type=str,
         default="build/firmware.elf",
-        help="Path to the elf file containing the symbol table for parsing the DBC Handler Address"
+        help="Path to the elf file containing the symbol table for parsing the DBC Handler Address",
     )
 
     parser.add_argument(
@@ -128,24 +130,22 @@ def main():
         "--grammar",
         default=False,
         action="store_true",
-        help="Enable grammar based inputs"
+        help="Enable grammar based inputs",
     )
 
     parser.add_argument(
-        "-d",
-        "--debug",
-        default=False,
-        action="store_true",
-        help="Enable debug tracing"
+        "-d", "--debug", default=False, action="store_true", help="Enable debug tracing"
     )
 
     args = parser.parse_args()
 
     if args.elf:
-        symbols = subprocess.check_output(
-            f"readelf {args.elf} -s", shell=True).decode("utf-8")
-        dbc = [line for line in symbols.split(
-            "\n") if "DBC_fault_handler" in line][0].split()
+        symbols = subprocess.check_output(f"readelf {args.elf} -s", shell=True).decode(
+            "utf-8"
+        )
+        dbc = [line for line in symbols.split("\n") if "DBC_fault_handler" in line][
+            0
+        ].split()
         dbc_addr = int(dbc[1], base=16) - 1
         dbc_size = int(dbc[2])
         dbc_range = range(dbc_addr, dbc_size + dbc_addr)
@@ -153,8 +153,16 @@ def main():
     if args.input:
         # fuzz mode
         signal.signal(signal.SIGINT, sigint_handler)
-        fuzz_thread = threading.Thread(target=partial(
-            fuzz_handler, args.firmware, args.input, args.grammar, args.debug, dbc_range))
+        fuzz_thread = threading.Thread(
+            target=partial(
+                fuzz_handler,
+                args.firmware,
+                args.input,
+                args.grammar,
+                args.debug,
+                dbc_range,
+            )
+        )
         fuzz_thread.start()
         fuzz_thread.join()
     else:
@@ -165,8 +173,11 @@ def main():
 
         # Run emu in thread to kill application on KeyboardInterrupt <C-c>
         signal.signal(signal.SIGINT, sigint_handler)
-        emu_thread = threading.Thread(target=partial(
-            emu_handler, args.firmware, args.grammar, args.debug, dbc_range))
+        emu_thread = threading.Thread(
+            target=partial(
+                emu_handler, args.firmware, args.grammar, args.debug, dbc_range
+            )
+        )
         emu_thread.start()
         emu_thread.join()
 
@@ -177,11 +188,9 @@ def old_main():
         sys.exit(-1)
 
     # read dbc assert memory range
-    dbc_range = range(0x800028c, 0x80002a8)
+    dbc_range = range(0x800028C, 0x80002A8)
     if len(sys.argv) == 4:
-        dbc_range = range(
-            int(sys.argv[2], base=16),
-            int(sys.argv[3], base=16))
+        dbc_range = range(int(sys.argv[2], base=16), int(sys.argv[3], base=16))
 
     # Debug information?
     debug = False
@@ -191,8 +200,9 @@ def old_main():
 
     # Run emu in thread to kill application on KeyboardInterrupt <C-c>
     signal.signal(signal.SIGINT, sigint_handler)
-    emu_thread = threading.Thread(target=partial(
-        emu_handler, sys.argv[1], input_cb, debug, dbc_range))
+    emu_thread = threading.Thread(
+        target=partial(emu_handler, sys.argv[1], input_cb, debug, dbc_range)
+    )
     emu_thread.start()
     emu_thread.join()
 

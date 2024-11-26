@@ -26,7 +26,11 @@ def spacepacket_factory(field_stream):
     seq_count = 0
     for trigger, scid, vcid, apid, data_len, data in field_stream:
         sph = SpacePacketHeader(
-            packet_type=PacketType.TC, apid=apid, seq_count=seq_count, data_len=data_len - 1)
+            packet_type=PacketType.TC,
+            apid=apid,
+            seq_count=seq_count,
+            data_len=data_len - 1,
+        )
         # sdlph = TcSpaceDataLinkProtocolHeader(
         #     scid=scid, vcid=vcid, frame_len=(data_len + 5 + 2), frame_seq_num=seq_count)
         seq_count = seq_count + 1 if seq_count < 16383 else 0
@@ -46,8 +50,7 @@ def bytes2fields(byte_stream):
             vcid = VCID_LIST[(config_byte >> 2) & 0x03]
 
             # get 10 bits for data_len
-            data_len = (((config_byte & 0x03) << 8)
-                        | list(take(byte_stream, 1))[0])
+            data_len = ((config_byte & 0x03) << 8) | list(take(byte_stream, 1))[0]
 
             # Cap data length
             if data_len > DATA_LEN_MAX:
@@ -92,27 +95,26 @@ class SpacepacketHandler:
                 yield b
 
         for trigger, spp, data in spacepacket_factory(bytes2fields(input_iter())):
-            self.packets.append(SpacepacketEntry(
-                trigger,
-                bytearray(
-                    spacepackets2bytes([(spp, data)]))))
+            self.packets.append(
+                SpacepacketEntry(trigger, bytearray(spacepackets2bytes([(spp, data)])))
+            )
 
     def set_raw_input(self, input_bytes):
         """Insert a raw bytes object into the packet queue with a trigger"""
         if len(input_bytes) < 2:
             raise SpacepacketInvalidInputException
 
-        self.packets.append(SpacepacketEntry(
-            int(input_bytes[0]),
-            bytearray(input_bytes[1:])))
+        self.packets.append(
+            SpacepacketEntry(int(input_bytes[0]), bytearray(input_bytes[1:]))
+        )
 
     def send_packet(self):
         self.counter += 1
         if len(self.packets) <= 0:
-            if self.counter > 1024:
+            if self.counter > 256:
                 raise OutOfPacketsException("Ran out of Spacepackets to send")
             return None
-        if self.packets[0].trigger << 2 >= self.counter:
+        if self.packets[0].trigger >= self.counter:
             self.counter = 0
             # FIXME handle sending packet using uart?
             return self.packets.pop(0).packet

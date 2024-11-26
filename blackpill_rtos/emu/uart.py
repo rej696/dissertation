@@ -1,10 +1,11 @@
 from emu.mmio.reg import MmioReg
 from emu.mmio.peripheral import Peripheral
 
-from unicorn import *
+from unicorn import Uc
 
 UART1_START_ADDRESS = 0x4001_1000
 UART_MEM_SIZE = 0x0000_0400
+
 
 def byte2str(value):
     if chr(value) == "\n":
@@ -15,6 +16,7 @@ def byte2str(value):
         char = chr(value)
 
     return char
+
 
 class UartDataReg(MmioReg):
     def __init__(self, addr, parent):
@@ -47,8 +49,7 @@ class Uart(Peripheral):
         self.ready_to_print = False
         self._irq_pending = 0
         self.reg_init()
-        uc.mmio_map(self.base, UART_MEM_SIZE, self.read_cb,
-                    None, self.write_cb, None)
+        uc.mmio_map(self.base, UART_MEM_SIZE, self.read_cb, None, self.write_cb, None)
 
     def read_cb(self, uc, addr, size, user_data):
         if len(self.reg("DR").read_data) == 0:
@@ -62,12 +63,17 @@ class Uart(Peripheral):
             if self.REG["DR"][0] == addr:
                 char = byte2str(value)
 
-                self.print(f"UART {self.name} MMIO {hex(addr)} read returning value {
-                      hex(value)} (" + char + ")")
-                self.reg("SR").clr_bit(5) # FIXME Figure out where to clear this bit
+                self.print(
+                    f"UART {self.name} MMIO {hex(addr)} read returning value \
+                        {hex(value)} ("
+                    + char
+                    + ")"
+                )
+                # FIXME Figure out where to clear this bit
+                self.reg("SR").clr_bit(5)
             else:
-                self.print(f"UART {self.name} MMIO {
-                      hex(addr)} read returning value {hex(value)}")
+                self.print(f"UART {self.name} MMIO \
+                        {hex(addr)} read returning value {hex(value)}")
 
         return value
 
@@ -75,11 +81,16 @@ class Uart(Peripheral):
         # if write to data register, set sr txe bit
         if self.REG["DR"][0] == addr:
             char = byte2str(value)
-            self.print(f"UART {self.name} MMIO {hex(addr)} written with value {hex(value)} ("
-                  + char + ")")
-            self.reg("SR").set_bit(7) # keep bit 7 of SR always set to indicate that it has been sent
+            self.print(
+                f"UART {self.name} MMIO {hex(addr)} written with value {hex(value)} ("
+                + char
+                + ")"
+            )
+            # keep bit 7 of SR always set to indicate that it has been sent
+            self.reg("SR").set_bit(7)
         else:
-            self.print(f"UART {self.name} MMIO {hex(addr)} written with value {hex(value)}")
+            self.print(f"UART {self.name} MMIO \
+                       {hex(addr)} written with value {hex(value)}")
 
         self.reg(addr).write_cb(uc, addr, size, value, user_data)
         if value == 0x0A:
@@ -113,6 +124,7 @@ class Uart(Peripheral):
                 string.append(byte2str(value))
             print(f"Uart {self.name} says: {''.join(string)}")
             # self.reg("DR").write_data = []
+
     @property
     def irq_pending(self):
         if self._irq_pending == 0:

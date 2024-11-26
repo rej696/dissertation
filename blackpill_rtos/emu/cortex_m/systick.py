@@ -34,7 +34,10 @@ class SysTick(Peripheral):
     def tick(self):
         if self.enabled:
             self.reg("VAL").value += 1
-            if self.reg("VAL").value >= self.reg("LOAD").value and self.reg("LOAD") != 0:
+            if (
+                self.reg("VAL").value >= self.reg("LOAD").value
+                and self.reg("LOAD") != 0
+            ):
                 # Trigger SysTick Interrupt
                 self._systick_pending = True
                 self.reg("VAL").value = 0

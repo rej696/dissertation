@@ -1,15 +1,15 @@
-
 from emu.mmio.reg import MmioReg
 from emu.mmio.peripheral import Peripheral
 
+
 class Nvic(Peripheral):
     REG = {
-        "ISER0": (0, MmioReg), # (not used)
-        "ISER1": (0x4, MmioReg), # For enabling the usart 1 and usart 2 interrupts
-        "ISER2": (0x8, MmioReg), # For enabling the usart 6 interrupt
-        "IP37": (0x300 + 37, MmioReg), # IP (interrupt priority) register for usart 1
-        "IP38": (0x300 + 38, MmioReg), # IP (interrupt priority) register for usart 2
-        "IP71": (0x300 + 71, MmioReg), # IP (interrupt priority) register for usart 6
+        "ISER0": (0, MmioReg),  # (not used)
+        "ISER1": (0x4, MmioReg),  # For enabling the usart 1 and usart 2 interrupts
+        "ISER2": (0x8, MmioReg),  # For enabling the usart 6 interrupt
+        "IP37": (0x300 + 37, MmioReg),  # IP (interrupt priority) register for usart 1
+        "IP38": (0x300 + 38, MmioReg),  # IP (interrupt priority) register for usart 2
+        "IP71": (0x300 + 71, MmioReg),  # IP (interrupt priority) register for usart 6
     }
 
     def __init__(self, uc, base_addr):
