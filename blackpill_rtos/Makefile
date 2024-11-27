@@ -73,13 +73,16 @@ emu: $(TARGET).bin
 	venv/bin/python3 -m emu -g $<
 
 fuzz-raw: $(TARGET).bin
-	AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 afl-fuzz -U -t +50000 -i raw_fuzz_inputs -o fuzz_outputs $(PYTHON) -m emu $< -i @@F
+	AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 afl-fuzz -U -t +50000 -i raw_fuzz_inputs -o raw_fuzz_outputs $(FUZZER_NAME) $(PYTHON) -m emu $< -i @@F
 
 fuzz-raw-debug: $(TARGET).bin
 	AFL_DEBUG=1 AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 afl-fuzz -U -t +50000 -i raw_fuzz_inputs -o raw_fuzz_outputs $(PYTHON) -m emu $< -i @@F
 
 fuzz: $(TARGET).bin
-	AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 afl-fuzz -U -t +50000 -i grammar_fuzz_inputs -o grammar_fuzz_outputs $(PYTHON) -m emu $< -g -i @@
+	AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 afl-fuzz -U -t +50000 -i grammar_fuzz_inputs -o grammar_fuzz_outputs $(FUZZER_NAME) $(PYTHON) -m emu $< -g -i @@
+
+fuzz-debug: $(TARGET).bin
+	AFL_DEBUG=1 AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 afl-fuzz -U -t +50000 -i grammar_fuzz_inputs -o grammar_fuzz_outputs $(FUZZER_NAME) $(PYTHON) -m emu $< -g -i @@
 
 emu_install: venv
 
@@ -94,10 +97,16 @@ clean:
 docker-build:
 	docker build -t rej696/afl:latest .
 
-docker-fuzz: $(TARGET).bin
-	docker run --rm -it -d --name afl-fuzz -v $$(pwd):/src rej696/afl bash -c "make PYTHON=python3 fuzz"
+# C-p C-q will background a running docker process
+docker-fuzz:
+	docker run --rm -it -d --name fuzzer01 -v $$(pwd):/src rej696/afl bash -c "make PYTHON=python3 FUZZER_NAME='-M fuzzer01' fuzz"
+	docker run --rm -it -d --name fuzzer02 -v $$(pwd):/src rej696/afl bash -c "make PYTHON=python3 FUZZER_NAME='-S fuzzer02' fuzz"
 
-docker-bash: $(TARGET).bin
+docker-fuzz-secondary:
+	docker run --rm -it -d --name fuzzer03 -v $$(pwd):/src rej696/afl bash -c "make PYTHON=python3 FUZZER_NAME='-S fuzzer03' fuzz"
+	docker run --rm -it -d --name fuzzer04 -v $$(pwd):/src rej696/afl bash -c "make PYTHON=python3 FUZZER_NAME='-S fuzzer04' fuzz"
+
+docker-bash:
 	docker run --rm -it -d --name afl-fuzz -v $$(pwd):/src rej696/afl bash
 
 docker-logs:
@@ -111,7 +120,7 @@ docker-stop:
 	docker stop afl-fuzz
 
 chown:
-	sudo chown -R $$USER:$$USER fuzz_outputs
+	sudo chown -R $$USER:$$USER -- $(DIR);
 
 docker-rm:
 	@make --no-print-directory chown

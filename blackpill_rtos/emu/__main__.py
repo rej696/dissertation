@@ -41,16 +41,11 @@ def fuzz_handler(filename, fuzz_input_filename, grammar, debug, dbc_addr):
         else:
             emu.spp_handler.set_raw_input(fuzz_input)
 
-    def validate_crash_cb():
-        print("Validation")
-
     uc_afl_fuzz_custom(
         emu.uc,
         input_file=fuzz_input_filename,
         place_input_callback=input_cb,
         fuzzing_callback=fuzz_start,
-        validate_crash_callback=validate_crash_cb,
-        always_validate=True,
         data=emu,
     )
 

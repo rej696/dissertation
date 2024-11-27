@@ -465,7 +465,7 @@ class Emulator:
         # mem = self.uc.mem_read(0x20003ed8, 0x4)
         # if mem == bytearray(b"\xfe\xca\xbe\xba"):
         #     raise EmulatorException("BABECAFE")
-        print_instr = True
+        print_instr = False
         # idle loop
         if print_instr and (
             addr not in idle_task_instr
