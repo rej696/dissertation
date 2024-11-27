@@ -4,11 +4,17 @@
 #include "app/app_config.h"
 #include "utils/dbc_assert.h"
 #include "utils/debug.h"
+#include "utils/endian.h"
 #include "utils/status.h"
 
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+
+/* Telemetries */
+static uint32_t out_of_seq_count = 0;
+static uint32_t csum_error_count = 0;
+static uint16_t last_seq_count_recv = 0;
 
 static status_t build_packet(
     spacepacket_hdr_t *const hdr,
@@ -99,9 +105,32 @@ static status_t validate_hdr(spacepacket_hdr_t const *const hdr)
     }
 #pragma GCC diagnostic pop
 
-    /* FIXME validate sequence count increasing by 1 */
+    if (hdr->data_length > SPACEPACKET_DATA_MAX_SIZE) {
+        return SPACEPACKET_STATUS_BUFFER_OVERFLOW;
+    }
+
+    /* Handle Sequence Counter */
+    if (hdr->sequence_count != (last_seq_count_recv + 1)) {
+        out_of_seq_count++;
+    }
+    last_seq_count_recv = hdr->sequence_count;
 
     return STATUS_OK;
+}
+
+static bool validate_checksum(size_t const size, uint8_t const buffer[size])
+{
+    DBC_REQUIRE(buffer != NULL);
+    DBC_REQUIRE(size > SPACEPACKET_CHECKSUM_SIZE);
+
+    /* Last byte is a checksum */
+    size_t csum_idx = size - SPACEPACKET_CHECKSUM_SIZE;
+    uint8_t csum_recv = buffer[csum_idx];
+    uint8_t csum_calc = 0;
+    for (size_t i = 0; i < csum_idx; ++i) {
+        csum_calc = (csum_calc + buffer[i]) % 256;
+    }
+    return csum_calc == csum_recv;
 }
 
 status_t spacepacket_process(
@@ -136,19 +165,27 @@ status_t spacepacket_process(
     }
 
     /* Validate data size */
-    size_t data_size = packet_size - SPACEPACKET_HDR_SIZE;
-    if (data_size <= hdr.data_length) {
-        DEBUG(
-            "Not enough bytes in buffer for spacepacket data",
-            SPACEPACKET_STATUS_BUFFER_UNDERFLOW);
-        return SPACEPACKET_STATUS_BUFFER_UNDERFLOW;
+    size_t data_size = packet_size - SPACEPACKET_HDR_SIZE - SPACEPACKET_CHECKSUM_SIZE;
+    if (data_size != (size_t)hdr.data_length + 1) {
+        if (data_size > hdr.data_length) {
+            DEBUG(
+                "Too many bytes in buffer for spacepacket data",
+                SPACEPACKET_STATUS_BUFFER_OVERFLOW);
+            return SPACEPACKET_STATUS_BUFFER_OVERFLOW;
+        } else {
+            DEBUG(
+                "Not enough bytes in buffer for spacepacket data",
+                SPACEPACKET_STATUS_BUFFER_UNDERFLOW);
+            return SPACEPACKET_STATUS_BUFFER_UNDERFLOW;
+        }
     }
 
-    if (data_size > SPACEPACKET_DATA_MAX_SIZE) {
+    if (!validate_checksum(packet_size, packet_buffer)) {
         DEBUG(
-            "Too many bytes in buffer for spacepacket data",
-            SPACEPACKET_STATUS_BUFFER_OVERFLOW);
-        return SPACEPACKET_STATUS_BUFFER_OVERFLOW;
+            "Invalid checksum, discarding received spacepacket",
+            SPACEPACKET_STATUS_INVALID_CHECKSUM);
+        csum_error_count++;
+        return SPACEPACKET_STATUS_INVALID_CHECKSUM;
     }
 
     uint8_t const *const data_buf = &packet_buffer[SPACEPACKET_HDR_SIZE];
@@ -187,4 +224,35 @@ status_t spacepacket_process(
         response_buffer);
 
     return status;
+}
+
+/* Telemetry Handlers */
+status_t spacepacket_out_of_seq_count(size_t *const size, uint8_t *const output)
+{
+    DBC_REQUIRE(size != NULL);
+    DBC_REQUIRE(output != NULL);
+
+    *size = 4;
+    endian_u32_to_network(out_of_seq_count, output);
+    return STATUS_OK;
+}
+
+status_t spacepacket_csum_error_count(size_t *const size, uint8_t *const output)
+{
+    DBC_REQUIRE(size != NULL);
+    DBC_REQUIRE(output != NULL);
+
+    *size = 4;
+    endian_u32_to_network(csum_error_count, output);
+    return STATUS_OK;
+}
+
+status_t spacepacket_last_seq_count(size_t *const size, uint8_t *const output)
+{
+    DBC_REQUIRE(size != NULL);
+    DBC_REQUIRE(output != NULL);
+
+    *size = 4;
+    endian_u32_to_network(csum_error_count, output);
+    return STATUS_OK;
 }

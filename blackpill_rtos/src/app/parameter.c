@@ -8,6 +8,7 @@
 
 static parameter_handler_t parameter_map[256] = {0};
 
+#include "utils/debug.h"
 status_t parameter_register(uint8_t id, parameter_handler_t handler)
 {
     DBC_REQUIRE(handler.set != NULL);

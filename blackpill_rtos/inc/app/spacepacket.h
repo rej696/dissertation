@@ -20,17 +20,8 @@
 #define SPACEPACKET_SEQ_FLAGS_LAST         (0x2)
 #define SPACEPACKET_SEQ_FLAGS_UNSEGMENTED  (0x3)
 
-#if 0
-typedef struct __attribute__((packed)) {
-    uint8_t version : 3;
-    uint8_t type : 1;
-    uint8_t sec_hdr : 1;
-    uint16_t apid : 11;
-    uint8_t sequence_flags : 2;
-    uint16_t sequence_count : 14;
-    uint16_t data_length : 16;
-} spacepacket_hdr_t;
-#endif
+#define SPACEPACKET_CHECKSUM_SIZE (1)
+
 typedef struct {
     uint8_t version;
     uint8_t type;
@@ -51,5 +42,12 @@ status_t spacepacket_process(
     uint8_t const packet_buffer[packet_size],
     size_t *const response_size,
     uint8_t *const response_buffer);
+
+/* Telemetry Handlers */
+status_t spacepacket_out_of_seq_count(size_t *const size, uint8_t *const output);
+
+status_t spacepacket_csum_error_count(size_t *const size, uint8_t *const output);
+
+status_t spacepacket_last_seq_count(size_t *const size, uint8_t *const output);
 
 #endif /* APP_SPACEPACKET_H_ */

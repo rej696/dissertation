@@ -1,4 +1,5 @@
 #include "app/action.h"
+#include "app/frame_buffer.h"
 #include "app/kiss_frame.h"
 #include "app/parameter.h"
 #include "app/spacepacket.h"
@@ -14,6 +15,7 @@
 #include "utils/debug.h"
 #include "utils/endian.h"
 #include "utils/status.h"
+#include "utils/utils.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -63,49 +65,8 @@ void blinky_handler(void)
             debug_str(on ? "tick" : "tock");
             on = !on;
         }
+        rtos_delay(1);
     }
-}
-
-/* FIXME replace with rtos aware queue */
-cbuf_t frame_buffer = {0};
-bool frame_buffer_ready = false;
-bool frame_buffer_lock = false;
-
-status_t frame_buffer_read(cbuf_t *const cbuf)
-{
-    if (!frame_buffer_ready) {
-        return STATUS_OK;
-    }
-
-    /* FIXME replace with rtos aware queue/mutex */
-    /* Mutex, if packet buffer is locked, delay and retry */
-    while (frame_buffer_lock) {
-        rtos_delay(2);
-    }
-    frame_buffer_lock = true;
-
-    size_t size = cbuf_size(&frame_buffer);
-    uint8_t tmp_buf[256] = {0};
-    status_t status = cbuf_read(&frame_buffer, size, tmp_buf);
-
-    if (status != STATUS_OK) {
-        frame_buffer_ready = false;
-        cbuf_init(&frame_buffer);
-        /* Release mutex lock */
-        frame_buffer_lock = false;
-        return status;
-    }
-    /* Release mutex lock */
-    frame_buffer_lock = false;
-    frame_buffer_ready = false;
-
-    /* Place contents of buffer into cbuf */
-    status = cbuf_write(cbuf, size, tmp_buf);
-    if (status != STATUS_OK) {
-        DEBUG("Failed to write tmp buf to spacepacket cbuf", status);
-        cbuf_init(cbuf);
-    }
-    return status;
 }
 
 void packet_thread_handler(void)
@@ -119,7 +80,6 @@ void packet_thread_handler(void)
     for (;;) {
         status_t status = frame_buffer_read(&kiss_frame_cbuf);
         if (status != STATUS_OK) {
-            /* FIXME Handle Error? clear buffers? */
             DEBUG("Error reading frame buffer", status);
         }
 
@@ -174,6 +134,12 @@ void uart_handler(void)
                 DEBUG("Failed to read from uart buffer", status);
                 continue;
             }
+            status = frame_buffer_write(size, buf);
+            if (status != STATUS_OK) {
+                DEBUG("Failed to write to frame buffer", status);
+            }
+
+#if 0
 #if 0 /* Debug uart read */
             debug_hex(size, &buf[0]);
 #endif
@@ -205,6 +171,7 @@ void uart_handler(void)
             frame_buffer_lock = false;
 #if 0
             debug_str("retrieved data from uart");
+#endif
 #endif
         }
         rtos_delay(100);
@@ -269,13 +236,34 @@ static status_t print_u32_param(void)
     return STATUS_OK;
 }
 
+static action_handler_t action_table[] = {
+    print_hello,
+    print_u8_param,
+    print_u32_param,
+};
+
+static parameter_handler_t param_table[] = {
+    {.set = set_u8_param, .get = get_u8_param},
+    {.set = set_u32_param, .get = get_u32_param},
+};
+
+static telemetry_handler_t tlm_table[] = {
+    spacepacket_out_of_seq_count,
+    spacepacket_csum_error_count,
+    spacepacket_last_seq_count,
+    frame_buffer_read_error_count,
+    frame_buffer_write_error_count,
+    frame_buffer_read_last_status,
+    frame_buffer_write_last_status,
+};
+
 int main(void)
 {
     rtos_init(idle_thread_stack, sizeof(idle_thread_stack));
     uart_init(UART1, 9600);
     debug_init(UART2, 9600);
     cbuf_init(uart_cbuf_get(UART1));  // init uart1 cbuf
-    cbuf_init(&frame_buffer);         // init frame buffer
+    frame_buffer_init();              // init frame buffer
     debug_str("boot");
 
     rtos_thread_create(&blinky_thread, &blinky_handler, blinky_stack, sizeof(blinky_stack));
@@ -287,25 +275,28 @@ int main(void)
         sizeof(packet_thread_stack));
 
     debug_str("threads created");
-#if 0
-    debug_str("Blinky Thread Stack Created: (addr, size)");
-    debug_int((uint32_t)blinky_stack);
-    debug_int((uint32_t)(blinky_stack + BLINKY_STACK_SIZE));
-    debug_str("UART Thread Stack Created: (addr, size)");
-    debug_int((uint32_t)uart_stack);
-    debug_int((uint32_t)(uart_stack + UART_STACK_SIZE));
-    debug_str("Packet Thread Stack Created: (addr, size)");
-    debug_int((uint32_t)packet_thread_stack);
-    debug_int((uint32_t)(packet_thread_stack + PACKET_THREAD_STACK_SIZE));
-#endif
 
     /* Register actions/parameters/tlms */
+    for (uint8_t i = 0; i < ARRAY_LEN(action_table); ++i) {
+        action_register(i, action_table[i]);
+    }
+    for (uint8_t i = 0; i < ARRAY_LEN(param_table); ++i) {
+        parameter_register(i, param_table[i]);
+    }
+    for (uint8_t i = 0; i < ARRAY_LEN(tlm_table); ++i) {
+        telemetry_register(i, tlm_table[i]);
+    }
+#if 0
     action_register(0, print_hello);
 
     action_register(1, print_u8_param);
     action_register(2, print_u32_param);
     parameter_register(1, (parameter_handler_t) {.set = set_u8_param, .get = get_u8_param});
     parameter_register(2, (parameter_handler_t) {.set = set_u32_param, .get = get_u32_param});
+    telemetry_register(0, spacepacket_out_of_seq_count);
+    telemetry_register(1, spacepacket_csum_error_count);
+    telemetry_register(2, spacepacket_last_seq_count);
+#endif
 
     rtos_run();
 
