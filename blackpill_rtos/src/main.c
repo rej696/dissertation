@@ -128,12 +128,17 @@ void packet_thread_handler(void)
             cbuf_init(&cbuf);
         }
 
-        while (cbuf_size(&cbuf) > 0) {
+        while (cbuf_size(&cbuf) > SPACEPACKET_HDR_SIZE) {
+            size_t response_size = 0;
+            uint8_t response_buffer[SPACEPACKET_HDR_SIZE + SPACEPACKET_DATA_MAX_SIZE] = {0};
             /* Process buffer */
-            status = spacepacket_process(&cbuf);
+            status = spacepacket_process(&cbuf, &response_size, response_buffer);
             if (status != STATUS_OK) {
                 DEBUG("Failed to process spacepacket", status);
+                continue;
             }
+            /* FIXME */
+            uart_write_buf(UART1, response_size, response_buffer);
         }
         /* TODO handle response? */
     }
@@ -231,7 +236,7 @@ uint32_t u32_param = 0;
 
 static status_t get_u32_param(size_t *const size, uint8_t *const output)
 {
-    *size = 1;
+    *size = 4;
     endian_u32_to_network(u32_param, output);
     return STATUS_OK;
 }

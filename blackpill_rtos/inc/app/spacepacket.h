@@ -1,8 +1,8 @@
 #ifndef APP_SPACEPACKET_H_
 #define APP_SPACEPACKET_H_
 
-#include "utils/status.h"
 #include "utils/cbuf.h"
+#include "utils/status.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -14,6 +14,11 @@
 #define SPACEPACKET_SEC_HDR_ENABLED  (1)
 #define SPACEPACKET_HDR_SIZE         (6)
 #define SPACEPACKET_DATA_MAX_SIZE    (6)
+
+#define SPACEPACKET_SEQ_FLAGS_CONTINUATION (0x0)
+#define SPACEPACKET_SEQ_FLAGS_FIRST        (0x1)
+#define SPACEPACKET_SEQ_FLAGS_LAST         (0x2)
+#define SPACEPACKET_SEQ_FLAGS_UNSEGMENTED  (0x3)
 
 #if 0
 typedef struct __attribute__((packed)) {
@@ -44,7 +49,8 @@ extern apid_handler_t apid_handler_map[APID_HANDLER_MAP_SIZE];
 /* FIXME handle framing better */
 #if 0
 status_t spacepacket_process(size_t const size, uint8_t const buffer[size]);
-#endif
 status_t spacepacket_process(cbuf_t *const cbuf);
+#endif
+status_t spacepacket_process(cbuf_t *const cbuf, size_t *const response_size, uint8_t *const response_buffer);
 
 #endif /* APP_SPACEPACKET_H_ */

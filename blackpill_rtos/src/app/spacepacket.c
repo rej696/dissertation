@@ -8,6 +8,40 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
+
+static status_t build_packet(
+    spacepacket_hdr_t *const hdr,
+    size_t const data_size,
+    uint8_t const data_buffer[data_size],
+    size_t *const output_size,
+    uint8_t *const output_buffer)
+{
+    DBC_REQUIRE(hdr != NULL);
+    DBC_REQUIRE(data_buffer != NULL);
+    DBC_REQUIRE(data_size < SPACEPACKET_DATA_MAX_SIZE);
+    DBC_REQUIRE(output_buffer != NULL);
+    DBC_REQUIRE(hdr->data_length == data_size - 1);
+    DBC_REQUIRE(hdr->type == SPACEPACKET_TYPE_TM);
+
+    /* Copy spacepacket header into buffer */
+    output_buffer[0] = (hdr->version << 5) & 0xE0;
+    output_buffer[0] |= (hdr->type << 4) & 0x10;
+    output_buffer[0] |= (hdr->sec_hdr << 3) & 0x08;
+    output_buffer[0] |= (hdr->apid >> 8) & 0x07;
+    output_buffer[1] = (uint8_t)(hdr->apid & 0xFF);
+    output_buffer[2] = (hdr->sequence_flags << 6) & 0xC0;
+    output_buffer[2] = (hdr->sequence_count >> 8) & 0x3F;
+    output_buffer[3] = (uint8_t)(hdr->sequence_count & 0xFF);
+    output_buffer[4] = (uint8_t)((hdr->data_length >> 8) & 0xFF);
+    output_buffer[5] = (uint8_t)(hdr->data_length & 0xFF);
+
+    /* Copy spacepacket header into buffer */
+    memcpy(&output_buffer[6], data_buffer, data_size);
+    *output_size = data_size + SPACEPACKET_HDR_SIZE;
+
+    return STATUS_OK;
+}
 
 static status_t parse_hdr(
     size_t const size,
@@ -65,16 +99,25 @@ static status_t validate_hdr(spacepacket_hdr_t const *const hdr)
     }
 #pragma GCC diagnostic pop
 
+    /* FIXME validate sequence count increasing by 1 */
+
     return STATUS_OK;
 }
 
 /* status_t spacepacket_process(size_t const size, uint8_t const buffer[size]) */
-status_t spacepacket_process(cbuf_t *const cbuf)
+status_t spacepacket_process(
+    cbuf_t *const cbuf,
+    size_t *const response_size,
+    uint8_t *const response_buffer)
 {
     DBC_REQUIRE(cbuf != NULL);
+    DBC_REQUIRE(response_size != NULL);
+    DBC_REQUIRE(response_buffer != NULL);
 
     if (cbuf_size(cbuf) < SPACEPACKET_HDR_SIZE) {
-        DEBUG("Not enough bytes in buffer for spacepacket header", SPACEPACKET_STATUS_BUFFER_UNDERFLOW);
+        DEBUG(
+            "Not enough bytes in buffer for spacepacket header",
+            SPACEPACKET_STATUS_BUFFER_UNDERFLOW);
         return SPACEPACKET_STATUS_BUFFER_UNDERFLOW;
     }
 
@@ -101,7 +144,9 @@ status_t spacepacket_process(cbuf_t *const cbuf)
 
     /* Validate data size */
     if (cbuf_size(cbuf) <= hdr.data_length) {
-        DEBUG("Not enough bytes in buffer for spacepacket data", SPACEPACKET_STATUS_BUFFER_UNDERFLOW);
+        DEBUG(
+            "Not enough bytes in buffer for spacepacket data",
+            SPACEPACKET_STATUS_BUFFER_UNDERFLOW);
         return SPACEPACKET_STATUS_BUFFER_UNDERFLOW;
     }
 
@@ -120,10 +165,30 @@ status_t spacepacket_process(cbuf_t *const cbuf)
     }
 
     size_t output_size = 0;
-    uint8_t output_buffer[256] = {0};
-    status = apid_handler(hdr.data_length + 1, data_buf, &output_size, output_buffer);
+    uint8_t output_buffer[SPACEPACKET_DATA_MAX_SIZE] = {0};
+    status = apid_handler(hdr.data_length + 1, data_buf, &output_size, &output_buffer[1]);
+    if (status != STATUS_OK) {
+        DEBUG("Failed to handle spacepacket data", status);
+    }
+    output_buffer[0] = (uint8_t)status;
+    output_size += 1;
 
-    // TODO build up output buffer and telemetry space packet
+    spacepacket_hdr_t output_hdr = {
+        .version = SPACEPACKET_VERSION,
+        .type = SPACEPACKET_TYPE_TM,
+        .sec_hdr = SPACEPACKET_SEC_HDR_DISABLED,
+        .sequence_flags = SPACEPACKET_SEQ_FLAGS_UNSEGMENTED,
+        .sequence_count = 0, /* FIXME make sequence_count increment */
+        .apid = hdr.apid,
+        .data_length = (uint16_t)(output_size - 1),
+    };
+
+    status = build_packet(
+        &output_hdr,
+        output_size,
+        &output_buffer[0],
+        response_size,
+        response_buffer);
 
     return status;
 }

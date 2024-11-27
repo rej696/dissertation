@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import serial
 import click
+import time
 from spacepackets.ccsds.spacepacket import SpacePacketHeader, PacketType
 
 ACTION_APID = 0
@@ -14,8 +15,10 @@ def setup_serial() -> serial.Serial:
 
 
 def send_packet(ser, packet: bytes):
-    print(bytearray(packet).hex(" "))
+    print("input:  " + bytearray(packet).hex(" "))
     ser.write(packet)
+    time.sleep(1)
+    print("output: " + bytearray(ser.read_all()).hex(" "))
 
 
 def create_packet(apid: int, data: list) -> bytes:
@@ -68,7 +71,7 @@ def set_param(ctx, param_id, data):
 @click.argument('tlm_id', type=int)
 @click.pass_context
 def tlm(ctx, tlm_id):
-    send_packet(ctx.obj['serial'], create_packet(TELEM_APID, tlm_id))
+    send_packet(ctx.obj['serial'], create_packet(TELEM_APID, [tlm_id]))
     # TODO read response and statuc code and print
 
 
