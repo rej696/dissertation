@@ -55,37 +55,49 @@ def fuzz_handler(filename, fuzz_input_filename, grammar, debug, dbc_addr):
 
 def spp_grammer_input_cb(emu):
     # Print hello world
-    emu.spp_handler.set_input(b"\x05\x00\x01\x00")
+    emu.spp_handler.set_input(b"\x20\x00\x00")
 
     # Set u8 parameter
-    emu.spp_handler.set_input(b"\x07\x80\x02\x01\xa5")
+    emu.spp_handler.set_input(b"\xC8\x01\x00\xa5")
     # Print u8 Parameter
-    emu.spp_handler.set_input(b"\x00\x00\x01\x01")
+    emu.spp_handler.set_input(b"\xE0\x00\x01")
 
     # Set u32 parameter
-    emu.spp_handler.set_input(b"\xff\x80\x05\x02\xde\xad\xbe\xef")
+    emu.spp_handler.set_input(b"\xA8\x04\x01\xde\xad\xbe\xef")
     # Print u8 Parameter
-    emu.spp_handler.set_input(b"\x32\x00\x01\x02")
+    emu.spp_handler.set_input(b"\xC0\x00\x02")
 
 
 def spp_raw_input_cb(emu):
     # Print hello world
-    emu.spp_handler.set_raw_input(bytearray(b"\x05\x10\x00\xDB\xDC\x00\x00\x00\x00\xC0"))
+    emu.spp_handler.set_raw_input(
+        bytearray(b"\x05\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0")
+    )
 
     # Set u8 parameter
-    emu.spp_handler.set_raw_input(bytearray(b"\x07\x10\x02\xDB\xDC\x00\x00\x01\x01\xa5\xC0"))
+    emu.spp_handler.set_raw_input(
+        bytearray(b"\x07\x10\x02\xdb\xdc\x00\x00\x01\x00\xa5\x78\xc0")
+    )
     # Print u8 Parameter
-    emu.spp_handler.set_raw_input(bytearray(b"\x00\x10\x00\xDB\xDC\x00\x00\x00\x01\xC0"))
+    emu.spp_handler.set_raw_input(
+        bytearray(b"\x00\x10\x00\xdb\xdc\x00\x00\x00\x01\xd1\xc0")
+    )
 
     # Set u32 parameter
     emu.spp_handler.set_raw_input(
-        bytearray(b"\xff\x10\x02\xDB\xDC\x00\x00\x04\x02\xde\xad\xbe\xef\xC0")
+        bytearray(b"\xff\x10\x02\xdb\xdc\x00\x00\x04\x01\xde\xad\xbe\xef\x0f\xc0")
     )
     # Print u32 Parameter
-    emu.spp_handler.set_raw_input(bytearray(b"\x32\x10\x00\xDB\xDC\x00\x00\x00\x02\xC0"))
+    emu.spp_handler.set_raw_input(
+        bytearray(b"\x32\x10\x00\xdb\xdc\x00\x00\x00\x02\xd2\xc0")
+    )
 
     # Print Hello world 4 times
-    emu.spp_handler.set_raw_input(bytearray(b"\x05\x10\x00\xDB\xDC\x00\x00\x00\x00\xC0\x10\x00\xDB\xDC\x00\x00\x00\x00\xC0\x10\x00\xDB\xDC\x00\x00\x00\x00\xC0\x10\x00\xDB\xDC\x00\x00\x00\x00\xC0"))
+    emu.spp_handler.set_raw_input(
+        bytearray(
+            b"\x05\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0"
+        )
+    )
 
 
 def emu_handler(filename, grammar, debug, dbc_range):

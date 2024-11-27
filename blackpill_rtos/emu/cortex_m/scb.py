@@ -29,6 +29,7 @@ class Scb(Peripheral):
         # trigger pendsv on write to pendsv bit
         if addr == 0x04 and value & (1 << 28):
             self._pendsv_pending = True
+            # FIXME trampoline here to handle pendsv?
 
         self.reg(addr).write_cb(uc, addr, size, value, user_data)
 

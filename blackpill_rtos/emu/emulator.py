@@ -229,10 +229,7 @@ class Emulator:
         self.uc.mem_map(SRAM_START_ADDRESS, SRAM_SIZE)
         # TODO Convert into MMIO peripheral
         self.uc.mem_map(GPIO_START_ADDRESS, GPIO_SIZE)
-        # self.uc.mem_map(UART1_START_ADDRESS, UART1_SIZE)
         self.uc.mem_map(RCC_START_ADDRESS, RCC_SIZE)
-        # self.uc.mem_map(CORTEX_M_INT_PERIPH_START_ADDR,
-        #                 CORTEX_M_INT_PERIPH_SIZE)
 
         # Special Value for EXEC_RETURN
         self.uc.mem_map(0xFFFFF000, 0x1000)
@@ -241,15 +238,9 @@ class Emulator:
         self.uc.ctl_set_exits([0xFFFFFFF8])
 
         # TODO setup uc hooks
-        self.print_instr = False
         self.uc.hook_add(UC_HOOK_CODE, self.uc_code_cb)
         # self.uc.hook_add(UC_HOOK_BLOCK, self.uc_mem_block_cb,
         #                  begin=0xFFFFF000, end=0xFFFFFFFF)
-        # self.debug_mem = (0x20003ed8, 0x20003edc)
-        # self.uc.hook_add(UC_HOOK_MEM_READ, self.uc_debug_read_cb,
-        #                  begin=self.debug_mem[0], end=self.debug_mem[1])
-        # self.uc.hook_add(UC_HOOK_MEM_WRITE, self.uc_debug_write_cb,
-        #                  begin=self.debug_mem[0], end=self.debug_mem[1])
 
         self.cortex_m = CorePeripherals(self.uc)
         self.cortex_m.scb.debug = False
@@ -396,7 +387,6 @@ class Emulator:
 
     def uc_code_cb(self, uc: Uc, addr, size, user_data):
         # This hook just prints the instruction being executed
-        print_instr = True
         code = uc.mem_read(addr, size)
 
         # handle cpsid and cpsie instructions
@@ -460,22 +450,11 @@ class Emulator:
         if addr in self.dbc_addr_range:
             raise DbcException("DBC_Exception triggered")
 
-        idle_task_instr = (0x80003DE, 0x80006D0, 0x80006D2, 0x80006D6)
-        memcpy_instr = tuple(range(0x8000F4A, 0x8000F66, 0x1))
-        # mem = self.uc.mem_read(0x20003ed8, 0x4)
-        # if mem == bytearray(b"\xfe\xca\xbe\xba"):
-        #     raise EmulatorException("BABECAFE")
-        print_instr = False
-        # idle loop
-        if print_instr and (
-            addr not in idle_task_instr
-            and addr not in memcpy_instr
-            and addr not in [0x8000856, 0x8000858, 0x8000888, 0x800088C]
-        ):
+        # print instruction
+        if self.debug:
             for instruction in self.cs.disasm(code, addr, 1):
-                print(f"{hex(addr)}\t {instruction.mnemonic} {instruction.op_str}")
-            # self.dump_mem(0x20003ed8, 0x4)
-            # self.dump_reg()
+                print(f"{hex(addr)}\t {instruction.mnemonic} {
+                      instruction.op_str}")
 
     def dump_mem(self, addr, size):
         def chunks(l, n):
@@ -491,7 +470,8 @@ class Emulator:
                 print(f"\t\t{hex(addr)}: {half_rows[0].hex(' ')}")
             else:
                 print(
-                    f"\t\t{hex(addr)}: {half_rows[0].hex(' ')}    {half_rows[1].hex(' ')}"
+                    f"\t\t{hex(addr)}: {half_rows[0].hex(' ')}    {
+                        half_rows[1].hex(' ')}"
                 )
             addr += 16
 
@@ -518,6 +498,9 @@ class Emulator:
         self.dump_mem(sp - 0x40, 0x40)
 
     def reset_handler(self):
+        # FIXME run without interrupts until rtos_run re-enables interrupts? after this boot process is complete, then we can "tick" using emu start timeouts and handle interrupts inbetween without needing a code callback?
+        # could also do WFI in rtos_on_idle, and then skip to the next systick/pendsv interrupt?
+        # rtos_schedule triggers pendsv, which is typically executed in the systick interrupt. need to have pendsv trigger after systick has returned (systick higher priority than pendsv) this should happen by default if we run "application" emulator code (non-interrupts) in increments of the systick frequency
         self.uc.emu_start(
             self.vector_table["reset_handler"],
             self.fw_size + self.base_addr,

@@ -18,9 +18,9 @@ class Nvic(Peripheral):
 
     def read_cb(self, uc, addr, size, user_data):
         value = self.reg(addr).read_cb(uc, addr, size, user_data)
-        print(f"NVIC MMIO{hex(addr)} read returning value {bin(value)}")
+        self.print(f"NVIC MMIO{hex(addr)} read returning value {bin(value)}")
         return value
 
     def write_cb(self, uc, addr, size, value, user_data):
-        print(f"NVIC MMIO {hex(addr)} written with value {bin(value)}")
+        self.print(f"NVIC MMIO {hex(addr)} written with value {bin(value)}")
         self.reg(addr).write_cb(uc, addr, size, value, user_data)
