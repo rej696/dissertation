@@ -1,4 +1,5 @@
 #include "app/action.h"
+#include "app/kiss_frame.h"
 #include "app/parameter.h"
 #include "app/spacepacket.h"
 #include "app/telemetry.h"
@@ -9,9 +10,10 @@
 #include "hal/uart.h"
 #include "rtos/thread.h"
 #include "utils/cbuf.h"
+#include "utils/dbc_assert.h"
 #include "utils/debug.h"
-#include "utils/status.h"
 #include "utils/endian.h"
+#include "utils/status.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -20,8 +22,8 @@
 /**
  * RTOS Threads
  * - Idle Thread
- * - Blink LED?
- * - Read/Write from UART
+ * - Blink LED
+ * - Read from UART
  * - Process Space Packets
  */
 
@@ -65,82 +67,91 @@ void blinky_handler(void)
 }
 
 /* FIXME replace with rtos aware queue */
-cbuf_t packet_buffer = {0};
-bool packet_buffer_ready = false;
-bool packet_buffer_lock = false;
+cbuf_t frame_buffer = {0};
+bool frame_buffer_ready = false;
+bool frame_buffer_lock = false;
+
+status_t frame_buffer_read(cbuf_t *const cbuf)
+{
+    if (!frame_buffer_ready) {
+        return STATUS_OK;
+    }
+
+    /* FIXME replace with rtos aware queue/mutex */
+    /* Mutex, if packet buffer is locked, delay and retry */
+    while (frame_buffer_lock) {
+        rtos_delay(2);
+    }
+    frame_buffer_lock = true;
+
+    size_t size = cbuf_size(&frame_buffer);
+    uint8_t tmp_buf[256] = {0};
+    status_t status = cbuf_read(&frame_buffer, size, tmp_buf);
+
+    if (status != STATUS_OK) {
+        frame_buffer_ready = false;
+        cbuf_init(&frame_buffer);
+        /* Release mutex lock */
+        frame_buffer_lock = false;
+        return status;
+    }
+    /* Release mutex lock */
+    frame_buffer_lock = false;
+    frame_buffer_ready = false;
+
+    /* Place contents of buffer into cbuf */
+    status = cbuf_write(cbuf, size, tmp_buf);
+    if (status != STATUS_OK) {
+        DEBUG("Failed to write tmp buf to spacepacket cbuf", status);
+        cbuf_init(cbuf);
+    }
+    return status;
+}
 
 void packet_thread_handler(void)
 {
-    cbuf_t cbuf = {0};
-    cbuf_init(&cbuf);
+    size_t packet_size = 0;
+    uint8_t packet_buffer[256] = {0};
+    cbuf_t kiss_frame_cbuf = {0};
+    cbuf_init(&kiss_frame_cbuf);
 
     /* recieve a buffer of data in a queue and process it */
     for (;;) {
-        if (!packet_buffer_ready) {
-            continue;
+        status_t status = frame_buffer_read(&kiss_frame_cbuf);
+        if (status != STATUS_OK) {
+            /* FIXME Handle Error? clear buffers? */
+            DEBUG("Error reading frame buffer", status);
         }
 
-#if 0
-        debug_str("attempting to read packet data");
-#endif
-        /* FIXME replace with rtos aware queue/mutex */
-        /* Mutex, if packet buffer is locked, delay and retry */
-        while (packet_buffer_lock) {
+        bool packet_complete = kiss_frame_unpack(&kiss_frame_cbuf, &packet_size, packet_buffer);
+
+        if (!packet_complete) {
+            /* frame not finished, save buffer state, delay (to context switch to other task)
+             * and continue */
             rtos_delay(2);
-        }
-        packet_buffer_lock = true;
-#if 0
-        debug_str("packet data locked for reading");
-#endif
-
-        size_t size = cbuf_size(&packet_buffer);
-        uint8_t tmp_buf[256] = {0};
-        status_t status = cbuf_read(&packet_buffer, size, tmp_buf);
-#if 0
-        debug_str("packet data read from cbuf");
-#endif
-        if (status != STATUS_OK) {
-#if 0
-            DEBUG("Failed to read packet buffer", status);
-            DEBUG("cbuf_write:", (status_t)packet_buffer.write);
-            DEBUG("cbuf_read:", (status_t)packet_buffer.read);
-            debug_str("cbuf_data:");
-            debug_hex(256, packet_buffer.buf);
-#endif
-
-            packet_buffer_ready = false;
-            cbuf_init(&packet_buffer);
-            /* Release mutex lock */
-            packet_buffer_lock = false;
             continue;
         }
-        /* Release mutex lock */
-        packet_buffer_lock = false;
-        packet_buffer_ready = false;
-#if 0
-        debug_str("processing packet data");
-#endif
 
-        /* Place contents of buffer into data cbuf */
-        status = cbuf_write(&cbuf, size, tmp_buf);
-        if (status != STATUS_OK) {
-            DEBUG("Failed to write tmp buf to spacepacket cbuf", status);
-            cbuf_init(&cbuf);
+        /* parse buffer as a spacepacket */
+        size_t response_size = 0;
+        uint8_t response_buffer[SPACEPACKET_HDR_SIZE + SPACEPACKET_DATA_MAX_SIZE] = {0};
+        /* Process buffer */
+        status = spacepacket_process(packet_size, packet_buffer, &response_size, response_buffer);
+        if (status == STATUS_OK) {
+            size_t output_frame_size = 0;
+            uint8_t output_frame_buffer[(SPACEPACKET_HDR_SIZE + SPACEPACKET_DATA_MAX_SIZE) * 2] = {
+                0};
+            kiss_frame_pack(
+                response_size,
+                response_buffer,
+                &output_frame_size,
+                output_frame_buffer);
+            uart_write_buf(UART1, output_frame_size, output_frame_buffer);
+        } else {
+            DEBUG("Failed to process spacepacket", status);
         }
-
-        while (cbuf_size(&cbuf) > SPACEPACKET_HDR_SIZE) {
-            size_t response_size = 0;
-            uint8_t response_buffer[SPACEPACKET_HDR_SIZE + SPACEPACKET_DATA_MAX_SIZE] = {0};
-            /* Process buffer */
-            status = spacepacket_process(&cbuf, &response_size, response_buffer);
-            if (status != STATUS_OK) {
-                DEBUG("Failed to process spacepacket", status);
-                continue;
-            }
-            /* FIXME */
-            uart_write_buf(UART1, response_size, response_buffer);
-        }
-        /* TODO handle response? */
+        /* FIXME clear packet buffer? */
+        packet_size = 0;
     }
 }
 
@@ -168,8 +179,8 @@ void uart_handler(void)
 #endif
             /* TODO push the buffer that has been read into the queue */
             /* FIXME replace with rtos aware queue/mutex */
-            /* Mutex, if packet buffer is locked, delay and retry */
-            while (packet_buffer_lock) {
+            /* Mutex, if frame buffer is locked, delay and retry */
+            while (frame_buffer_lock) {
 #if 0
                 debug_str("waiting for packet buffer mutex lock");
 #endif
@@ -178,20 +189,20 @@ void uart_handler(void)
 #if 0
             debug_str("packet buffer mutex locked");
 #endif
-            packet_buffer_lock = true;
-            status = cbuf_write(&packet_buffer, size, buf);
+            frame_buffer_lock = true;
+            status = cbuf_write(&frame_buffer, size, buf);
             if (status != STATUS_OK) {
                 DEBUG("Failed to write uart data to packet buffer", status);
-                packet_buffer_ready = false;
+                frame_buffer_ready = false;
                 /* Release packet buffer mutex */
-                packet_buffer_lock = false;
+                frame_buffer_lock = false;
                 continue;
             }
 
-            /* Mark packet buffer as ready */
-            packet_buffer_ready = true;
-            /* Release packet buffer mutex */
-            packet_buffer_lock = false;
+            /* Mark frame buffer as ready */
+            frame_buffer_ready = true;
+            /* Release frame buffer mutex */
+            frame_buffer_lock = false;
 #if 0
             debug_str("retrieved data from uart");
 #endif
@@ -263,8 +274,8 @@ int main(void)
     rtos_init(idle_thread_stack, sizeof(idle_thread_stack));
     uart_init(UART1, 9600);
     debug_init(UART2, 9600);
-    cbuf_init(uart_cbuf_get(UART1)); // init uart1 cbuf
-    cbuf_init(&packet_buffer); // init packet buffer
+    cbuf_init(uart_cbuf_get(UART1));  // init uart1 cbuf
+    cbuf_init(&frame_buffer);         // init frame buffer
     debug_str("boot");
 
     rtos_thread_create(&blinky_thread, &blinky_handler, blinky_stack, sizeof(blinky_stack));
@@ -295,7 +306,6 @@ int main(void)
     action_register(2, print_u32_param);
     parameter_register(1, (parameter_handler_t) {.set = set_u8_param, .get = get_u8_param});
     parameter_register(2, (parameter_handler_t) {.set = set_u32_param, .get = get_u32_param});
-
 
     rtos_run();
 

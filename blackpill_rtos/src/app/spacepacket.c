@@ -104,32 +104,25 @@ static status_t validate_hdr(spacepacket_hdr_t const *const hdr)
     return STATUS_OK;
 }
 
-/* status_t spacepacket_process(size_t const size, uint8_t const buffer[size]) */
 status_t spacepacket_process(
-    cbuf_t *const cbuf,
+    size_t const packet_size,
+    uint8_t const packet_buffer[packet_size],
     size_t *const response_size,
     uint8_t *const response_buffer)
 {
-    DBC_REQUIRE(cbuf != NULL);
+    DBC_REQUIRE(packet_buffer != NULL);
     DBC_REQUIRE(response_size != NULL);
     DBC_REQUIRE(response_buffer != NULL);
 
-    if (cbuf_size(cbuf) < SPACEPACKET_HDR_SIZE) {
+    if (packet_size < SPACEPACKET_HDR_SIZE) {
         DEBUG(
             "Not enough bytes in buffer for spacepacket header",
             SPACEPACKET_STATUS_BUFFER_UNDERFLOW);
         return SPACEPACKET_STATUS_BUFFER_UNDERFLOW;
     }
 
-    uint8_t hdr_buf[SPACEPACKET_HDR_SIZE] = {0};
-    status_t status = cbuf_read(cbuf, SPACEPACKET_HDR_SIZE, hdr_buf);
-    if (status != STATUS_OK) {
-        DEBUG("Falied to read spacepacket header from cbuf", status);
-        return status;
-    }
-
     spacepacket_hdr_t hdr = {0};
-    status = parse_hdr(SPACEPACKET_HDR_SIZE, &hdr_buf[0], &hdr);
+    status_t status = parse_hdr(SPACEPACKET_HDR_SIZE, &packet_buffer[0], &hdr);
     if (status != STATUS_OK) {
         DEBUG("Unable to parse spacepacket header", status);
         return status;
@@ -143,19 +136,22 @@ status_t spacepacket_process(
     }
 
     /* Validate data size */
-    if (cbuf_size(cbuf) <= hdr.data_length) {
+    size_t data_size = packet_size - SPACEPACKET_HDR_SIZE;
+    if (data_size <= hdr.data_length) {
         DEBUG(
             "Not enough bytes in buffer for spacepacket data",
             SPACEPACKET_STATUS_BUFFER_UNDERFLOW);
         return SPACEPACKET_STATUS_BUFFER_UNDERFLOW;
     }
 
-    uint8_t data_buf[SPACEPACKET_DATA_MAX_SIZE] = {0};
-    status = cbuf_read(cbuf, hdr.data_length + 1, data_buf);
-    if (status != STATUS_OK) {
-        DEBUG("Falied to read spacepacket data from cbuf", status);
-        return status;
+    if (data_size > SPACEPACKET_DATA_MAX_SIZE) {
+        DEBUG(
+            "Too many bytes in buffer for spacepacket data",
+            SPACEPACKET_STATUS_BUFFER_OVERFLOW);
+        return SPACEPACKET_STATUS_BUFFER_OVERFLOW;
     }
+
+    uint8_t const *const data_buf = &packet_buffer[SPACEPACKET_HDR_SIZE];
 
     // handle application data
     apid_handler_t apid_handler = apid_handler_map[hdr.apid];

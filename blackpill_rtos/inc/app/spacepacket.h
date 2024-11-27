@@ -46,11 +46,10 @@ typedef struct {
 typedef status_t (*apid_handler_t)(size_t, uint8_t const *const, size_t *, uint8_t *const);
 extern apid_handler_t apid_handler_map[APID_HANDLER_MAP_SIZE];
 
-/* FIXME handle framing better */
-#if 0
-status_t spacepacket_process(size_t const size, uint8_t const buffer[size]);
-status_t spacepacket_process(cbuf_t *const cbuf);
-#endif
-status_t spacepacket_process(cbuf_t *const cbuf, size_t *const response_size, uint8_t *const response_buffer);
+status_t spacepacket_process(
+    size_t const packet_size,
+    uint8_t const packet_buffer[packet_size],
+    size_t *const response_size,
+    uint8_t *const response_buffer);
 
 #endif /* APP_SPACEPACKET_H_ */

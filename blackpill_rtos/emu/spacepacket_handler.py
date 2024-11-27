@@ -13,6 +13,52 @@ def take(iter, n):
         yield next(iter)
 
 
+KISS_FEND = 0xC0
+KISS_FESC = 0xDB
+KISS_TFEND = 0xDC
+KISS_TFESC = 0xDD
+
+
+def kiss_pack(data: bytearray) -> bytearray:
+    frame = []
+    for byte in data:
+        if byte == KISS_FEND:
+            frame.append(KISS_FESC)
+            frame.append(KISS_TFEND)
+        elif byte == KISS_FESC:
+            frame.append(KISS_FESC)
+            frame.append(KISS_TFESC)
+        else:
+            frame.append(byte)
+    frame.append(KISS_FEND)
+    return bytearray(frame)
+
+
+def kiss_unpack(frame: bytearray) -> bytearray:
+    data = []
+    escape = False
+    for byte in frame:
+        if byte == KISS_FEND:
+            continue
+        elif byte == KISS_FESC:
+            escape = True
+        elif byte == KISS_TFEND:
+            if escape == True:
+                byte = KISS_FEND
+            escape = False
+        elif byte == KISS_TFESC:
+            if escape == True:
+                byte = KISS_FESC
+            escape = False
+        else:
+            escape = False
+
+        if not escape:
+            data.append(byte)
+
+    return bytearray(data)
+
+
 def spacepackets2bytes(spacepacket_stream):
     # for sdlph, sph, data in spacepacket_stream:
     #     for byte in sdlph.pack() + sph.pack() + data:
@@ -96,7 +142,9 @@ class SpacepacketHandler:
 
         for trigger, spp, data in spacepacket_factory(bytes2fields(input_iter())):
             self.packets.append(
-                SpacepacketEntry(trigger, bytearray(spacepackets2bytes([(spp, data)])))
+                SpacepacketEntry(
+                    trigger, bytearray(kiss_pack(spacepackets2bytes([(spp, data)])))
+                )
             )
 
     def set_raw_input(self, input_bytes):

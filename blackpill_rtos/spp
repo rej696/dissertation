@@ -9,69 +9,121 @@ GET_PARAM_APID = 1
 SET_PARAM_APID = 2
 TELEM_APID = 3
 
+KISS_FEND = 0xC0
+KISS_FESC = 0xDB
+KISS_TFEND = 0xDC
+KISS_TFESC = 0xDD
+
+
+def kiss_pack(data: bytearray) -> bytearray:
+    frame = []
+    for byte in data:
+        if byte == KISS_FEND:
+            frame.append(KISS_FESC)
+            frame.append(KISS_TFEND)
+        elif byte == KISS_FESC:
+            frame.append(KISS_FESC)
+            frame.append(KISS_TFESC)
+        else:
+            frame.append(byte)
+    frame.append(KISS_FEND)
+    return bytearray(frame)
+
+
+def kiss_unpack(frame: bytearray) -> bytearray:
+    data = []
+    escape = False
+    for byte in frame:
+        if byte == KISS_FEND:
+            continue
+        elif byte == KISS_FESC:
+            escape = True
+        elif byte == KISS_TFEND:
+            if escape == True:
+                byte = KISS_FEND
+            escape = False
+        elif byte == KISS_TFESC:
+            if escape == True:
+                byte = KISS_FESC
+            escape = False
+        else:
+            escape = False
+
+        if not escape:
+            data.append(byte)
+
+    return bytearray(data)
+
 
 def setup_serial() -> serial.Serial:
-    return serial.Serial('/dev/ttyUSB1')
+    return serial.Serial("/dev/ttyUSB1")
 
 
 def send_packet(ser, packet: bytes):
     print("input:  " + bytearray(packet).hex(" "))
     ser.write(packet)
     time.sleep(1)
-    print("output: " + bytearray(ser.read_all()).hex(" "))
+    response = bytearray(ser.read_all())
+    print("kiss frame: " + response.hex(" "))
+    print("spacepacket: " + kiss_unpack(response).hex(" "))
 
 
 def create_packet(apid: int, data: list) -> bytes:
     data_bytes = serial.to_bytes(data)
     seq_count = 0
     sph = SpacePacketHeader(
-        packet_type=PacketType.TC, apid=apid, seq_count=seq_count, data_len=len(data) - 1)
-    return sph.pack() + data_bytes
+        packet_type=PacketType.TC,
+        apid=apid,
+        seq_count=seq_count,
+        data_len=len(data) - 1,
+    )
+    return kiss_pack(bytearray(sph.pack() + data_bytes))
 
 
 @click.group()
 @click.pass_context
 def cli(ctx):
     ctx.ensure_object(dict)
-    ctx.obj['serial'] = setup_serial()
+    ctx.obj["serial"] = setup_serial()
 
 
 @cli.command()
-@click.argument('action_id', type=int)
+@click.argument("action_id", type=int)
 @click.pass_context
 def action(ctx, action_id):
-    send_packet(ctx.obj['serial'], create_packet(ACTION_APID, [action_id]))
+    send_packet(ctx.obj["serial"], create_packet(ACTION_APID, [action_id]))
     # TODO read status code in response and print
 
 
 @cli.command()
-@click.argument('param_id', type=int)
+@click.argument("param_id", type=int)
 @click.pass_context
 def get_param(ctx, param_id):
-    send_packet(ctx.obj['serial'], create_packet(GET_PARAM_APID, [param_id]))
+    send_packet(ctx.obj["serial"], create_packet(GET_PARAM_APID, [param_id]))
     # TODO read response and status code and print
 
 
 @cli.command()
-@click.argument('param_id', type=int)
+@click.argument("param_id", type=int)
 # @click.argument('data', type=lambda x: bytes(.from, encoding="utf-8"))
 @click.argument(
-    'data',
+    "data",
     type=lambda x: bytes(eval(x)),
 )
 @click.pass_context
 def set_param(ctx, param_id, data):
     """data: pass a list of integer literals (uint8), e.g. [0xAB, 3, 0xFF]"""
-    send_packet(ctx.obj['serial'], create_packet(
-        SET_PARAM_APID, [param_id] + list(data)))
+    send_packet(
+        ctx.obj["serial"], create_packet(SET_PARAM_APID, [param_id] + list(data))
+    )
     # TODO read status code in response and print
 
 
 @cli.command()
-@click.argument('tlm_id', type=int)
+@click.argument("tlm_id", type=int)
 @click.pass_context
 def tlm(ctx, tlm_id):
-    send_packet(ctx.obj['serial'], create_packet(TELEM_APID, [tlm_id]))
+    send_packet(ctx.obj["serial"], create_packet(TELEM_APID, [tlm_id]))
     # TODO read response and statuc code and print
 
 
