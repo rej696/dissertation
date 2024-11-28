@@ -1,10 +1,15 @@
 #!/usr/bin/env python
+from datetime import datetime
 import serial
 import click
+import random
+import subprocess
+import threading
 import time
-from spacepackets.ccsds.spacepacket import SpacePacketHeader, PacketType
 from ccsds.kiss import kiss_pack, kiss_unpack
-from ccsds.utils import checksum
+from ccsds.packetstream import spacepacket_factory, bytes2fields, spacepackets2bytes
+from ccsds.utils import checksum, take
+from spacepackets.ccsds.spacepacket import SpacePacketHeader, PacketType
 
 ACTION_APID = 0
 GET_PARAM_APID = 1
@@ -12,12 +17,37 @@ SET_PARAM_APID = 2
 TELEM_APID = 3
 
 
-def setup_serial() -> serial.Serial:
-    return serial.Serial("/dev/ttyUSB1")
+def setup_serial(dev: str) -> serial.Serial:
+    return serial.Serial(dev)
+
+
+def monitor_debug(ser, timeout):
+    last_tick = datetime.now().timestamp()
+    while True:
+        line = ser.read_all().decode("utf-8")
+        timestamp = datetime.now().timestamp()
+        if line.strip():
+            for s in line.strip().split("\n"):
+                print(f"[{datetime.fromtimestamp(timestamp).strftime("%H:%M:%S")}] {s}")
+        if "tick" in line or "tock" in line:
+            last_tick = timestamp
+        if timestamp - last_tick > timeout:
+            print(
+                f"[{datetime.fromtimestamp(timestamp).strftime("%H:%M:%S")}] "
+                + f"ERROR in range {datetime.fromtimestamp(last_tick).strftime("%H:%M:%S")}"
+                + f" -> {datetime.fromtimestamp(timestamp).strftime("%H:%M:%S")}"
+            )
+            # reset the hardware
+            print("\nResetting Board")
+            subprocess.run(["st-flash", "reset"])
+            print("Board Reset\n")
+        time.sleep(1)
 
 
 def send_packet(ser, packet: bytes):
-    print("input:  " + bytearray(packet).hex(" "))
+    print(
+        f"[{datetime.now().strftime("%H:%M:%S")}] input:  " + bytearray(packet).hex(" ")
+    )
     ser.write(packet)
     time.sleep(1)
     response = bytearray(ser.read_all())
@@ -37,11 +67,32 @@ def create_packet(apid: int, data: list) -> bytes:
     return kiss_pack(checksum(bytearray(sph.pack() + data_bytes)))
 
 
+def blackbox_generator():
+    try:
+        while True:
+            # yield random.randbytes(1)
+            yield random.randint(0, 255)
+    except KeyboardInterrupt:
+        raise StopIteration
+
+
+def fuzzstream():
+    for trigger, spp, data in spacepacket_factory(bytes2fields(blackbox_generator())):
+        # use trigger as mutation, e.g.
+        # - toggle randomise payload
+        # - toggle randomise spacepacket header fields
+        # - toggle randomise checksum
+        # - toggle randomise/invalid framing
+
+        yield bytearray(spacepackets2bytes([(spp, data)]))
+
+
 @click.group()
+@click.option("--dev", default="/dev/ttyUSB0", type=str)
 @click.pass_context
-def cli(ctx):
+def cli(ctx, dev):
     ctx.ensure_object(dict)
-    ctx.obj["serial"] = setup_serial()
+    ctx.obj["serial"] = setup_serial(dev)
 
 
 @cli.command()
@@ -49,7 +100,6 @@ def cli(ctx):
 @click.pass_context
 def action(ctx, action_id):
     send_packet(ctx.obj["serial"], create_packet(ACTION_APID, [action_id]))
-    # TODO read status code in response and print
 
 
 @cli.command()
@@ -57,12 +107,10 @@ def action(ctx, action_id):
 @click.pass_context
 def get_param(ctx, param_id):
     send_packet(ctx.obj["serial"], create_packet(GET_PARAM_APID, [param_id]))
-    # TODO read response and status code and print
 
 
 @cli.command()
 @click.argument("param_id", type=int)
-# @click.argument('data', type=lambda x: bytes(.from, encoding="utf-8"))
 @click.argument(
     "data",
     type=lambda x: bytes(eval(x)),
@@ -73,7 +121,6 @@ def set_param(ctx, param_id, data):
     send_packet(
         ctx.obj["serial"], create_packet(SET_PARAM_APID, [param_id] + list(data))
     )
-    # TODO read status code in response and print
 
 
 @cli.command()
@@ -81,7 +128,28 @@ def set_param(ctx, param_id, data):
 @click.pass_context
 def tlm(ctx, tlm_id):
     send_packet(ctx.obj["serial"], create_packet(TELEM_APID, [tlm_id]))
-    # TODO read response and statuc code and print
+
+
+@cli.command()
+@click.argument("n", type=int)
+@click.option("--delay", default=10, type=int)
+@click.pass_context
+def fuzz(ctx, n, delay):
+    print(f"Fuzzing {n} times with delay {delay}")
+    delay = False
+    for frame in take(fuzzstream(), n):
+        if delay:
+            time.sleep(delay)
+        delay = True
+
+        send_packet(ctx.obj["serial"], frame)
+
+
+@cli.command()
+@click.option("--timeout", default=5, type=int)
+@click.pass_context
+def log(ctx, timeout):
+    monitor_debug(ctx.obj["serial"], timeout)
 
 
 if __name__ == "__main__":

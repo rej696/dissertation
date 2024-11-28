@@ -58,14 +58,14 @@ def spp_grammer_input_cb(emu):
     emu.spp_handler.set_input(b"\x20\x00\x00")
 
     # Set u8 parameter
-    emu.spp_handler.set_input(b"\xC8\x01\x00\xa5")
+    emu.spp_handler.set_input(b"\xc8\x01\x00\xa5")
     # Print u8 Parameter
-    emu.spp_handler.set_input(b"\xE0\x00\x01")
+    emu.spp_handler.set_input(b"\xe0\x00\x01")
 
     # Set u32 parameter
-    emu.spp_handler.set_input(b"\xA8\x04\x01\xde\xad\xbe\xef")
+    emu.spp_handler.set_input(b"\xa8\x04\x01\xde\xad\xbe\xef")
     # Print u8 Parameter
-    emu.spp_handler.set_input(b"\xC0\x00\x02")
+    emu.spp_handler.set_input(b"\xc0\x00\x02")
 
 
 def spp_raw_input_cb(emu):
