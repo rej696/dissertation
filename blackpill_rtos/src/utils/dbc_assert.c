@@ -2,12 +2,11 @@
 
 #include "hal/uart.h"
 
-DBC_NORETURN void DBC_fault_handler(char const *module, int label)
+DBC_NORETURN void DBC_fault_handler(char const *const msg)
 {
-    /* TODO setup printf to print line number */
-    uart_write_str(UART2, "DBC_fault_handler raised in ");
-    uart_write_str(UART2, module);
-    (void)label;
+    /* Print File and line number */
+    uart_write_str(UART2, msg);
+    uart_write_str(UART2, ": DBC Failure!!\r\n");
 
     for (;;) {
         asm("nop");

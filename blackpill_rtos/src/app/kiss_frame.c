@@ -97,6 +97,11 @@ bool kiss_frame_unpack(cbuf_t *const cbuf, size_t *const count, uint8_t *const o
             }
         }
         if (!frame_esc && !end_frame) {
+            if (*count >= CBUF_SIZE) {
+                /* reset packet buffer if will overflow */
+                *output = 0;
+                return false;
+            }
             /* Write byte to output buffer */
             output[*count] = byte;
             *count += 1;

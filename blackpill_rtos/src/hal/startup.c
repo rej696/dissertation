@@ -1,6 +1,7 @@
 #include <stdint.h>
 
 #include "hal/stm32f4_blackpill.h"
+#include "hal/uart.h"
 
 /* forward declare main function */
 extern int main(void);
@@ -32,12 +33,14 @@ void assert_failed(char const *file, int line) {
     /* TODO: handle a fault */
     (void)file;
     (void)line;
+    uart_write_str(UART2, "Hardfault!!\r\n");
     /* *((uint32_t *)0x40004404) = 'd'; */
     NVIC_SystemReset();
 }
 
 __attribute__((naked)) void Default_Handler(void)
 {
+    uart_write_str(UART2, "default_handler\r\n");
     asm("nop");
 }
 

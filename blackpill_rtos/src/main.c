@@ -72,7 +72,7 @@ void blinky_handler(void)
 void packet_thread_handler(void)
 {
     size_t packet_size = 0;
-    uint8_t packet_buffer[256] = {0};
+    uint8_t packet_buffer[CBUF_SIZE] = {0};
     cbuf_t kiss_frame_cbuf = {0};
     cbuf_init(&kiss_frame_cbuf);
 
@@ -83,12 +83,20 @@ void packet_thread_handler(void)
             DEBUG("Error reading frame buffer", status);
         }
 
-        bool packet_complete = kiss_frame_unpack(&kiss_frame_cbuf, &packet_size, packet_buffer);
+        /* data extracted from frame buffer is available to be deframed */
+        if (cbuf_size(&kiss_frame_cbuf) > 0) {
+            bool packet_complete = kiss_frame_unpack(&kiss_frame_cbuf, &packet_size, packet_buffer);
 
-        if (!packet_complete) {
-            /* frame not finished, save buffer state, delay (to context switch to other task)
-             * and continue */
-            rtos_delay(2);
+            if (!packet_complete) {
+                /* frame not finished, save buffer state, delay (to context switch to other task)
+                 * and continue */
+                rtos_delay(2);
+                continue;
+            }
+        }
+
+        /* No spacepackets available to process */
+        if (packet_size <= 0) {
             continue;
         }
 
@@ -126,9 +134,6 @@ void uart_handler(void)
             disable_irq();
             status_t status = cbuf_read(cbuf, size, &buf[0]);
             enable_irq();
-#if 0
-            DEBUG("Read uart buffer with status", status);
-#endif
             if (status != STATUS_OK) {
                 /* TODO handle this error */
                 DEBUG("Failed to read from uart buffer", status);
@@ -205,8 +210,7 @@ static status_t set_u8_param(size_t size, uint8_t const *const input)
 
 static status_t print_u8_param(void)
 {
-    debug_str("Printing u8 param:");
-    debug_int(u8_param);
+    DEBUG_INT("Printing u8 param:", u8_param);
     return STATUS_OK;
 }
 
@@ -231,8 +235,7 @@ static status_t set_u32_param(size_t size, uint8_t const *const input)
 
 static status_t print_u32_param(void)
 {
-    debug_str("Printing u32 param:");
-    debug_int(u32_param);
+    DEBUG_INT("Printing u32 param:", u8_param);
     return STATUS_OK;
 }
 

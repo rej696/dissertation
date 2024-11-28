@@ -36,7 +36,7 @@ static status_t frame_buffer_read_inner(cbuf_t *const cbuf)
     self.lock = true;
 
     size_t size = cbuf_size(&self.cbuf);
-    uint8_t tmp_buf[256] = {0};
+    uint8_t tmp_buf[CBUF_SIZE] = {0};
     status_t status = cbuf_read(&self.cbuf, size, tmp_buf);
 
     if (status != STATUS_OK) {

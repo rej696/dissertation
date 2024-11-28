@@ -39,22 +39,25 @@ void debug_str(char const *const msg)
     uart_write_str(debug_uart_id, "\r\n");
 }
 
-void debug_int(uint32_t value)
+void debug_int(char const *const msg, uint32_t value)
 {
-    uart_write_str(debug_uart_id, "0x");
-    /* uart_write_hex_byte(debug_uart_id, (uint8_t) value); */
+    DBC_REQUIRE(msg != NULL);
+    uart_write_str(debug_uart_id, msg);
+    uart_write_str(debug_uart_id, " (0x");
     for (int i = 3; i >= 0; --i) {
         uint8_t byte = (((uint32_t)value) >> (i * 8)) & 0xFF;
         uart_write_hex_byte(debug_uart_id, byte);
     }
-
-    uart_write_str(debug_uart_id, "\r\n");
+    uart_write_str(debug_uart_id, ")\r\n");
 }
 
-void debug_hex(uint32_t const size, uint8_t const buf[size])
+void debug_hex(char const *const msg, uint32_t const size, uint8_t const buf[size])
 {
     DBC_REQUIRE(size > 0U);
     DBC_REQUIRE(buf != NULL);
+    DBC_REQUIRE(msg != NULL);
+    uart_write_str(debug_uart_id, msg);
+    uart_write_str(debug_uart_id, ":\r\n");
 
     for (uint32_t i = 0; i < size; ++i) {
         uart_write_hex_byte(debug_uart_id, buf[i]);
