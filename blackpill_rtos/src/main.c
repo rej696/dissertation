@@ -71,6 +71,7 @@ void blinky_handler(void)
 
 void packet_thread_handler(void)
 {
+    bool packet_complete = false;
     size_t packet_size = 0;
     uint8_t packet_buffer[CBUF_SIZE] = {0};
     cbuf_t kiss_frame_cbuf = {0};
@@ -85,18 +86,14 @@ void packet_thread_handler(void)
 
         /* data extracted from frame buffer is available to be deframed */
         if (cbuf_size(&kiss_frame_cbuf) > 0) {
-            bool packet_complete = kiss_frame_unpack(&kiss_frame_cbuf, &packet_size, packet_buffer);
-
-            if (!packet_complete) {
-                /* frame not finished, save buffer state, delay (to context switch to other task)
-                 * and continue */
-                rtos_delay(2);
-                continue;
-            }
+            packet_complete = kiss_frame_unpack(&kiss_frame_cbuf, &packet_size, packet_buffer);
         }
 
         /* No spacepackets available to process */
-        if (packet_size <= 0) {
+        if ((packet_size <= 0) || (!packet_complete)) {
+            /* frame not finished, save buffer state, delay (to context switch to other task)
+             * and continue */
+            rtos_delay(2);
             continue;
         }
 

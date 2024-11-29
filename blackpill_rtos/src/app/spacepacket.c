@@ -91,7 +91,7 @@ static status_t validate_hdr(spacepacket_hdr_t const *const hdr)
         return SPACEPACKET_STATUS_INVALID_VERSION;
     }
     if (hdr->type != SPACEPACKET_TYPE_TC) {
-        DEBUG("Invalid spacepacket type", (status_t)hdr->type);
+        DEBUG_INT("Invalid spacepacket type", hdr->type);
         return SPACEPACKET_STATUS_INVALID_TYPE;
     }
     if (hdr->sec_hdr != SPACEPACKET_SEC_HDR_DISABLED) {
@@ -100,7 +100,8 @@ static status_t validate_hdr(spacepacket_hdr_t const *const hdr)
     }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wtype-limits"
-    if ((hdr->apid < SPACEPACKET_CONFIG_MIN_APID) || (hdr->apid >= SPACEPACKET_CONFIG_MAX_APID)) {
+    if ((hdr->apid < SPACEPACKET_CONFIG_MIN_APID) || (hdr->apid > SPACEPACKET_CONFIG_MAX_APID)) {
+        DEBUG_INT("Invalid APID", hdr->apid);
         return SPACEPACKET_STATUS_INVALID_APID;
     }
 #pragma GCC diagnostic pop
