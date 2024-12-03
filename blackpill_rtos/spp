@@ -7,14 +7,11 @@ import subprocess
 import threading
 import time
 from ccsds.kiss import kiss_pack, kiss_unpack
-from ccsds.packetstream import spacepacket_factory, bytes2fields, spacepackets2bytes
+from ccsds.packetstream import (
+    spacepacket_factory, bytes2fields, spacepackets2bytes, ACTION_APID, GET_PARAM_APID, SET_PARAM_APID, TELEM_APID
+)
 from ccsds.utils import checksum, take
 from spacepackets.ccsds.spacepacket import SpacePacketHeader, PacketType
-
-ACTION_APID = 0
-GET_PARAM_APID = 1
-SET_PARAM_APID = 2
-TELEM_APID = 3
 
 
 def setup_serial(dev: str) -> serial.Serial:
@@ -28,7 +25,8 @@ def monitor_debug(ser, timeout):
         timestamp = datetime.now().timestamp()
         if line.strip():
             for s in line.strip().split("\n"):
-                print(f"[{datetime.fromtimestamp(timestamp).strftime("%H:%M:%S")}] {s}")
+                print(
+                    f"[{datetime.fromtimestamp(timestamp).strftime("%H:%M:%S")}] {s}")
         if "tick" in line or "tock" in line:
             last_tick = timestamp
         if timestamp - last_tick > timeout:
@@ -46,7 +44,8 @@ def monitor_debug(ser, timeout):
 
 def send_packet(ser, packet: bytes):
     print(
-        f"[{datetime.now().strftime("%H:%M:%S")}] input:  " + bytearray(packet).hex(" ")
+        f"[{datetime.now().strftime("%H:%M:%S")}] input:  " +
+        bytearray(packet).hex(" ")
     )
     ser.write(packet)
     time.sleep(1)
@@ -77,14 +76,14 @@ def blackbox_generator():
 
 
 def fuzzstream():
-    for trigger, spp, data in spacepacket_factory(bytes2fields(blackbox_generator())):
+    for flags, spp, data in spacepacket_factory(bytes2fields(blackbox_generator())):
         # use trigger as mutation, e.g.
         # - toggle randomise payload
         # - toggle randomise spacepacket header fields
         # - toggle randomise checksum
         # - toggle randomise/invalid framing
 
-        yield bytearray(spacepackets2bytes([(spp, data)]))
+        yield bytearray(spacepackets2bytes([(flags, spp, data)]))
 
 
 @click.group()
@@ -119,7 +118,8 @@ def get_param(ctx, param_id):
 def set_param(ctx, param_id, data):
     """data: pass a list of integer literals (uint8), e.g. [0xAB, 3, 0xFF]"""
     send_packet(
-        ctx.obj["serial"], create_packet(SET_PARAM_APID, [param_id] + list(data))
+        ctx.obj["serial"], create_packet(
+            SET_PARAM_APID, [param_id] + list(data))
     )
 
 
@@ -134,13 +134,27 @@ def tlm(ctx, tlm_id):
 @click.argument("n", type=int)
 @click.option("--delay", default=10, type=int)
 @click.pass_context
-def fuzz(ctx, n, delay):
+def fuzz_times(ctx, n, delay):
     print(f"Fuzzing {n} times with delay {delay}")
-    delay = False
+    first = True
     for frame in take(fuzzstream(), n):
-        if delay:
+        if not first:
             time.sleep(delay)
-        delay = True
+        first = False
+
+        send_packet(ctx.obj["serial"], frame)
+
+
+@cli.command()
+@click.option("--delay", default=10, type=int)
+@click.pass_context
+def fuzz(ctx, delay):
+    print(f"Fuzzing with delay {delay}")
+    first = True
+    for frame in fuzzstream():
+        if not first:
+            time.sleep(delay)
+        first = False
 
         send_packet(ctx.obj["serial"], frame)
 
@@ -150,6 +164,19 @@ def fuzz(ctx, n, delay):
 @click.pass_context
 def log(ctx, timeout):
     monitor_debug(ctx.obj["serial"], timeout)
+
+
+@cli.command()
+@click.argument(
+    "data",
+    type=lambda x: bytes(eval(x)),
+)
+@click.pass_context
+def send_bytes(ctx, data):
+    """data: pass a list of integer literals (uint8), e.g. [0xAB, 3, 0xFF]"""
+    send_packet(
+        ctx.obj["serial"], bytearray(data)
+    )
 
 
 if __name__ == "__main__":

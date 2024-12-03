@@ -213,8 +213,6 @@ class Emulator:
         self.packet = None
         self.interrupt_context = ["None"]
 
-        # TODO Load registers from an SVD file?
-
         with open(firmware_path, "rb") as f:
             fw = f.read()
             self.fw_size = len(fw)
@@ -227,7 +225,6 @@ class Emulator:
 
         # Setup memory map and map peripherals
         self.uc.mem_map(SRAM_START_ADDRESS, SRAM_SIZE)
-        # TODO Convert into MMIO peripheral
         self.uc.mem_map(GPIO_START_ADDRESS, GPIO_SIZE)
         self.uc.mem_map(RCC_START_ADDRESS, RCC_SIZE)
 
@@ -244,8 +241,8 @@ class Emulator:
 
         self.cortex_m = CorePeripherals(self.uc)
         self.cortex_m.scb.debug = False
-        self.uart1 = Uart(self.uc, UART1_START_ADDRESS, 1)
-        self.uart2 = Uart(self.uc, UART2_START_ADDRESS, 2)
+        self.uart1 = Uart(self.uc, UART1_START_ADDRESS, 1, terminator=0xC0) # KISS_FEND
+        self.uart2 = Uart(self.uc, UART2_START_ADDRESS, 2, terminator=0x0A) # '\n'
         self.uart1.debug = False
         self.uart2.debug = False
 
@@ -444,6 +441,19 @@ class Emulator:
                 )
 
             self.trampoline_handlers.insert(0, uart2_trampoline_handler)
+            self.uc.emu_stop()
+
+        if self.uart1.ready_to_print:
+
+            def uart1_trampoline_handler():
+                self.uart1.print_buf_hex()
+                pc = self.uc.reg_read(UC_ARM_REG_PC)
+                self.uc.emu_start(
+                    pc + 1,
+                    self.fw_size + self.base_addr,
+                )
+
+            self.trampoline_handlers.insert(0, uart1_trampoline_handler)
             self.uc.emu_stop()
 
         # check for DBC exception being raised

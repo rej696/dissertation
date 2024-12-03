@@ -42,11 +42,12 @@ class Uart(Peripheral):
         "GTPR": (24, MmioReg),
     }
 
-    def __init__(self, uc, base_addr, name, debug=False):
+    def __init__(self, uc, base_addr, name, debug=False, terminator=0x0A):
         super().__init__(uc, base_addr, debug)
         self.debug = debug
         self.name = name
         self.ready_to_print = False
+        self.terminator = terminator
         self._irq_pending = 0
         self.reg_init()
         uc.mmio_map(self.base, UART_MEM_SIZE, self.read_cb, None, self.write_cb, None)
@@ -69,7 +70,6 @@ class Uart(Peripheral):
                     + char
                     + ")"
                 )
-                # FIXME Figure out where to clear this bit
                 self.reg("SR").clr_bit(5)
             else:
                 self.print(f"UART {self.name} MMIO \
@@ -93,15 +93,12 @@ class Uart(Peripheral):
                        {hex(addr)} written with value {hex(value)}")
 
         self.reg(addr).write_cb(uc, addr, size, value, user_data)
-        if value == 0x0A:
+        if value == self.terminator:
             self.ready_to_print = True
 
     def put_byte(self, byte):
-        # self.reg("DR").value = byte & 0xFF
-        # self.reg("SR").get_bit(5)
         self.reg("DR").read_data.append(byte)
         self._irq_pending += 1
-        # self.reg("SR").set_bit(5)
 
     def put_buf(self, buf):
         for byte in buf:
@@ -110,10 +107,6 @@ class Uart(Peripheral):
 
     def get_byte(self):
         return self.reg("DR").write_data.pop(0)
-        # if len(self.reg("DR").write_data) != 0:
-        #     return self.reg("DR").write_data.pop(0)
-        # else:
-        #     return "\0"
 
     def print_buf(self):
         if self.reg("SR").get_bit(7):
@@ -123,7 +116,15 @@ class Uart(Peripheral):
                 value = self.reg("DR").write_data.pop(0)
                 string.append(byte2str(value))
             print(f"Uart {self.name} says: {''.join(string)}")
-            # self.reg("DR").write_data = []
+
+    def print_buf_hex(self):
+        if self.reg("SR").get_bit(7):
+            self.ready_to_print = False
+            string = []
+            for _ in range(len(self.reg("DR").write_data)):
+                value = self.reg("DR").write_data.pop(0)
+                string.append(value)
+            print(f"Uart {self.name} says: {bytearray(string).hex(' ')}")
 
     @property
     def irq_pending(self):

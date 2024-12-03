@@ -35,9 +35,9 @@ class SpacepacketHandler:
             for b in input_bytes:
                 yield b
 
-        for trigger, spp, data in spacepacket_factory(bytes2fields(input_iter())):
+        for flags, spp, data in spacepacket_factory(bytes2fields(input_iter())):
             self.packets.append(
-                SpacepacketEntry(trigger, bytearray(spacepackets2bytes([(spp, data)])))
+                SpacepacketEntry(flags.trigger(), bytearray(spacepackets2bytes([(flags, spp, data)])))
             )
 
     def set_raw_input(self, input_bytes):
@@ -58,7 +58,6 @@ class SpacepacketHandler:
         if self.packets[0].trigger <= self.counter:
             self.counter = 0
             # FIXME handle sending packet using uart?
-            return self.packets.pop(0).packet
-
-
-# packet_type=PacketType.TC, apid=0, seq_count=0, data_len=0
+            packet = self.packets.pop(0).packet
+            print(packet)
+            return packet

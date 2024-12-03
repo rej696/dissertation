@@ -55,17 +55,17 @@ def fuzz_handler(filename, fuzz_input_filename, grammar, debug, dbc_addr):
 
 def spp_grammer_input_cb(emu):
     # Print hello world
-    emu.spp_handler.set_input(b"\x20\x00\x00")
+    emu.spp_handler.set_input(b"\xFF\x00")
 
     # Set u8 parameter
-    emu.spp_handler.set_input(b"\xc8\x01\x00\xa5")
+    emu.spp_handler.set_input(b"\xFF\x20\x01\xa5")
     # Print u8 Parameter
-    emu.spp_handler.set_input(b"\xe0\x00\x01")
+    emu.spp_handler.set_input(b"\xFF\x01")
 
     # Set u32 parameter
-    emu.spp_handler.set_input(b"\xa8\x04\x01\xde\xad\xbe\xef")
+    emu.spp_handler.set_input(b"\xFF\x21\x04\xde\xad\xbe\xef")
     # Print u8 Parameter
-    emu.spp_handler.set_input(b"\xc0\x00\x02")
+    emu.spp_handler.set_input(b"\xFF\x02")
 
 
 def spp_raw_input_cb(emu):
