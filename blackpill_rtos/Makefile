@@ -113,21 +113,21 @@ docker-fuzz-secondary:
 	docker run --rm -it -d --name fuzzer04 -v $$(pwd):/src rej696/afl bash -c "make PYTHON=python3 FUZZER_NAME='-S fuzzer04' fuzz"
 
 docker-bash:
-	docker run --rm -it -d --name afl-fuzz -v $$(pwd):/src rej696/afl bash
+	docker run --rm -it --name fuzz -v $$(pwd):/src rej696/afl bash
 
 docker-logs:
-	docker logs afl-fuzz -f
+	docker logs fuzz -f
 
 docker-attach:
-	docker attach afl-fuzz
+	docker attach fuzz
 
 docker-stop:
 	@make --no-print-directory chown
-	docker stop afl-fuzz
+	docker stop fuzz
 
 chown:
 	sudo chown -R $$USER:$$USER -- $(DIR);
 
 docker-rm:
 	@make --no-print-directory chown
-	docker rm afl-fuzz
+	docker rm fuzz
