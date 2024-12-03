@@ -212,7 +212,7 @@ status_t spacepacket_process(
         .type = SPACEPACKET_TYPE_TM,
         .sec_hdr = SPACEPACKET_SEC_HDR_DISABLED,
         .sequence_flags = SPACEPACKET_SEQ_FLAGS_UNSEGMENTED,
-        .sequence_count = 0, /* FIXME make sequence_count increment */
+        .sequence_count = hdr.sequence_count, /* Use sequence number from received packet */
         .apid = hdr.apid,
         .data_length = (uint16_t)(output_size - 1),
     };

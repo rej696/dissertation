@@ -63,7 +63,6 @@ static status_t frame_buffer_read_inner(cbuf_t *const cbuf)
 static status_t frame_buffer_write_inner(size_t const size, uint8_t const buf[size])
 {
     status_t status = STATUS_OK;
-    /* TODO push the buffer that has been read into the queue */
     /* FIXME replace with rtos aware queue/mutex */
     /* Mutex, if frame buffer is locked, delay and retry */
     while (self.lock) {

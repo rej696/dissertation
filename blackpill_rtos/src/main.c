@@ -96,6 +96,7 @@ void packet_thread_handler(void)
             rtos_delay(2);
             continue;
         }
+        debug_hex("recv packet", packet_size, packet_buffer);
 
         /* parse buffer as a spacepacket */
         size_t response_size = 0;
@@ -115,7 +116,7 @@ void packet_thread_handler(void)
         } else {
             DEBUG("Failed to process spacepacket", status);
         }
-        /* FIXME clear packet buffer? */
+        /* Clear packet buffer once processed */
         packet_size = 0;
     }
 }
@@ -140,41 +141,6 @@ void uart_handler(void)
             if (status != STATUS_OK) {
                 DEBUG("Failed to write to frame buffer", status);
             }
-
-#if 0
-#if 0 /* Debug uart read */
-            debug_hex(size, &buf[0]);
-#endif
-            /* TODO push the buffer that has been read into the queue */
-            /* FIXME replace with rtos aware queue/mutex */
-            /* Mutex, if frame buffer is locked, delay and retry */
-            while (frame_buffer_lock) {
-#if 0
-                debug_str("waiting for packet buffer mutex lock");
-#endif
-                rtos_delay(2);
-            }
-#if 0
-            debug_str("packet buffer mutex locked");
-#endif
-            frame_buffer_lock = true;
-            status = cbuf_write(&frame_buffer, size, buf);
-            if (status != STATUS_OK) {
-                DEBUG("Failed to write uart data to packet buffer", status);
-                frame_buffer_ready = false;
-                /* Release packet buffer mutex */
-                frame_buffer_lock = false;
-                continue;
-            }
-
-            /* Mark frame buffer as ready */
-            frame_buffer_ready = true;
-            /* Release frame buffer mutex */
-            frame_buffer_lock = false;
-#if 0
-            debug_str("retrieved data from uart");
-#endif
-#endif
         }
         rtos_delay(100);
     }
@@ -198,7 +164,7 @@ static status_t get_u8_param(size_t *const size, uint8_t *const output)
 static status_t set_u8_param(size_t size, uint8_t const *const input)
 {
     if (size != 1) {
-        DEBUG("Invalid arguments for test_param", PARAMETER_STATUS_INVALID_PAYLOAD_SIZE);
+        DEBUG("Invalid arguments for set_u8_param", PARAMETER_STATUS_INVALID_PAYLOAD_SIZE);
         return PARAMETER_STATUS_INVALID_PAYLOAD_SIZE;
     }
     u8_param = *input;
@@ -223,7 +189,7 @@ static status_t get_u32_param(size_t *const size, uint8_t *const output)
 static status_t set_u32_param(size_t size, uint8_t const *const input)
 {
     if (size != 4) {
-        DEBUG("Invalid arguments for test_param", PARAMETER_STATUS_INVALID_PAYLOAD_SIZE);
+        DEBUG("Invalid arguments for set_u32_param", PARAMETER_STATUS_INVALID_PAYLOAD_SIZE);
         return PARAMETER_STATUS_INVALID_PAYLOAD_SIZE;
     }
     endian_u32_from_network(input, &u32_param);
@@ -286,17 +252,6 @@ int main(void)
     for (uint8_t i = 0; i < ARRAY_LEN(tlm_table); ++i) {
         telemetry_register(i, tlm_table[i]);
     }
-#if 0
-    action_register(0, print_hello);
-
-    action_register(1, print_u8_param);
-    action_register(2, print_u32_param);
-    parameter_register(1, (parameter_handler_t) {.set = set_u8_param, .get = get_u8_param});
-    parameter_register(2, (parameter_handler_t) {.set = set_u32_param, .get = get_u32_param});
-    telemetry_register(0, spacepacket_out_of_seq_count);
-    telemetry_register(1, spacepacket_csum_error_count);
-    telemetry_register(2, spacepacket_last_seq_count);
-#endif
 
     rtos_run();
 

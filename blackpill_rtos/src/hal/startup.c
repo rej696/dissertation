@@ -30,17 +30,14 @@ __attribute__((noreturn)) void Reset_Handler(void)
 }
 
 void assert_failed(char const *file, int line) {
-    /* TODO: handle a fault */
-    (void)file;
     (void)line;
-    uart_write_str(UART2, "Hardfault!!\r\n");
-    /* *((uint32_t *)0x40004404) = 'd'; */
+    uart_write_str(UART2, file);
+    uart_write_str(UART2, "\r\n");
     NVIC_SystemReset();
 }
 
 __attribute__((naked)) void Default_Handler(void)
 {
-    uart_write_str(UART2, "default_handler\r\n");
     asm("nop");
 }
 
@@ -191,5 +188,39 @@ __attribute__((naked)) void HardFault_Handler(void)
         "    mov r1,#1\n\t"
         "    b assert_failed\n\t"
         "str_hrd: .asciz \"HardFault\"\n\t"
+        "    .align 2\n\t"
+    );
+}
+
+__attribute__((naked)) void MemManageFault_Handler(void)
+{
+    asm volatile (
+        "    ldr r0,=str_mem\n\t"
+        "    mov r1,#1\n\t"
+        "    b assert_failed\n\t"
+        "str_mem: .asciz \"MemManageFault\"\n\t"
+        "    .align 2\n\t"
+    );
+}
+
+__attribute__((naked)) void BusFault_Handler(void)
+{
+    asm volatile (
+        "    ldr r0,=str_bus\n\t"
+        "    mov r1,#1\n\t"
+        "    b assert_failed\n\t"
+        "str_bus: .asciz \"BusFault\"\n\t"
+        "    .align 2\n\t"
+    );
+}
+
+__attribute__((naked)) void UsageFault_Handler(void)
+{
+    asm volatile (
+        "    ldr r0,=str_usg\n\t"
+        "    mov r1,#1\n\t"
+        "    b assert_failed\n\t"
+        "str_usg: .asciz \"UsageFault\"\n\t"
+        "    .align 2\n\t"
     );
 }
