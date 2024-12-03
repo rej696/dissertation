@@ -1,3 +1,5 @@
+import random
+
 def take(iter, n):
     """take generator for lazily reading a sequence from an iterator"""
     for _ in range(n):
@@ -14,3 +16,10 @@ def checksum(data: bytearray) -> bytearray:
 
     output.append(sum)
     return bytearray(output)
+
+def blackbox_generator():
+    try:
+        while True:
+            yield random.randint(0, 255)
+    except KeyboardInterrupt:
+        raise StopIteration

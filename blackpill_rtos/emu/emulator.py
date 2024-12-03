@@ -163,7 +163,7 @@ class VectorTable(OrderedDict):
         "reserved6": 52,
         "pendsv_handler": 56,
         "systick_handler": 60,
-        # "irq_handler": 64, # No Custom IRQ's included at the moment
+        # STM32 Custom IRQ's
         "uart1_handler": 212,
         "uart2_handler": 216,
     }
@@ -234,15 +234,14 @@ class Emulator:
         self.uc.ctl_exits_enabled(True)
         self.uc.ctl_set_exits([0xFFFFFFF8])
 
-        # TODO setup uc hooks
+        # Setup Code Hook
         self.uc.hook_add(UC_HOOK_CODE, self.uc_code_cb)
-        # self.uc.hook_add(UC_HOOK_BLOCK, self.uc_mem_block_cb,
-        #                  begin=0xFFFFF000, end=0xFFFFFFFF)
 
+        # Setup Peripheral Models
         self.cortex_m = CorePeripherals(self.uc)
-        self.cortex_m.scb.debug = False
         self.uart1 = Uart(self.uc, UART1_START_ADDRESS, 1, terminator=0xC0) # KISS_FEND
         self.uart2 = Uart(self.uc, UART2_START_ADDRESS, 2, terminator=0x0A) # '\n'
+        self.cortex_m.scb.debug = False
         self.uart1.debug = False
         self.uart2.debug = False
 
@@ -306,8 +305,6 @@ class Emulator:
             self.dump_reg()
 
     def handle_interrupt(self, uc, isr):
-        # TODO make this better?
-
         def isr_handler():
             isr_addr = self.vector_table[isr]
             if self.debug:
@@ -341,9 +338,8 @@ class Emulator:
     def return_from_interrupt(self):
         lr = self.uc.reg_read(UC_ARM_REG_LR)
         irq_num = self.uc.reg_read(UC_ARM_REG_IPSR)
-        # print(f"Returning from ISR Interrupt_Stack {self.interrupt_context}")
         interrupt_context = self.interrupt_context.pop()
-        if not self.interrupt_enabled:  # or not interrupt_context:
+        if not self.interrupt_enabled:
             print(
                 "ERROR: attempting to return from interrupt while interrupts are disabled?"
             )
@@ -396,21 +392,15 @@ class Emulator:
         self.cortex_m.systick.tick()
 
         # handle interrupts
-        # TODO not interrupt context blocks interrupts from being called inside other interrupts
-        # (so systick won't tick while interrupts are in progress)
-        # This doesn't work because the trampoline handlers exit the interrupt context before pre-empting the interrupts
-        # maybe get handle interrupt to insert isr handlers infront of the next trampoline handler?
-        if self.interrupt_enabled:  # and not self.interrupt_context:
-            # if self.self.cortex_m.systick.systick_pending:
-            # if len(self.interrupt_context) > 2 and self.interrupt_context[-1] != "systick_handler" and self.cortex_m.systick.systick_pending:
+        if self.interrupt_enabled:
             if (
                 not (
                     self.interrupt_context[-1] == "systick_handler"
                     and len(self.interrupt_context) > 2
                 )
             ) and self.cortex_m.systick.systick_pending:
-                # FIXME only send spacepacket on systick
-                self.packet = self.spp_handler.send_packet()
+                # only trigger send spacepacket on systick
+                self.packet = next(self.packets)
                 self.handle_interrupt(uc, "systick_handler")
 
             elif (
@@ -425,8 +415,7 @@ class Emulator:
                 self.handle_interrupt(uc, "uart1_handler")
 
         if self.packet:
-            if self.debug:
-                print(f"Putting packet {self.packet}")
+            print(f"Uart 1 sent: {self.packet.hex(" ")}")
             self.uart1.put_buf(self.packet)
             self.packet = None
 
@@ -508,18 +497,13 @@ class Emulator:
         self.dump_mem(sp - 0x40, 0x40)
 
     def reset_handler(self):
-        # FIXME run without interrupts until rtos_run re-enables interrupts? after this boot process is complete, then we can "tick" using emu start timeouts and handle interrupts inbetween without needing a code callback?
-        # could also do WFI in rtos_on_idle, and then skip to the next systick/pendsv interrupt?
-        # rtos_schedule triggers pendsv, which is typically executed in the systick interrupt. need to have pendsv trigger after systick has returned (systick higher priority than pendsv) this should happen by default if we run "application" emulator code (non-interrupts) in increments of the systick frequency
         self.uc.emu_start(
             self.vector_table["reset_handler"],
             self.fw_size + self.base_addr,
-            # 200_000 * UC_MILISECOND_SCALE,
-            # 20000 * UC_MILISECOND_SCALE,
-            # 0,
         )
 
     def start(self):
+        self.packets = self.spp_handler.packet_generator()
         self.trampoline_handlers = [self.reset_handler]
         self.uc.reg_write(UC_ARM_REG_MSP, self.vector_table["initial_stack_pointer"])
         try:
@@ -533,7 +517,6 @@ class Emulator:
             print(f"Exception {e}:")
             self.dump_reg()
             force_crash(e)
-        # TODO handle execeptions for afl correctly (i.e. which are crashes and which just the end of execution)
         except EmulatorException as e:
             print(f"Emulator Exception {e}:")
             self.dump_reg()
@@ -551,6 +534,7 @@ class Emulator:
 
 
 def fuzz_start(uc, self):
+    self.packets = self.spp_handler.packet_generator()
     self.uc = uc
     self.trampoline_handlers = [self.reset_handler]
     self.uc.reg_write(UC_ARM_REG_MSP, self.vector_table["initial_stack_pointer"])
@@ -565,7 +549,7 @@ def fuzz_start(uc, self):
         print(f"Exception {e}:")
         self.dump_reg()
         return e.errno
-    # TODO handle execeptions for afl correctly (i.e. which are crashes and which just the end of execution)
+    # handle execeptions for afl correctly (i.e. which are crashes and which just the end of execution)
     except EmulatorException as e:
         print(f"Emulator Exception {e}:")
         self.dump_reg()

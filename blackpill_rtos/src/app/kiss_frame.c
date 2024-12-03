@@ -90,7 +90,6 @@ bool kiss_frame_unpack(cbuf_t *const cbuf, size_t *const count, uint8_t *const o
             }
             default: {
                 /* parse data normally */
-                DBC_ASSERT(!frame_esc);
                 frame_esc = false;
                 end_frame = false;
                 break;

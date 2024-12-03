@@ -96,7 +96,9 @@ void packet_thread_handler(void)
             rtos_delay(2);
             continue;
         }
+#if 0
         debug_hex("recv packet", packet_size, packet_buffer);
+#endif
 
         /* parse buffer as a spacepacket */
         size_t response_size = 0;
@@ -142,7 +144,7 @@ void uart_handler(void)
                 DEBUG("Failed to write to frame buffer", status);
             }
         }
-        rtos_delay(100);
+        rtos_delay(1);
     }
 }
 
@@ -198,7 +200,7 @@ static status_t set_u32_param(size_t size, uint8_t const *const input)
 
 static status_t print_u32_param(void)
 {
-    DEBUG_INT("Printing u32 param:", u8_param);
+    DEBUG_INT("Printing u32 param:", u32_param);
     return STATUS_OK;
 }
 

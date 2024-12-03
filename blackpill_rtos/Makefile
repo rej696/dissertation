@@ -27,7 +27,7 @@ TARGET := $(BUILD)/firmware
 SOURCES := $(shell find $(SRC) -name '*.c')
 OBJECTS := $(SOURCES:$(SRC)/%.c=$(BUILD)/%.o)
 
-.PHONY: build dump clean emu gdb disasm debug io emu_install addr dbc
+.PHONY: build dump clean emu emu-raw emu-bb gdb disasm debug io emu_install addr dbc
 
 build: $(TARGET).bin
 
@@ -71,6 +71,12 @@ emu-raw: $(TARGET).bin
 
 emu: $(TARGET).bin
 	venv/bin/python3 -m emu -g $<
+
+emu-bb-raw: $(TARGET).bin
+	venv/bin/python3 -m emu -b $<
+
+emu-bb: $(TARGET).bin
+	venv/bin/python3 -m emu -b -g $<
 
 fuzz-raw: $(TARGET).bin
 	AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 afl-fuzz -U -t +50000 -i raw_fuzz_inputs -o raw_fuzz_outputs $(FUZZER_NAME) $(PYTHON) -m emu $< -i @@F

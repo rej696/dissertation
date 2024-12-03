@@ -1,6 +1,7 @@
 from emu.emulator import Emulator, FLASH_START_ADDRESS, fuzz_start
 from unicornafl import uc_afl_fuzz_custom
 from functools import partial
+from ccsds.utils import blackbox_generator
 import sys
 import signal
 import threading
@@ -12,29 +13,10 @@ import os
 
 def fuzz_handler(filename, fuzz_input_filename, grammar, debug, dbc_addr):
     emu = Emulator(filename, FLASH_START_ADDRESS, False, dbc_addr)
-    # setup fuzzing stuff
 
-    # afl fork server
-    print("Start AFL Fork Server")
-    end_address = list(dbc_addr)[0]  # DBC_Exception?
-    # FIXME this function doesn't exist anymore, will have to make use of
-    # the place_input_callback and validate_crash_callback functions of the
-    # uc.afl_fuzz function (that does exist)
-    # Need to experiment with afl_fuzz function if it works with the trampoline method
-    # Alternatively might be able to fuzz the whole script without using unicorn afl and by just running the emulator under the fuzzer?
-    # afl_mode = emu.uc.afl_forkserver_start([end_address])
+    end_address = list(dbc_addr)[0]  # start of DBC_Exception_Handler
 
-    # The most likely solution will be to use uc_afl_fuzz_custom, which takes a fuzzing_callback function, which could be our emu.start() function
-    # FIXME need right arguments
     def input_cb(uc, input_bs, persisent_round, emu) -> bool:
-        # # read fuzzing input data
-        # while not os.path.isfile(fuzz_input_filename):
-        #     print("waiting for file")
-        #     time.sleep(1)
-        # fuzz_input = b""
-        # with open(fuzz_input_filename, "rb") as f:
-        #     fuzz_input = f.read()
-        # store fuzzing input data somewhere to go into uart?
         fuzz_input = bytearray(input_bs)
         if grammar:
             emu.spp_handler.set_input(fuzz_input)
@@ -49,53 +31,53 @@ def fuzz_handler(filename, fuzz_input_filename, grammar, debug, dbc_addr):
         data=emu,
     )
 
-    # # start emulator
-    # emu.start()
-
 
 def spp_grammer_input_cb(emu):
     # Print hello world
-    emu.spp_handler.set_input(b"\xFF\x00")
+    emu.spp_handler.set_input(b"\xF0\x00\x00")
 
     # Set u8 parameter
-    emu.spp_handler.set_input(b"\xFF\x20\x01\xa5")
+    emu.spp_handler.set_input(b"\xF0\x20\x01\xa5")
     # Print u8 Parameter
-    emu.spp_handler.set_input(b"\xFF\x01")
+    emu.spp_handler.set_input(b"\xF0\x01\x00")
 
     # Set u32 parameter
-    emu.spp_handler.set_input(b"\xFF\x21\x04\xde\xad\xbe\xef")
+    emu.spp_handler.set_input(b"\xF0\x21\x04\xde\xad\xbe\xef")
     # Print u8 Parameter
-    emu.spp_handler.set_input(b"\xFF\x02")
+    emu.spp_handler.set_input(b"\xF0\x02\x00")
+
+    # Send them all in one go
+    emu.spp_handler.set_input(b"\xF0\x00\x00\xF0\x20\x01\x7D\xF0\x01\x00\xF0\x21\x04\xCA\xFE\xBA\xBE\xF0\x02\x00\xF0\x02\x00")
 
 
 def spp_raw_input_cb(emu):
     # Print hello world
     emu.spp_handler.set_raw_input(
-        bytearray(b"\x05\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0")
+        bytearray(b"\xFA\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0")
     )
 
     # Set u8 parameter
     emu.spp_handler.set_raw_input(
-        bytearray(b"\x07\x10\x02\xdb\xdc\x00\x00\x01\x00\xa5\x78\xc0")
+        bytearray(b"\xFB\x10\x02\xdb\xdc\x00\x00\x01\x00\xa5\x78\xc0")
     )
     # Print u8 Parameter
     emu.spp_handler.set_raw_input(
-        bytearray(b"\x00\x10\x00\xdb\xdc\x00\x00\x00\x01\xd1\xc0")
+        bytearray(b"\xFA\x10\x00\xdb\xdc\x00\x00\x00\x01\xd1\xc0")
     )
 
     # Set u32 parameter
     emu.spp_handler.set_raw_input(
-        bytearray(b"\xff\x10\x02\xdb\xdc\x00\x00\x04\x01\xde\xad\xbe\xef\x0f\xc0")
+        bytearray(b"\xFE\x10\x02\xdb\xdc\x00\x00\x04\x01\xde\xad\xbe\xef\x0f\xc0")
     )
     # Print u32 Parameter
     emu.spp_handler.set_raw_input(
-        bytearray(b"\x32\x10\x00\xdb\xdc\x00\x00\x00\x02\xd2\xc0")
+        bytearray(b"\xFA\x10\x00\xdb\xdc\x00\x00\x00\x02\xd2\xc0")
     )
 
     # Print Hello world 4 times
     emu.spp_handler.set_raw_input(
         bytearray(
-            b"\x05\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0"
+            b"\xFA\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\xFA\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\xFA\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\xFA\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0"
         )
     )
 
@@ -108,6 +90,16 @@ def emu_handler(filename, grammar, debug, dbc_range):
         spp_raw_input_cb(emu)
     emu.start()
 
+
+def blackbox_handler(filename, grammar, debug, dbc_range):
+    emu = Emulator(filename, FLASH_START_ADDRESS, debug, dbc_range)
+    gen = blackbox_generator()
+    if grammar:
+        emu.spp_handler.set_input(gen)
+    else:
+        emu.spp_handler.set_raw_input(gen)
+
+    emu.start()
 
 def sigint_handler(sig, frame):
     """Handler for <C-c>"""
@@ -144,6 +136,14 @@ def main():
     )
 
     parser.add_argument(
+        "-b",
+        "--blackbox",
+        default=False,
+        action="store_true",
+        help="Enable infinite blackbox fuzzing",
+    )
+
+    parser.add_argument(
         "-d", "--debug", default=False, action="store_true", help="Enable debug tracing"
     )
 
@@ -161,7 +161,7 @@ def main():
         dbc_range = range(dbc_addr, dbc_size + dbc_addr)
 
     if args.input:
-        # fuzz mode
+        # afl fuzz mode
         signal.signal(signal.SIGINT, sigint_handler)
         fuzz_thread = threading.Thread(
             target=partial(
@@ -175,11 +175,20 @@ def main():
         )
         fuzz_thread.start()
         fuzz_thread.join()
+    elif args.blackbox:
+        # blackbox fuzz mode
+        # Run emu in thread to kill application on KeyboardInterrupt <C-c>
+        signal.signal(signal.SIGINT, sigint_handler)
+        emu_thread = threading.Thread(
+            target=partial(
+                blackbox_handler, args.firmware, args.grammar, args.debug, dbc_range
+            )
+        )
+        emu_thread.start()
+        emu_thread.join()
+
     else:
         # emu mode
-
-        # input_cb = spp_grammer_input_cb
-        input_cb = spp_raw_input_cb
 
         # Run emu in thread to kill application on KeyboardInterrupt <C-c>
         signal.signal(signal.SIGINT, sigint_handler)
@@ -190,31 +199,6 @@ def main():
         )
         emu_thread.start()
         emu_thread.join()
-
-
-def old_main():
-    if len(sys.argv) < 2:
-        print("provide file path as argument")
-        sys.exit(-1)
-
-    # read dbc assert memory range
-    dbc_range = range(0x800028C, 0x80002A8)
-    if len(sys.argv) == 4:
-        dbc_range = range(int(sys.argv[2], base=16), int(sys.argv[3], base=16))
-
-    # Debug information?
-    debug = False
-
-    # input_cb = spp_grammer_input_cb
-    input_cb = spp_raw_input_cb
-
-    # Run emu in thread to kill application on KeyboardInterrupt <C-c>
-    signal.signal(signal.SIGINT, sigint_handler)
-    emu_thread = threading.Thread(
-        target=partial(emu_handler, sys.argv[1], input_cb, debug, dbc_range)
-    )
-    emu_thread.start()
-    emu_thread.join()
 
 
 if __name__ == "__main__":

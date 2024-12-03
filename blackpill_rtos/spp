@@ -2,15 +2,14 @@
 from datetime import datetime
 import serial
 import click
-import random
 import subprocess
 import threading
 import time
 from ccsds.kiss import kiss_pack, kiss_unpack
 from ccsds.packetstream import (
-    spacepacket_factory, bytes2fields, spacepackets2bytes, ACTION_APID, GET_PARAM_APID, SET_PARAM_APID, TELEM_APID
+    PacketStream, ACTION_APID, GET_PARAM_APID, SET_PARAM_APID, TELEM_APID
 )
-from ccsds.utils import checksum, take
+from ccsds.utils import checksum, take, blackbox_generator
 from spacepackets.ccsds.spacepacket import SpacePacketHeader, PacketType
 
 
@@ -66,24 +65,9 @@ def create_packet(apid: int, data: list) -> bytes:
     return kiss_pack(checksum(bytearray(sph.pack() + data_bytes)))
 
 
-def blackbox_generator():
-    try:
-        while True:
-            # yield random.randbytes(1)
-            yield random.randint(0, 255)
-    except KeyboardInterrupt:
-        raise StopIteration
-
-
 def fuzzstream():
-    for flags, spp, data in spacepacket_factory(bytes2fields(blackbox_generator())):
-        # use trigger as mutation, e.g.
-        # - toggle randomise payload
-        # - toggle randomise spacepacket header fields
-        # - toggle randomise checksum
-        # - toggle randomise/invalid framing
-
-        yield bytearray(spacepackets2bytes([(flags, spp, data)]))
+    for handler in PacketStream.from_bytestream(blackbox_generator()):
+        yield handler.pack()
 
 
 @click.group()
