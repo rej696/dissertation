@@ -1,4 +1,5 @@
 #!/usr/bin/env/python
+import os
 
 grammar_examples = {
     "hello_action": b"\xf0\x00\x00",
@@ -19,9 +20,11 @@ raw_examples = {
 }
 
 for name, data in grammar_examples.items():
+    os.makedirs("grammar_fuzz_inputs", exist_ok=True)
     with open(f"grammar_fuzz_inputs/{name}.bin", "wb") as f:
         f.write(data)
 
 for name, data in raw_examples.items():
+    os.makedirs("raw_fuzz_inputs", exist_ok=True)
     with open(f"raw_fuzz_inputs/{name}.bin", "wb") as f:
         f.write(data)

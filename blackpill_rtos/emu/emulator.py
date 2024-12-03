@@ -405,7 +405,7 @@ class Emulator:
                 self.handle_interrupt(uc, "uart1_handler")
 
         if self.packet:
-            print(f"Uart 1 sent: {self.packet.hex(" ")}")
+            print(f"Uart 1 sent: {self.packet.hex(' ')}")
             self.uart1.put_buf(self.packet)
             self.packet = None
 
@@ -442,8 +442,9 @@ class Emulator:
         # print instruction
         if self.debug:
             for instruction in self.cs.disasm(code, addr, 1):
-                print(f"{hex(addr)}\t {instruction.mnemonic} {
-                      instruction.op_str}")
+                print(
+                    f"{hex(addr)}\t {instruction.mnemonic}" + f" {instruction.op_str}"
+                )
 
     def dump_mem(self, addr, size):
         def chunks(line, n):
@@ -459,8 +460,8 @@ class Emulator:
                 print(f"\t\t{hex(addr)}: {half_rows[0].hex(' ')}")
             else:
                 print(
-                    f"\t\t{hex(addr)}: {half_rows[0].hex(' ')}    {
-                        half_rows[1].hex(' ')}"
+                    f"\t\t{hex(addr)}: {half_rows[0].hex(' ')}"
+                    + f"    {half_rows[1].hex(' ')}"
                 )
             addr += 16
 
