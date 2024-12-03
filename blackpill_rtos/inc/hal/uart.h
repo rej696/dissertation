@@ -1,9 +1,10 @@
 #ifndef UART_H_
 #define UART_H_
 
+#include "utils/cbuf.h"
+
 #include <stdbool.h>
 #include <stdint.h>
-#include "utils/cbuf.h"
 
 typedef struct uart {
     volatile uint32_t SR;

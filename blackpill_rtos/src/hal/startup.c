@@ -1,7 +1,7 @@
-#include <stdint.h>
-
 #include "hal/stm32f4_blackpill.h"
 #include "hal/uart.h"
+
+#include <stdint.h>
 
 /* forward declare main function */
 extern int main(void);
@@ -12,7 +12,7 @@ __attribute__((noreturn)) void Reset_Handler(void)
     /* declare linkerscript symbols */
     extern uint32_t __bss_start__, __bss_end__;   /* Start/end of .bss section */
     extern uint32_t __data_start__, __data_end__; /* Start/end of .data section in flash */
-    extern uint32_t _sidata;        /* Start of .data section in sram */
+    extern uint32_t _sidata;                      /* Start of .data section in sram */
 
     /* set .bss to zero */
     for (uint32_t *dst = &__bss_start__; dst < &__bss_end__; ++dst) {
@@ -29,22 +29,17 @@ __attribute__((noreturn)) void Reset_Handler(void)
         (void)0; /* Infinite loop if main returns */
 }
 
-void assert_failed(char const *file, int line) {
+void assert_failed(char const *file, int line)
+{
     (void)line;
     uart_write_str(UART2, file);
     uart_write_str(UART2, "\r\n");
     NVIC_SystemReset();
 }
 
-__attribute__((naked)) void Default_Handler(void)
-{
-    asm("nop");
-}
+__attribute__((naked)) void Default_Handler(void) { asm("nop"); }
 
-__attribute__((naked)) void Reserved(void)
-{
-    asm("nop");
-}
+__attribute__((naked)) void Reserved(void) { asm("nop"); }
 
 /* Fault Exception Handlers */
 void NMI_Handler(void) __attribute__((weak));
@@ -69,8 +64,7 @@ extern void __stack_end__(void);
 
 typedef void (*const vector_table_t[16 + 91])(void);
 /* 16 standard and 91 STM32 specific handlers in the vector table */
-__attribute__((section(".vectors")))
-vector_table_t tab = {
+__attribute__((section(".vectors"))) vector_table_t tab = {
     [0] = __stack_end__,
     [1] = Reset_Handler,
     [2] = NMI_Handler,
@@ -183,44 +177,36 @@ vector_table_t tab = {
 
 __attribute__((naked)) void HardFault_Handler(void)
 {
-    asm volatile (
-        "    ldr r0,=str_hrd\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_hrd: .asciz \"HardFault\"\n\t"
-        "    .align 2\n\t"
-    );
+    asm volatile("    ldr r0,=str_hrd\n\t"
+                 "    mov r1,#1\n\t"
+                 "    b assert_failed\n\t"
+                 "str_hrd: .asciz \"HardFault\"\n\t"
+                 "    .align 2\n\t");
 }
 
 __attribute__((naked)) void MemManageFault_Handler(void)
 {
-    asm volatile (
-        "    ldr r0,=str_mem\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_mem: .asciz \"MemManageFault\"\n\t"
-        "    .align 2\n\t"
-    );
+    asm volatile("    ldr r0,=str_mem\n\t"
+                 "    mov r1,#1\n\t"
+                 "    b assert_failed\n\t"
+                 "str_mem: .asciz \"MemManageFault\"\n\t"
+                 "    .align 2\n\t");
 }
 
 __attribute__((naked)) void BusFault_Handler(void)
 {
-    asm volatile (
-        "    ldr r0,=str_bus\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_bus: .asciz \"BusFault\"\n\t"
-        "    .align 2\n\t"
-    );
+    asm volatile("    ldr r0,=str_bus\n\t"
+                 "    mov r1,#1\n\t"
+                 "    b assert_failed\n\t"
+                 "str_bus: .asciz \"BusFault\"\n\t"
+                 "    .align 2\n\t");
 }
 
 __attribute__((naked)) void UsageFault_Handler(void)
 {
-    asm volatile (
-        "    ldr r0,=str_usg\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_usg: .asciz \"UsageFault\"\n\t"
-        "    .align 2\n\t"
-    );
+    asm volatile("    ldr r0,=str_usg\n\t"
+                 "    mov r1,#1\n\t"
+                 "    b assert_failed\n\t"
+                 "str_usg: .asciz \"UsageFault\"\n\t"
+                 "    .align 2\n\t");
 }

@@ -1,8 +1,6 @@
 import copy
 import itertools
-from spacepackets.ccsds.spacepacket import SpacePacketHeader, PacketType
-from ccsds.kiss import kiss_pack, kiss_unpack
-from ccsds.utils import checksum, take
+from ccsds.utils import take
 from ccsds.packetstream import PacketStream
 
 
@@ -60,48 +58,27 @@ class SpacepacketHandler:
         """
         Read from a iterable bytes object through the spacepacket grammar into the packet queue
         """
-        # 3 bytes are the minimum required for the grammar parser
-        # if len(input_bytes) < 3:
-        #     raise SpacepacketInvalidInputException
         self.append_packet_generator(
-                SpacepacketEntry(handler.trigger(), handler.pack())
-                for handler in
-                PacketStream.from_bytestream((b for b in input_bytes)))
+            SpacepacketEntry(handler.trigger(), handler.pack())
+            for handler in PacketStream.from_bytestream((b for b in input_bytes))
+        )
 
     def set_raw_input(self, input_bytes):
         """Insert a raw bytes object into the packet queue with a trigger"""
-        # if len(input_bytes) < 2:
-        #     raise SpacepacketInvalidInputException
 
         def input_iter(input):
             while True:
-                # Take a length byte and read out that many bytes from the stream
                 try:
+                    # Take a config byte and read length/trigger values,
+                    # then read out length many bytes from the stream
                     config_byte = list(take(input, 1))[0]
                     trigger = (config_byte >> 4) & 0xF
                     input_len = config_byte & 0xF
                     yield SpacepacketEntry(trigger, bytearray(take(input, input_len)))
-                except (StopIteration, RuntimeError) as e:
+                except (StopIteration, RuntimeError):
                     break
 
-
         self.append_packet_generator(input_iter((b for b in input_bytes)))
-
-    # def send_packet(self):
-    #     self.counter += 1
-    #     if self.packets_available:
-    #         if self.counter > 0xF:
-    #             self.counter = 0
-    #             try:
-    #                 packet = list(take(self.packets, 1))[0]
-    #                 print(packet)
-    #                 return packet
-    #             except (StopIteration, RuntimeError) as e:
-    #                 print(e)
-    #                 self.packets_available = False
-    #     else:
-    #         if self.counter > 32:
-    #             raise OutOfPacketsException("Ran out of Spacepackets to send")
 
     def packet_generator(self):
         for packet in self.packets:
@@ -118,15 +95,3 @@ class SpacepacketHandler:
             yield None
 
         raise OutOfPacketsException("Ran out of Spacepackets to send")
-
-
-
-
-        # if len(self.packets) <= 0:
-        #     if self.counter > 32:
-        #         raise OutOfPacketsException("Ran out of Spacepackets to send")
-        #     return None
-        # if self.packets[0].trigger <= self.counter:
-        #     self.counter = 0
-        #     packet = self.packets.pop(0).packet
-        #     return packet

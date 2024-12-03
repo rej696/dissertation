@@ -1,5 +1,5 @@
 from spacepackets.exceptions import BytesTooShortError
-from typing import Final, Optional, Self
+from typing import Final, Self
 import struct
 
 TC_HEADER_LEN: Final[int] = 5

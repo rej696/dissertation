@@ -1,6 +1,3 @@
-from unicorn import Uc
-
-
 class MmioReg:
     def __init__(self, addr, parent):
         self.parent = parent
@@ -8,15 +5,10 @@ class MmioReg:
         self.user_data = None
         self.value = 0
 
-    def read_cb(self, uc: Uc, addr, size, user_data):
-        # assert size == 4
-        # assert self.addr == addr
-        # uc.mem_write(addr, self.value.to_bytes(4, 'little'))
+    def read_cb(self, uc, addr, size, user_data):
         return self.value
 
-    def write_cb(self, uc: Uc, addr, size, value, user_data):
-        # assert self.addr == addr
-        # assert size == 4
+    def write_cb(self, uc, addr, size, value, user_data):
         self.value = value
 
     def get_bit(self, n):

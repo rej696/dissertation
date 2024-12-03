@@ -185,7 +185,4 @@ void uart_write_hex_buf(uart_id_t const uart_id, uint32_t const size, uint8_t co
     uart_write_byte(uart_id, '\n');
 }
 
-cbuf_t *uart_cbuf_get(uart_id_t const uart_id)
-{
-    return &uart_buf_map[uart_id];
-}
+cbuf_t *uart_cbuf_get(uart_id_t const uart_id) { return &uart_buf_map[uart_id]; }

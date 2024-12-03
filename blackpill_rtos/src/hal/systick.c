@@ -55,7 +55,7 @@ void rtos_on_startup(void)
 void rtos_on_idle(void)
 {
 #if 0
-    /* Wait for interrupt (not sure if this works with unicorn */
+    /* Wait for interrupt (not sure if this works with unicorn) */
     __WFI();
 #else
     (void)0;

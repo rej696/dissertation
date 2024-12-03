@@ -5,16 +5,12 @@ from ccsds.utils import blackbox_generator
 import sys
 import signal
 import threading
-import time
 import subprocess
 import argparse
-import os
 
 
 def fuzz_handler(filename, fuzz_input_filename, grammar, debug, dbc_addr):
     emu = Emulator(filename, FLASH_START_ADDRESS, False, dbc_addr)
-
-    end_address = list(dbc_addr)[0]  # start of DBC_Exception_Handler
 
     def input_cb(uc, input_bs, persisent_round, emu) -> bool:
         fuzz_input = bytearray(input_bs)
@@ -34,50 +30,52 @@ def fuzz_handler(filename, fuzz_input_filename, grammar, debug, dbc_addr):
 
 def spp_grammer_input_cb(emu):
     # Print hello world
-    emu.spp_handler.set_input(b"\xF0\x00\x00")
+    emu.spp_handler.set_input(b"\xf0\x00\x00")
 
     # Set u8 parameter
-    emu.spp_handler.set_input(b"\xF0\x20\x01\xa5")
+    emu.spp_handler.set_input(b"\xf0\x20\x01\xa5")
     # Print u8 Parameter
-    emu.spp_handler.set_input(b"\xF0\x01\x00")
+    emu.spp_handler.set_input(b"\xf0\x01\x00")
 
     # Set u32 parameter
-    emu.spp_handler.set_input(b"\xF0\x21\x04\xde\xad\xbe\xef")
+    emu.spp_handler.set_input(b"\xf0\x21\x04\xde\xad\xbe\xef")
     # Print u8 Parameter
-    emu.spp_handler.set_input(b"\xF0\x02\x00")
+    emu.spp_handler.set_input(b"\xf0\x02\x00")
 
     # Send them all in one go
-    emu.spp_handler.set_input(b"\xF0\x00\x00\xF0\x20\x01\x7D\xF0\x01\x00\xF0\x21\x04\xCA\xFE\xBA\xBE\xF0\x02\x00\xF0\x02\x00")
+    emu.spp_handler.set_input(
+        b"\xf0\x00\x00\xf0\x20\x01\x7d\xf0\x01\x00\xf0\x21\x04\xca\xfe\xba\xbe\xf0\x02\x00\xf0\x02\x00"
+    )
 
 
 def spp_raw_input_cb(emu):
     # Print hello world
     emu.spp_handler.set_raw_input(
-        bytearray(b"\xFA\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0")
+        bytearray(b"\xfa\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0")
     )
 
     # Set u8 parameter
     emu.spp_handler.set_raw_input(
-        bytearray(b"\xFB\x10\x02\xdb\xdc\x00\x00\x01\x00\xa5\x78\xc0")
+        bytearray(b"\xfb\x10\x02\xdb\xdc\x00\x00\x01\x00\xa5\x78\xc0")
     )
     # Print u8 Parameter
     emu.spp_handler.set_raw_input(
-        bytearray(b"\xFA\x10\x00\xdb\xdc\x00\x00\x00\x01\xd1\xc0")
+        bytearray(b"\xfa\x10\x00\xdb\xdc\x00\x00\x00\x01\xd1\xc0")
     )
 
     # Set u32 parameter
     emu.spp_handler.set_raw_input(
-        bytearray(b"\xFE\x10\x02\xdb\xdc\x00\x00\x04\x01\xde\xad\xbe\xef\x0f\xc0")
+        bytearray(b"\xfe\x10\x02\xdb\xdc\x00\x00\x04\x01\xde\xad\xbe\xef\x0f\xc0")
     )
     # Print u32 Parameter
     emu.spp_handler.set_raw_input(
-        bytearray(b"\xFA\x10\x00\xdb\xdc\x00\x00\x00\x02\xd2\xc0")
+        bytearray(b"\xfa\x10\x00\xdb\xdc\x00\x00\x00\x02\xd2\xc0")
     )
 
     # Print Hello world 4 times
     emu.spp_handler.set_raw_input(
         bytearray(
-            b"\xFA\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\xFA\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\xFA\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\xFA\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0"
+            b"\xfa\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\xfa\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\xfa\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\xfa\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0"
         )
     )
 
@@ -100,6 +98,7 @@ def blackbox_handler(filename, grammar, debug, dbc_range):
         emu.spp_handler.set_raw_input(gen)
 
     emu.start()
+
 
 def sigint_handler(sig, frame):
     """Handler for <C-c>"""

@@ -28,11 +28,11 @@ def kiss_unpack(frame: bytearray) -> bytearray:
         elif byte == KISS_FESC:
             escape = True
         elif byte == KISS_TFEND:
-            if escape == True:
+            if escape:
                 byte = KISS_FEND
             escape = False
         elif byte == KISS_TFESC:
-            if escape == True:
+            if escape:
                 byte = KISS_FESC
             escape = False
         else:

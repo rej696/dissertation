@@ -64,7 +64,8 @@
  * The `expr_` expression is **not** evaluated if assertions are
  * disabled with the ::DBC_DISABLE switch.
  */
-#define DBC_ASSERT(expr_) ((expr_) ? ((void)0) : DBC_fault_handler(__FILE__ ":" STRINGIZE(__LINE__)))
+#define DBC_ASSERT(expr_)                                                                          \
+    ((expr_) ? ((void)0) : DBC_fault_handler(__FILE__ ":" STRINGIZE(__LINE__)))
 
 /*! General purpose assertion with user-specified ID number that
  * evaluates the `expr_` expression even when assertions are disabled.

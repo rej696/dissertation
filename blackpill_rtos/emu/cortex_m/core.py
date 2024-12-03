@@ -44,10 +44,8 @@ class CorePeripherals:
     def read_cb(self, uc, addr, size, user_data):
         p, offset = self.periph(addr)
         value = p.read_cb(uc, offset, size, user_data)
-        # print(f"CorePeripheral {hex(addr)} read returning value {value}")
         return value
 
     def write_cb(self, uc, addr, size, value, user_data):
         p, offset = self.periph(addr)
-        # print(f"CorePeripheral {hex(addr)} written with value {value}")
         p.write_cb(uc, offset, size, value, user_data)

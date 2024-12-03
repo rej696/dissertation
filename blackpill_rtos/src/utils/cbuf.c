@@ -2,16 +2,14 @@
 
 #include "utils/status.h"
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
-
 
 void cbuf_init(cbuf_t *const self)
 {
     self->write = 0;
     self->read = 0;
-    /* memset(self->buf, 0U, CBUF_SIZE); */
 }
 
 status_t cbuf_put(cbuf_t *const self, uint8_t const value)

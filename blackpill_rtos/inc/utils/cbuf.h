@@ -3,8 +3,8 @@
 
 #include "utils/status.h"
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #define CBUF_SIZE (1024)
 

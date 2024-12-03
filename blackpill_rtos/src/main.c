@@ -135,7 +135,6 @@ void uart_handler(void)
             status_t status = cbuf_read(cbuf, size, &buf[0]);
             enable_irq();
             if (status != STATUS_OK) {
-                /* TODO handle this error */
                 DEBUG("Failed to read from uart buffer", status);
                 continue;
             }
@@ -172,6 +171,8 @@ static status_t set_u8_param(size_t size, uint8_t const *const input)
     u8_param = *input;
     return STATUS_OK;
 }
+
+/* Test Actions/Parameters/Telemetries */
 
 static status_t print_u8_param(void)
 {

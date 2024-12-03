@@ -4,8 +4,8 @@
 #include "utils/cbuf.h"
 #include "utils/dbc_assert.h"
 #include "utils/debug.h"
-#include "utils/status.h"
 #include "utils/endian.h"
+#include "utils/status.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -28,7 +28,6 @@ static status_t frame_buffer_read_inner(cbuf_t *const cbuf)
         return STATUS_OK;
     }
 
-    /* FIXME replace with rtos aware queue/mutex */
     /* Mutex, if packet buffer is locked, delay and retry */
     while (self.lock) {
         rtos_delay(2);
@@ -63,7 +62,7 @@ static status_t frame_buffer_read_inner(cbuf_t *const cbuf)
 static status_t frame_buffer_write_inner(size_t const size, uint8_t const buf[size])
 {
     status_t status = STATUS_OK;
-    /* FIXME replace with rtos aware queue/mutex */
+
     /* Mutex, if frame buffer is locked, delay and retry */
     while (self.lock) {
         rtos_delay(2);

@@ -6,7 +6,7 @@ AlignAfterOpenBracket: AlwaysBreak
 AlignConsecutiveMacros: Consecutive
 AlignEscapedNewlines: Right
 AlignOperands: Align
-AlignArrayOfStructures: Right
+AlignArrayOfStructures: None
 AlignTrailingComments: true
 
 # Control what statements can be compressed onto a single line

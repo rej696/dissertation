@@ -34,7 +34,6 @@ typedef enum status {
     TELEMETRY_STATUS_INVALID_PAYLOAD_SIZE,
     TELEMETRY_STATUS_INVALID_TELEMETRY_ID,
 
-
     /* Used to identify the size of the status enum */
     STATUS_MAX,
 } status_t;

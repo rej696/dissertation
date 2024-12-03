@@ -1,6 +1,4 @@
 import struct
-import random
-import sys
 import os
 import signal
 from collections import OrderedDict
@@ -13,18 +11,12 @@ from capstone import (
     CS_MODE_THUMB,
 )
 
-# from capstone.arm_const import
 from unicornafl import (
     Uc,
     UcError,
     UC_ARCH_ARM,
     UC_MODE_LITTLE_ENDIAN,
-    UC_MILISECOND_SCALE,
     UC_HOOK_CODE,
-    UC_HOOK_INTR,
-    UC_HOOK_BLOCK,
-    UC_HOOK_MEM_READ,
-    UC_HOOK_MEM_WRITE,
     UC_ERR_OK,
     UC_ERR_EXCEPTION,
     UC_ERR_INSN_INVALID,
@@ -239,8 +231,8 @@ class Emulator:
 
         # Setup Peripheral Models
         self.cortex_m = CorePeripherals(self.uc)
-        self.uart1 = Uart(self.uc, UART1_START_ADDRESS, 1, terminator=0xC0) # KISS_FEND
-        self.uart2 = Uart(self.uc, UART2_START_ADDRESS, 2, terminator=0x0A) # '\n'
+        self.uart1 = Uart(self.uc, UART1_START_ADDRESS, 1, terminator=0xC0)  # KISS_FEND
+        self.uart2 = Uart(self.uc, UART2_START_ADDRESS, 2, terminator=0x0A)  # '\n'
         self.cortex_m.scb.debug = False
         self.uart1.debug = False
         self.uart2.debug = False
@@ -368,15 +360,13 @@ class Emulator:
             sp = self.uc.reg_read(UC_ARM_REG_SP)
 
         if self.debug:
-            print(f"Returning from ISR to PC {hex(pc)}, SP {hex(sp)}")
+            print(
+                f"Returning from ISR ({irq_num}, {interrupt_context}) to PC {hex(pc)}, SP {hex(sp)}"
+            )
         self.uc.emu_start(
             pc + 1,
             self.fw_size + self.base_addr,
         )
-
-    def uc_mem_block_cb(self, uc, address, size, data):
-        irq_num = uc.reg_read(UC_ARM_REG_IPSR)
-        self.return_from_interrupt(uc)
 
     def uc_code_cb(self, uc: Uc, addr, size, user_data):
         # This hook just prints the instruction being executed
@@ -456,9 +446,9 @@ class Emulator:
                       instruction.op_str}")
 
     def dump_mem(self, addr, size):
-        def chunks(l, n):
-            for i in range(0, len(l), n):
-                yield l[i : i + n]
+        def chunks(line, n):
+            for i in range(0, len(line), n):
+                yield line[i : i + n]
 
         print(f"\tMemory: @ {hex(addr)}")
         mem = self.uc.mem_read(addr, size)

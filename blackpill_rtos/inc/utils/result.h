@@ -1,8 +1,9 @@
 #ifndef RESULT_H_
 #define RESULT_H_
 
-#include <stdint.h>
 #include "utils/status.h"
+
+#include <stdint.h>
 
 typedef struct {
     status_t status;
@@ -13,6 +14,5 @@ typedef struct {
     status_t status;
     uint32_t value;
 } u32_result_t;
-
 
 #endif /* RESULT_H_ */

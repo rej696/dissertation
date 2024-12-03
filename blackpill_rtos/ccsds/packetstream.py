@@ -1,5 +1,5 @@
 from spacepackets.ccsds.spacepacket import SpacePacketHeader, PacketType, SequenceFlags
-from ccsds.kiss import kiss_pack, kiss_unpack
+from ccsds.kiss import kiss_pack
 from ccsds.utils import checksum, take
 
 # Length of data is max size of frame minus headers and trailers
@@ -11,6 +11,7 @@ ACTION_APID = 0
 GET_PARAM_APID = 1
 SET_PARAM_APID = 2
 TELEM_APID = 3
+
 
 def seq_count_inc(value):
     return value + 1 if value < 16383 else 0
@@ -48,33 +49,43 @@ class PacketStream:
         self._trigger = (config_byte >> 4) & 0xF
 
         # set error conditions depending on config byte
-        match (config_byte & 0xF):
-            case 0x0: pass  # 0 is fully valid packet
-            case 0x1: self._frame = False
-            case 0x2: self._checksum = False
-            case 0x3: self._spp_version = False
-            case 0x4: self._spp_type = False
-            case 0x5: self._spp_sec_hdr = False
-            case 0x6: self._spp_apid = False
-            case 0x7: self._spp_data_length = False
-            case 0x8: self._spp_seq_count = False
-            case 0x9: self._spp_seq_flags = False
+        match config_byte & 0xF:
+            case 0x0:
+                pass  # 0 is fully valid packet
+            case 0x1:
+                self._frame = False
+            case 0x2:
+                self._checksum = False
+            case 0x3:
+                self._spp_version = False
+            case 0x4:
+                self._spp_type = False
+            case 0x5:
+                self._spp_sec_hdr = False
+            case 0x6:
+                self._spp_apid = False
+            case 0x7:
+                self._spp_data_length = False
+            case 0x8:
+                self._spp_seq_count = False
+            case 0x9:
+                self._spp_seq_flags = False
+            case 0xB:
+                self._payload_valid = False
             # TODO use other error conditions?
-            case 0xB: self._payload_valid = False
-            case 0xC: pass
-            case 0xD: pass
-            case 0xE: pass
-            case 0xF: pass
-
+            case 0xC:
+                pass
+            case 0xD:
+                pass
+            case 0xE:
+                pass
+            case 0xF:
+                pass
 
         # Start with known good values e.g. actions and telemetry don't need more data etc.
         config_byte = list(take(byte_stream, 1))[0]
         self.apid = (config_byte >> 4) & 0x03
         self.handler_id = config_byte & 0x0F
-
-        # Handle handler_id error condition
-        payload = bytearray()
-        payload_len = 0
 
         config_byte = list(take(byte_stream, 1))[0]
         if self._payload_valid:
@@ -89,15 +100,6 @@ class PacketStream:
             # handle invalid payload data error condition
             self.data_len = config_byte + 1
             self.data = bytearray(take(byte_stream, self.data_len))
-
-        # self._frame = bool((config_byte >> 7) & 0x01)
-        # self._checksum = bool((config_byte >> 6) & 0x01)
-        # self._spp_version = bool((config_byte >> 5) & 0x01)
-        # self._spp_type = bool((config_byte >> 4) & 0x01)
-        # self._spp_sec_hdr = bool((config_byte >> 3) & 0x01)
-        # self._spp_apid = bool((config_byte >> 2) & 0x01)
-        # self._spp_data_length = bool((config_byte >> 1) & 0x01)
-        # self._spp_seq_count = bool(config_byte & 0x01)
 
     def trigger(self) -> int:
         return self._trigger
@@ -140,7 +142,11 @@ class PacketStream:
         return value if self._spp_seq_count else seq_count_dec(value)
 
     def spp_seq_flags(self) -> SequenceFlags:
-        return SequenceFlags.UNSEGMENTED if self._spp_seq_flags else SequenceFlags.CONTINUATION_SEGMENT
+        return (
+            SequenceFlags.UNSEGMENTED
+            if self._spp_seq_flags
+            else SequenceFlags.CONTINUATION_SEGMENT
+        )
 
     @property
     def sph(self) -> SpacePacketHeader:
@@ -151,7 +157,7 @@ class PacketStream:
             seq_flags=self.spp_seq_flags(),
             seq_count=self.spp_seq_count(self.seq_count),
             sec_header_flag=self.spp_sec_hdr(),
-            ccsds_version=self.spp_version()
+            ccsds_version=self.spp_version(),
         )
 
     def pack(self) -> bytearray:
