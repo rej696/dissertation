@@ -24,7 +24,7 @@ typedef enum {
   DebugMonitor_IRQn             =  -4,              /*!<  12  Debug Monitor                                                    */
   PendSV_IRQn                   =  -2,              /*!<  14  Pendable request for system service                              */
   SysTick_IRQn                  =  -1,              /*!<  15  System Tick Timer                                                */
-/* -------------------  TODO Specific Interrupt Numbers  ------------------ */
+/* ------------------- Specific STM32 Interrupt Numbers  ------------------ */
 
 /* Selected STM32F411xE IRQn values */
   USART1_IRQn = 37,
