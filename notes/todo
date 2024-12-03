@@ -1,19 +1,3 @@
-TODO write branches for inputs
-DONE handle application repsonses (2024-11-27 15:37)
-DONE create queue for communicating between threads (2024-11-27 18:35)
-TODO document emulator magic numbers
-TODO emulate gpio peripheral to show writes to led pin
 TODO fix interrupt preemption based on priority
-DONE fix sending spacepackets in emulator (2024-11-27 15:37)
-TODO improve fuzzer performance by performing startup sequence before forkserver
-TODO implement more interesting logic in application for fuzzer
-TODO fuzz blackpill application with fuzzware/hoedur?
-TODO clean up emulator/application code
 TODO run fuzzer on server
-TODO run multiple fuzzers with child fuzzers
-TODO improve fuzzer performance through modifying code callback
-DONE add checksum (2024-11-27 18:34)
-TODO improve grammar with more error condition possiblities
-TODO blackbox grammar fuzzer
-TODO add rtos lock timeouts
-TODO coverage guided blackbox fuzzer
+TODO write README
