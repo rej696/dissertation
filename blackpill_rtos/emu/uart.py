@@ -115,7 +115,7 @@ class Uart(Peripheral):
             for _ in range(len(self.reg("DR").write_data)):
                 value = self.reg("DR").write_data.pop(0)
                 string.append(byte2str(value))
-            print(f"Uart {self.name} says: {''.join(string)}")
+            return f"Uart {self.name} says: {''.join(string)}"
 
     def print_buf_hex(self):
         if self.reg("SR").get_bit(7):
@@ -124,7 +124,7 @@ class Uart(Peripheral):
             for _ in range(len(self.reg("DR").write_data)):
                 value = self.reg("DR").write_data.pop(0)
                 string.append(value)
-            print(f"Uart {self.name} says: {bytearray(string).hex(' ')}")
+            return f"Uart {self.name} says: {bytearray(string).hex(' ')}"
 
     @property
     def irq_pending(self):

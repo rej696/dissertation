@@ -191,9 +191,11 @@ class Emulator:
         base_addr,
         debug=False,
         dbc_addr_range=range(0x800028D, 0x80002A9),
+        coverage=False
     ) -> None:
         self.debug = debug
         self.dbc_addr_range = dbc_addr_range
+        self.cov = set() if coverage else None
         self.uc = Uc(UC_ARCH_ARM, UC_MODE_LITTLE_ENDIAN)
         self.cs = Cs(
             CS_ARCH_ARM, CS_MODE_THUMB | CS_MODE_MCLASS | CS_MODE_LITTLE_ENDIAN
@@ -209,7 +211,7 @@ class Emulator:
             fw = f.read()
             self.fw_size = len(fw)
             self.vector_table = VectorTable.parse(fw)
-            print(f"[*] loaded vector table:\n{self.vector_table}")
+            self.print(f"[*] loaded vector table:\n{self.vector_table}")
 
             size = get_aligned_size(self.fw_size)
             self.uc.mem_map(self.base_addr, size)
@@ -238,18 +240,18 @@ class Emulator:
         self.uart2.debug = False
 
     def uc_debug_read_cb(self, uc, access, addr, size, value, user_data):
-        print(f"Reading memory @ {hex(addr)}[{hex(size)}]")
-        print(f"{access}, {addr}, {size}, {value}")
+        self.print(f"Reading memory @ {hex(addr)}[{hex(size)}]")
+        self.print(f"{access}, {addr}, {size}, {value}")
         self.dump_mem(addr, size)
 
     def uc_debug_write_cb(self, uc, access, addr, size, value, user_data):
-        print(f"Writing memory @ {hex(addr)}[{hex(size)}]")
-        print(f"{access}, {addr}, {size}, {value}")
+        self.print(f"Writing memory @ {hex(addr)}[{hex(size)}]")
+        self.print(f"{access}, {addr}, {size}, {value}")
         self.dump_mem(addr, size)
 
     def save_context(self, uc, spsel, fpca):
         if self.debug:
-            print("Saving Context (old)")
+            self.print("Saving Context (old)")
             self.dump_reg()
         sp_reg = UC_ARM_REG_MSP
         if spsel:
@@ -271,7 +273,7 @@ class Emulator:
 
     def restore_context(self, uc, spsel, fpca):
         if self.debug:
-            print("Previous Context:")
+            self.print("Previous Context:")
             self.dump_reg()
         sp_reg = UC_ARM_REG_MSP
         if spsel:
@@ -293,14 +295,14 @@ class Emulator:
 
         uc.reg_write(UC_ARM_REG_SP, sp)
         if self.debug:
-            print("Restored Context:")
+            self.print("Restored Context:")
             self.dump_reg()
 
     def handle_interrupt(self, uc, isr):
         def isr_handler():
             isr_addr = self.vector_table[isr]
             if self.debug:
-                print(f"Entering ISR {isr}")
+                self.print(f"Entering ISR {isr}")
             control = uc.reg_read(UC_ARM_REG_CONTROL)
             spsel = bool(control & 0b10)  # which stack pointer is active?
             fpca = bool(control & 0b100)  # floating point context?
@@ -316,7 +318,7 @@ class Emulator:
             uc.reg_write(UC_ARM_REG_PC, pc)
             self.interrupt_context.append(isr)
             if self.debug:
-                print(
+                self.print(
                     f"Entering ISR @ {hex(isr_addr)}, "
                     + f"IRQ stack {self.interrupt_context}"
                 )
@@ -332,7 +334,7 @@ class Emulator:
         irq_num = self.uc.reg_read(UC_ARM_REG_IPSR)
         interrupt_context = self.interrupt_context.pop()
         if not self.interrupt_enabled:
-            print(
+            self.print(
                 "ERROR: attempting to return from interrupt while interrupts are disabled?"
             )
             return
@@ -360,7 +362,7 @@ class Emulator:
             sp = self.uc.reg_read(UC_ARM_REG_SP)
 
         if self.debug:
-            print(
+            self.print(
                 f"Returning from ISR ({irq_num}, {interrupt_context}) to PC {hex(pc)}, SP {hex(sp)}"
             )
         self.uc.emu_start(
@@ -369,9 +371,10 @@ class Emulator:
         )
 
     def uc_code_cb(self, uc: Uc, addr, size, user_data):
-        # This hook just prints the instruction being executed
-        code = uc.mem_read(addr, size)
+        if self.cov is not None and addr not in self.cov:
+            self.cov.add(addr)
 
+        code = uc.mem_read(addr, size)
         # handle cpsid and cpsie instructions
         if code == bytearray((0x72, 0xB6)):
             self.interrupt_enabled = False
@@ -405,14 +408,15 @@ class Emulator:
                 self.handle_interrupt(uc, "uart1_handler")
 
         if self.packet:
-            print(f"Uart 1 sent: {self.packet.hex(' ')}")
+            self.print(f"Uart 1 sent: {self.packet.hex(' ')}")
             self.uart1.put_buf(self.packet)
             self.packet = None
 
         if self.uart2.ready_to_print:
 
             def uart2_trampoline_handler():
-                self.uart2.print_buf()
+                if string := self.uart2.print_buf():
+                    self.print(string)
                 pc = self.uc.reg_read(UC_ARM_REG_PC)
                 self.uc.emu_start(
                     pc + 1,
@@ -425,7 +429,8 @@ class Emulator:
         if self.uart1.ready_to_print:
 
             def uart1_trampoline_handler():
-                self.uart1.print_buf_hex()
+                if string := self.uart1.print_buf_hex():
+                    self.print(string)
                 pc = self.uc.reg_read(UC_ARM_REG_PC)
                 self.uc.emu_start(
                     pc + 1,
@@ -442,7 +447,7 @@ class Emulator:
         # print instruction
         if self.debug:
             for instruction in self.cs.disasm(code, addr, 1):
-                print(
+                self.print(
                     f"{hex(addr)}\t {instruction.mnemonic}" + f" {instruction.op_str}"
                 )
 
@@ -451,40 +456,40 @@ class Emulator:
             for i in range(0, len(line), n):
                 yield line[i : i + n]
 
-        print(f"\tMemory: @ {hex(addr)}")
+        self.print(f"\tMemory: @ {hex(addr)}")
         mem = self.uc.mem_read(addr, size)
 
         for row in chunks(mem, 16):
             half_rows = tuple(chunks(row, 8))
             if len(half_rows) < 2:
-                print(f"\t\t{hex(addr)}: {half_rows[0].hex(' ')}")
+                self.print(f"\t\t{hex(addr)}: {half_rows[0].hex(' ')}")
             else:
-                print(
+                self.print(
                     f"\t\t{hex(addr)}: {half_rows[0].hex(' ')}"
                     + f"    {half_rows[1].hex(' ')}"
                 )
             addr += 16
 
     def dump_reg(self):
-        print("\tRegister Dump:")
-        print(f"\t\tPC: {hex(self.uc.reg_read(UC_ARM_REG_PC))}")
-        print(f"\t\tLR: {hex(self.uc.reg_read(UC_ARM_REG_LR))}")
-        print(f"\t\tSP: {hex(self.uc.reg_read(UC_ARM_REG_SP))}")
-        print(f"\t\tR0: {hex(self.uc.reg_read(UC_ARM_REG_R0))}")
-        print(f"\t\tR1: {hex(self.uc.reg_read(UC_ARM_REG_R1))}")
-        print(f"\t\tR2: {hex(self.uc.reg_read(UC_ARM_REG_R2))}")
-        print(f"\t\tR3: {hex(self.uc.reg_read(UC_ARM_REG_R3))}")
-        print(f"\t\tR4: {hex(self.uc.reg_read(UC_ARM_REG_R4))}")
-        print(f"\t\tR5: {hex(self.uc.reg_read(UC_ARM_REG_R5))}")
-        print(f"\t\tR6: {hex(self.uc.reg_read(UC_ARM_REG_R6))}")
-        print(f"\t\tR7: {hex(self.uc.reg_read(UC_ARM_REG_R7))}")
-        print(f"\t\tR8: {hex(self.uc.reg_read(UC_ARM_REG_R8))}")
-        print(f"\t\tR9: {hex(self.uc.reg_read(UC_ARM_REG_R9))}")
-        print(f"\t\tR10: {hex(self.uc.reg_read(UC_ARM_REG_R10))}")
-        print(f"\t\tR11: {hex(self.uc.reg_read(UC_ARM_REG_R11))}")
-        print(f"\t\tR12: {hex(self.uc.reg_read(UC_ARM_REG_R12))}")
+        self.print("\tRegister Dump:")
+        self.print(f"\t\tPC: {hex(self.uc.reg_read(UC_ARM_REG_PC))}")
+        self.print(f"\t\tLR: {hex(self.uc.reg_read(UC_ARM_REG_LR))}")
+        self.print(f"\t\tSP: {hex(self.uc.reg_read(UC_ARM_REG_SP))}")
+        self.print(f"\t\tR0: {hex(self.uc.reg_read(UC_ARM_REG_R0))}")
+        self.print(f"\t\tR1: {hex(self.uc.reg_read(UC_ARM_REG_R1))}")
+        self.print(f"\t\tR2: {hex(self.uc.reg_read(UC_ARM_REG_R2))}")
+        self.print(f"\t\tR3: {hex(self.uc.reg_read(UC_ARM_REG_R3))}")
+        self.print(f"\t\tR4: {hex(self.uc.reg_read(UC_ARM_REG_R4))}")
+        self.print(f"\t\tR5: {hex(self.uc.reg_read(UC_ARM_REG_R5))}")
+        self.print(f"\t\tR6: {hex(self.uc.reg_read(UC_ARM_REG_R6))}")
+        self.print(f"\t\tR7: {hex(self.uc.reg_read(UC_ARM_REG_R7))}")
+        self.print(f"\t\tR8: {hex(self.uc.reg_read(UC_ARM_REG_R8))}")
+        self.print(f"\t\tR9: {hex(self.uc.reg_read(UC_ARM_REG_R9))}")
+        self.print(f"\t\tR10: {hex(self.uc.reg_read(UC_ARM_REG_R10))}")
+        self.print(f"\t\tR11: {hex(self.uc.reg_read(UC_ARM_REG_R11))}")
+        self.print(f"\t\tR12: {hex(self.uc.reg_read(UC_ARM_REG_R12))}")
         sp = self.uc.reg_read(UC_ARM_REG_SP)
-        print(f"\tStack: @ {hex(sp)}")
+        self.print(f"\tStack: @ {hex(sp)}")
         self.dump_mem(sp - 0x40, 0x40)
 
     def reset_handler(self):
@@ -501,28 +506,31 @@ class Emulator:
             while True:
                 handler = self.trampoline_handlers.pop(0)
                 if self.debug:
-                    print("Trampoline Handler:")
+                    self.print("Trampoline Handler:")
                     self.dump_reg()
                 handler()
         except UcError as e:
-            print(f"Exception {e}:")
+            self.print(f"Exception {e}:")
             self.dump_reg()
             force_crash(e)
         except EmulatorException as e:
-            print(f"Emulator Exception {e}:")
+            self.print(f"Emulator Exception {e}:")
             self.dump_reg()
             force_crash(e)
         except DbcException as e:
-            print(f"DBC Exception {e}:")
+            self.print(f"DBC Exception {e}:")
             self.dump_reg()
             force_crash(e)
         except OutOfPacketsException as e:
-            print(f"OutOfPacketsException: {e}")
+            self.print(f"OutOfPacketsException: {e}")
         except Exception as e:
-            print(f"Unhandled Exception {e}:")
+            self.print(f"Unhandled Exception {e}:")
             self.dump_reg()
             raise e
 
+    def print(self, string):
+        if self.cov is None:
+            print(">>>" + string)
 
 def fuzz_start(uc, self):
     self.packets = self.spp_handler.packet_generator()
@@ -533,24 +541,24 @@ def fuzz_start(uc, self):
         while True:
             handler = self.trampoline_handlers.pop(0)
             if self.debug:
-                print("Trampoline Handler:")
+                self.print("Trampoline Handler:")
                 self.dump_reg()
             handler()
     except UcError as e:
-        print(f"Exception {e}:")
+        self.print(f"Exception {e}:")
         self.dump_reg()
         return e.errno
     # handle execeptions for afl correctly (i.e. which are crashes and which just the end of execution)
     except EmulatorException as e:
-        print(f"Emulator Exception {e}:")
+        self.print(f"Emulator Exception {e}:")
         self.dump_reg()
         return UC_ERR_EXCEPTION
     except DbcException as e:
-        print(f"DBC Exception {e}:")
+        self.print(f"DBC Exception {e}:")
         self.dump_reg()
         return UC_ERR_EXCEPTION
     except OutOfPacketsException as e:
-        print(f"OutOfPacketsException: {e}")
+        self.print(f"OutOfPacketsException: {e}")
         return UC_ERR_OK
     except Exception as e:
         print(f"Unhandled Exception {e}:")
@@ -558,6 +566,7 @@ def fuzz_start(uc, self):
         return UC_ERR_EXCEPTION
 
     return UC_ERR_OK
+
 
 
 def force_crash(uc_error):

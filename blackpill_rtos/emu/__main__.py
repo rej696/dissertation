@@ -2,6 +2,7 @@ from emu.emulator import Emulator, FLASH_START_ADDRESS, fuzz_start
 from unicornafl import uc_afl_fuzz_custom
 from functools import partial
 from ccsds.utils import blackbox_generator
+import os
 import sys
 import signal
 import threading
@@ -27,20 +28,43 @@ def fuzz_handler(filename, fuzz_input_filename, grammar, debug, dbc_addr):
         data=emu,
     )
 
+def cov_handler(filename, fuzz_input_filename, grammar, debug, dbc_addr, cov_path, address_space):
+    coverage = set()
+    # get ordered list of files
+    files = sorted(filter(lambda x:not x.is_dir(), os.scandir(cov_path)), key=(lambda x:x.name))
+    for input_file in files:
+        emu = Emulator(filename, FLASH_START_ADDRESS, False, dbc_addr, True)
+        print(f"Input: {input_file.name}")
+        with open(input_file, "rb") as f:
+            input = bytearray(f.read())
+            if grammar:
+                emu.spp_handler.set_input(input)
+            else:
+                emu.spp_handler.set_raw_input(input)
+
+        result = fuzz_start(emu.uc, emu)
+        if not address_space.issuperset(emu.cov):
+            print("ERROR")
+        coverage.update(emu.cov)
+
+        print(f"\tResult: {result}")
+        print(f"\tCoverage: {(len(emu.cov) / len(address_space))* 100: .2f}%")
+        print(f"\tTotal Coverage: {(len(coverage) / len(address_space))*100: .2f}%")
+
 
 def spp_grammer_input_cb(emu):
     # Print hello world
     emu.spp_handler.set_input(b"\xf0\x00\x00")
 
     # Set u8 parameter
-    emu.spp_handler.set_input(b"\xf0\x20\x01\xa5")
+    emu.spp_handler.set_input(b"\xa0\x20\x01\xa5")
     # Print u8 Parameter
-    emu.spp_handler.set_input(b"\xf0\x01\x00")
+    emu.spp_handler.set_input(b"\x20\x01\x00")
 
     # Set u32 parameter
-    emu.spp_handler.set_input(b"\xf0\x21\x04\xde\xad\xbe\xef")
+    emu.spp_handler.set_input(b"\x50\x21\x04\xde\xad\xbe\xef")
     # Print u32 Parameter
-    emu.spp_handler.set_input(b"\xf0\x02\x00")
+    emu.spp_handler.set_input(b"\xe0\x02\x00")
 
     # Send them all in one go
     emu.spp_handler.set_input(
@@ -51,31 +75,30 @@ def spp_grammer_input_cb(emu):
 def spp_raw_input_cb(emu):
     # Print hello world
     emu.spp_handler.set_raw_input(
-        bytearray(b"\x0a\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0")
+        bytearray(b"\xfa\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0")
     )
 
     # Set u8 parameter
     emu.spp_handler.set_raw_input(
-        bytearray(b"\x0b\x10\x02\xdb\xdc\x00\x00\x01\x00\xa5\x78\xc0")
+        bytearray(b"\xab\x10\x02\xdb\xdc\x00\x00\x01\x00\xa5\x78\xc0")
     )
     # Print u8 Parameter
     emu.spp_handler.set_raw_input(
-        bytearray(b"\x0a\x10\x00\xdb\xdc\x00\x00\x00\x01\xd1\xc0")
+        bytearray(b"\x2a\x10\x00\xdb\xdc\x00\x00\x00\x01\xd1\xc0")
     )
 
     # Set u32 parameter
     emu.spp_handler.set_raw_input(
-        bytearray(b"\x0e\x10\x02\xdb\xdc\x00\x00\x04\x01\xde\xad\xbe\xef\x0f\xc0")
+        bytearray(b"\x5e\x10\x02\xdb\xdc\x00\x00\x04\x01\xde\xad\xbe\xef\x0f\xc0")
     )
     # Print u32 Parameter
     emu.spp_handler.set_raw_input(
-        bytearray(b"\x0a\x10\x00\xdb\xdc\x00\x00\x00\x02\xd2\xc0")
+        bytearray(b"\xea\x10\x00\xdb\xdc\x00\x00\x00\x02\xd2\xc0")
     )
 
-    # Print Hello world 4 times
+    # Send them all in one go
     emu.spp_handler.set_raw_input(
-        bytearray(
-            b"\x0a\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\x0a\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\x0a\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\x0a\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0"
+        bytearray(b"\xfa\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\xfb\x10\x02\xdb\xdc\x00\x00\x01\x00\x7d\x50\xc0\xfa\x10\x00\xdb\xdc\x00\x00\x00\x01\xd1\xc0\xfe\x10\x02\xdb\xdc\x00\x00\x04\x01\xca\xfe\xba\xbe\x17\xc0\x0a\x10\x00\xdb\xdc\x00\x00\x00\x02\xd2\xc0"
         )
     )
 
@@ -120,6 +143,14 @@ def main():
     )
 
     parser.add_argument(
+        "-c",
+        "--cov",
+        type=str,
+        default="",
+        help="Path to the folder containing the input files",
+    )
+
+    parser.add_argument(
         "--elf",
         type=str,
         default="build/firmware.elf",
@@ -159,7 +190,38 @@ def main():
         dbc_size = int(dbc[2])
         dbc_range = range(dbc_addr, dbc_size + dbc_addr)
 
-    if args.input:
+        if args.cov:
+            address_space = {int(addr, 16) for addr in
+                subprocess.check_output(
+                    "arm-none-eabi-objdump -d "
+                    + args.elf
+                    + " | awk '$1 ~ /8.*:/ && $3 !~ /word/ { print $1 }' | tr -d ':'",
+                    shell=True
+                ).decode(
+                    "utf-8"
+                ).split("\n")
+                if addr
+            }
+
+    if args.cov:
+        # afl fuzz mode
+        signal.signal(signal.SIGINT, sigint_handler)
+        cov_thread = threading.Thread(
+            target=partial(
+                cov_handler,
+                args.firmware,
+                args.input,
+                args.grammar,
+                args.debug,
+                dbc_range,
+                args.cov,
+                address_space,
+            )
+        )
+        cov_thread.start()
+        cov_thread.join()
+
+    elif args.input:
         # afl fuzz mode
         signal.signal(signal.SIGINT, sigint_handler)
         fuzz_thread = threading.Thread(

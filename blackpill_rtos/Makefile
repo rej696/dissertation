@@ -27,8 +27,7 @@ TARGET := $(BUILD)/firmware
 SOURCES := $(shell find $(SRC) -name '*.c')
 OBJECTS := $(SOURCES:$(SRC)/%.c=$(BUILD)/%.o)
 
-.PHONY: build dump clean emu emu-raw emu-bb gdb disasm debug io emu_install addr dbc
-
+.PHONY: build flash dump gdb io debug disasm addr dbc clean
 build: $(TARGET).bin
 
 $(TARGET).bin: $(TARGET).elf
@@ -60,35 +59,67 @@ debug:
 disasm: $(TARGET).elf
 	$(GDB) -q $< -ex "set pagination off" -ex "disas /s $(SYMBOL)" -ex quit
 
+addresses: $(TARGET).elf
+	@$(OBJDUMP) -d $< | awk '/$$1 ~ /8.*:/ && $$3 !~ /word/ { print $1 }' | tr -d ':'
+
 addr: $(TARGET).elf
 	@readelf $<  -s | awk '/$(SYMBOL)/ { printf("%x ", strtonum("0x"$$2) - 1); printf("%x\n", (strtonum("0x"$$2) + $$3 - 1)) }'
 
 dbc: $(TARGET).elf
 	@make --no-print-directory SYMBOL=DBC_fault_handler addr
 
+clean:
+	rm -rf build
+
+
+.PHONY: emu emu-raw emu-bb emu-bb-raw gen-fuzz-inputs fuzz fuzz-debug fuzz-raw \
+	fuzz-raw-debug cov-afl cov-afl-raw cov cov-raw emu_install
 emu-raw: $(TARGET).bin
-	venv/bin/python3 -m emu $<
+	$(PYTHON) -m emu $<
 
 emu: $(TARGET).bin
-	venv/bin/python3 -m emu -g $<
+	$(PYTHON) -m emu -g $<
 
 emu-bb-raw: $(TARGET).bin
-	venv/bin/python3 -m emu -b $<
+	$(PYTHON) -m emu -b $<
 
 emu-bb: $(TARGET).bin
-	venv/bin/python3 -m emu -b -g $<
+	$(PYTHON) -m emu -b -g $<
+
+gen-fuzz-inputs:
+	$(PYTHON) generate_inputs.py
 
 fuzz-raw: $(TARGET).bin
-	AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 afl-fuzz -U -t +50000 -i raw_fuzz_inputs -o raw_fuzz_outputs $(FUZZER_NAME) $(PYTHON) -m emu $< -i @@F
+	AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 \
+		afl-fuzz -U -t +50000 -i raw_fuzz_inputs -o raw_fuzz_outputs \
+		$(FUZZER_NAME) $(PYTHON) -m emu $< -i @@
 
 fuzz-raw-debug: $(TARGET).bin
-	AFL_DEBUG=1 AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 afl-fuzz -U -t +50000 -i raw_fuzz_inputs -o raw_fuzz_outputs $(PYTHON) -m emu $< -i @@F
+	AFL_DEBUG=1 AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 \
+		  afl-fuzz -U -t +50000 -i raw_fuzz_inputs -o raw_fuzz_outputs \
+		  $(FUZZER_NAME) $(PYTHON) -m emu $< -i @@
 
 fuzz: $(TARGET).bin
-	AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 afl-fuzz -U -t +50000 -i grammar_fuzz_inputs -o grammar_fuzz_outputs $(FUZZER_NAME) $(PYTHON) -m emu $< -g -i @@
+	AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 \
+			 afl-fuzz -U -t +50000 -i grammar_fuzz_inputs -o grammar_fuzz_outputs \
+			 $(FUZZER_NAME) $(PYTHON) -m emu $< -g -i @@
 
 fuzz-debug: $(TARGET).bin
-	AFL_DEBUG=1 AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 afl-fuzz -U -t +50000 -i grammar_fuzz_inputs -o grammar_fuzz_outputs $(FUZZER_NAME) $(PYTHON) -m emu $< -g -i @@
+	AFL_DEBUG=1 AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 \
+		  afl-fuzz -U -t +50000 -i grammar_fuzz_inputs -o grammar_fuzz_outputs \
+		  $(FUZZER_NAME) $(PYTHON) -m emu $< -g -i @@
+
+cov-afl: $(TARGET).bin
+	afl-showmap -C -i grammar_fuzz_outputs -o /dev/null -- $(PYTHON) -m emu $< -g -i @@
+
+cov-afl-raw: $(TARGET).bin
+	afl-showmap -C -i raw_fuzz_outputs -o /dev/null -- $(PYTHON) -m emu $< -i @@
+
+cov: $(TARGET).bin
+	$(PYTHON) -m emu $< -g -c grammar_fuzz_outputs/default/queue
+
+cov-raw: $(TARGET).bin
+	$(PYTHON) -m emu $< -c raw_fuzz_outputs/default/queue
 
 emu_install: venv
 
@@ -96,22 +127,11 @@ venv: requirements.txt
 	python3 -m venv venv
 	venv/bin/pip3 install -r requirements.txt
 
-clean:
-	rm -rf build
-
-.PHONY: docker-build docker-fuzz docker-bash docker-logs docker-attach docker-stop chown docker-rm
+.PHONY: docker-build docker-bash docker-logs docker-attach docker-stop chown docker-rm
 docker-build:
 	docker build -t rej696/afl:latest .
 
 # C-p C-q will background a running docker process
-docker-fuzz:
-	docker run --rm -it -d --name fuzzer01 -v $$(pwd):/src rej696/afl bash -c "make PYTHON=python3 FUZZER_NAME='-M fuzzer01' fuzz"
-	docker run --rm -it -d --name fuzzer02 -v $$(pwd):/src rej696/afl bash -c "make PYTHON=python3 FUZZER_NAME='-S fuzzer02' fuzz"
-
-docker-fuzz-secondary:
-	docker run --rm -it -d --name fuzzer03 -v $$(pwd):/src rej696/afl bash -c "make PYTHON=python3 FUZZER_NAME='-S fuzzer03' fuzz"
-	docker run --rm -it -d --name fuzzer04 -v $$(pwd):/src rej696/afl bash -c "make PYTHON=python3 FUZZER_NAME='-S fuzzer04' fuzz"
-
 docker-bash:
 	docker run --rm -it --name fuzz -v $$(pwd):/src rej696/afl bash
 
