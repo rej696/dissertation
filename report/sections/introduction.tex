@@ -2,9 +2,116 @@
 \graphicspath{{\subfix{../images}}}
 \begin{document}
 
-introduction
+Historically, designing, manufacturing and operating space missions has been a
+costly undertaking, with a large number risks and specific challenges. Software
+systems in spacecraft have been carefully designed over long time periods to
+ensure that there was the possiblity of failure was minimal, due to the high
+cost and difficulty with trying to resolve issues after launch.
+
+However, the cost of launches to low earth orbit has been reducing, driven by
+the rise in companies like SpaceX [REF]. This, and the development and
+proliferation of the cubesat standard [REF], has enabled a new type of
+organisation to build and operate space missions.
+
+FIXME comment about intuition 1 landing on the moon
+FIXME comment about companies being small
+
+This new space industry does not follow the same rules as the governments and
+heavy industry who previously had exclusive access to space. They manufacture
+smaller, cheaper satellites, in much larger quantities and with shorter lead
+times, often to low earth orbit [REF].
+
+Sofware needs to be developed in shorter time frames for lower costs, due to
+tighter profits from contracts and higher competition. Satellites in low earth
+orbit have a shorter lifetime due to atmospheric drag. Cubesats have a
+generally high failure rate due to a long list of possible failure modes which
+can cripple a platform, with no chance of repair. Some examples might be a
+solar panel not deploying, a launch vibration damaging a critical sensor, or an
+issue with the thermal management resulting in the payload having degraded
+operations. Often, the correctness of the software systems only becomes an
+issue when all these barriers have been passed, and so is a risk that is not
+considered worth spending time and money until later in a programme. Thus, new
+space companies have a vastly different approach to software systems compared
+with big space companies, and many of the approaches used by big space
+companies to ensure sofware correctness, such as extensive system and
+integration testing and formal methods, are simply to time consuming and
+expensive to be applicable in the new space environment.
+
+FIXME: ( SpaceX's StarLink satellite program is the
+obvious example of this. These satellites have a short mission life of five
+years [REF], )
+
+* Satellite Architecture (SPAD book?)
+
+Software systems are an essential component of modern satellite designs.
+Satellites usually include a number of distributed embedded systems, each
+tasked with monitoring and controlling different critical subsystems such as
+power, attitude control, communication etc. Typically, a satellite will have a
+central on board computer (OBC), or command and data handling subsystem (CDH).
+
+There may be a dedicated guidance navigation and control (GNC) or attitude
+determination and control (ADCS) subsystem which runs complex algorithms using
+data retrieved from sensors like star trackers, rate sensors, magnetometers and
+sun sensors to drive actuators like reaction wheels and magnetorquers in order
+to point the satellite. Pointing is critical for many tasks. Payload operation
+tasks such as imaging require a high degree of accuracy and responsiveness.
+Propulsion manouvers, managing thermal loads, power generation (i.e. pointing
+the solar panels at the sun to improve the efficiency) all require an effective
+ADCS subsystem.
+
+The OBC will be connected to many lower power telemetry (TM) nodes, which are
+tasked with monitoring temperatures, voltages and currents, and toggling switches
+to enable/disable different subsystems. The OBC will log the telemetry reported
+by the TM nodes, and if telemery exceeds limits, handle fault detection,
+isolation and recovery (FDIR).
+
+The OBC or CDH subsystem is responsible for handling communication with a
+ground station via a radio, and so provides the interface between a satellite
+and the operator, who uses the OBC to download data from orbit, schedule
+payload operations, and respond to issues.
+
+Payload computers (PLC) are common on satellites with compex payloads and are
+responsible for managing and operating whatever instruments are on board for
+delivery of the mission, such as radios, imagers, scientific experiments etc.
+On smaller satellites, like cubesats where payloads are less complex, the
+responsiblilties of the PLC can be handled by the OBC.
+
+** Flight Software security and protocols
+...spacepacket, framing, checksums etc? Fuzzware and Hoedur
+
+** Flight Software Development Challenges
+
+Developing flight software for satellite systems is a complex process due to
+the large number of different interfaces and interdepencies in the
+architecture. Furthermore, due to the space environment, computers used in
+satellite systems can have stringent environmental requirements, such as high
+radiation tolerance to reduce the likelyhood of single event upsets (SEU), low
+power consumption and consideration of thermal management. The embedded
+microcontrollers that meet these requiremetns can be more expensive than those
+commonly used for other applications, like in automotive systems or IOT devices.
+
+Developing software for embedded systems often has a critical dependency on
+hardware. Writing drivers for devices using only a datasheet can result in long
+periods of rework when hardware is available to test against due to incorrect
+information or a misinterpretation. The number of interdependent systems, the
+costs of these components, and smaller budgets of new space companies, results
+in dedicated engineering hardware required for effective development of
+embedded flight software being unavailable. Often engineers are only being able
+to test with flight hardware, and then have to fit their testing into a packet
+schedule to meet tight deadlines.
+
+
+
+** Emulation and Fuzz testing
+
+Fuzz testing is an approach to testing ....
+* FIXME take stuff from below and put into here, but rework to be more about how fuzzing could be a lower cost automated solution to system testing
+
+* FIXME should probably talk about protocols
 
 \section{Motivation}
+
+- Writing software for satellites
 
 \section{Background}
 
