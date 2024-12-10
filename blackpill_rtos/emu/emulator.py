@@ -191,7 +191,7 @@ class Emulator:
         base_addr,
         debug=False,
         dbc_addr_range=range(0x800028D, 0x80002A9),
-        coverage=False
+        coverage=False,
     ) -> None:
         self.debug = debug
         self.dbc_addr_range = dbc_addr_range
@@ -532,6 +532,7 @@ class Emulator:
         if self.cov is None:
             print(">>>" + string)
 
+
 def fuzz_start(uc, self):
     self.packets = self.spp_handler.packet_generator()
     self.uc = uc
@@ -566,7 +567,6 @@ def fuzz_start(uc, self):
         return UC_ERR_EXCEPTION
 
     return UC_ERR_OK
-
 
 
 def force_crash(uc_error):

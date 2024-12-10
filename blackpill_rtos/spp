@@ -9,7 +9,7 @@ from ccsds.kiss import kiss_pack, kiss_unpack
 from ccsds.packetstream import (
     PacketStream, ACTION_APID, GET_PARAM_APID, SET_PARAM_APID, TELEM_APID
 )
-from ccsds.utils import checksum, take, blackbox_generator
+from ccsds.utils import checksum, take, blackbox_generator, raw_input_stream
 from spacepackets.ccsds.spacepacket import SpacePacketHeader, PacketType
 
 
@@ -65,9 +65,22 @@ def create_packet(apid: int, data: list) -> bytes:
     return kiss_pack(checksum(bytearray(sph.pack() + data_bytes)))
 
 
-def fuzzstream():
+def grammarstream():
     for handler in PacketStream.from_bytestream(blackbox_generator()):
-        yield handler.pack()
+        yield handler.trigger(), handler.pack()
+
+def fuzzstream(ser, delay, stream):
+    """
+    send all frames in the stream object at intervals calculated from
+    the product of the delay and the trigger
+    """
+    first = True
+    for trigger, frame in stream:
+        if not first:
+            time.sleep(delay * trigger)
+        first = False
+
+        send_packet(ser, frame)
 
 
 @click.group()
@@ -116,31 +129,34 @@ def tlm(ctx, tlm_id):
 
 @cli.command()
 @click.argument("n", type=int)
-@click.option("--delay", default=10, type=int)
+@click.option("--delay", default=1, type=int)
 @click.pass_context
 def fuzz_times(ctx, n, delay):
-    print(f"Fuzzing {n} times with delay {delay}")
-    first = True
-    for frame in take(fuzzstream(), n):
-        if not first:
-            time.sleep(delay)
-        first = False
-
-        send_packet(ctx.obj["serial"], frame)
+    print(f"Grammar Fuzzing {n} times with delay {delay}")
+    fuzzstream(ctx.obj["serial"], delay, take(grammarstream(), n))
 
 
 @cli.command()
-@click.option("--delay", default=10, type=int)
+@click.option("--delay", default=1, type=int)
 @click.pass_context
 def fuzz(ctx, delay):
-    print(f"Fuzzing with delay {delay}")
-    first = True
-    for frame in fuzzstream():
-        if not first:
-            time.sleep(delay)
-        first = False
+    print(f"Grammar Fuzzing with delay {delay}")
+    fuzzstream(ctx.obj["serial"], delay, grammarstream())
 
-        send_packet(ctx.obj["serial"], frame)
+@cli.command()
+@click.argument("n", type=int)
+@click.option("--delay", default=1, type=int)
+@click.pass_context
+def fuzz_raw_times(ctx, n, delay):
+    print(f"Fuzzing with delay {delay}")
+    fuzzstream(ctx.obj["serial"], delay, take(raw_input_stream(blackbox_generator()), n))
+
+@cli.command()
+@click.option("--delay", default=1, type=int)
+@click.pass_context
+def fuzz_raw(ctx, delay):
+    print(f"Fuzzing with delay {delay}")
+    fuzzstream(ctx.obj["serial"], delay, raw_input_stream(blackbox_generator()))
 
 
 @cli.command()

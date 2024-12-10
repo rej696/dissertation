@@ -28,10 +28,15 @@ def fuzz_handler(filename, fuzz_input_filename, grammar, debug, dbc_addr):
         data=emu,
     )
 
-def cov_handler(filename, fuzz_input_filename, grammar, debug, dbc_addr, cov_path, address_space):
+
+def cov_handler(
+    filename, fuzz_input_filename, grammar, debug, dbc_addr, cov_path, address_space
+):
     coverage = set()
     # get ordered list of files
-    files = sorted(filter(lambda x:not x.is_dir(), os.scandir(cov_path)), key=(lambda x:x.name))
+    files = sorted(
+        filter(lambda x: not x.is_dir(), os.scandir(cov_path)), key=(lambda x: x.name)
+    )
     for input_file in files:
         emu = Emulator(filename, FLASH_START_ADDRESS, False, dbc_addr, True)
         print(f"Input: {input_file.name}")
@@ -98,7 +103,8 @@ def spp_raw_input_cb(emu):
 
     # Send them all in one go
     emu.spp_handler.set_raw_input(
-        bytearray(b"\xfa\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\xfb\x10\x02\xdb\xdc\x00\x00\x01\x00\x7d\x50\xc0\xfa\x10\x00\xdb\xdc\x00\x00\x00\x01\xd1\xc0\xfe\x10\x02\xdb\xdc\x00\x00\x04\x01\xca\xfe\xba\xbe\x17\xc0\x0a\x10\x00\xdb\xdc\x00\x00\x00\x02\xd2\xc0"
+        bytearray(
+            b"\xfa\x10\x00\xdb\xdc\x00\x00\x00\x00\xd0\xc0\xfb\x10\x02\xdb\xdc\x00\x00\x01\x00\x7d\x50\xc0\xfa\x10\x00\xdb\xdc\x00\x00\x00\x01\xd1\xc0\xfe\x10\x02\xdb\xdc\x00\x00\x04\x01\xca\xfe\xba\xbe\x17\xc0\x0a\x10\x00\xdb\xdc\x00\x00\x00\x02\xd2\xc0"
         )
     )
 
@@ -191,15 +197,16 @@ def main():
         dbc_range = range(dbc_addr, dbc_size + dbc_addr)
 
         if args.cov:
-            address_space = {int(addr, 16) for addr in
-                subprocess.check_output(
+            address_space = {
+                int(addr, 16)
+                for addr in subprocess.check_output(
                     "arm-none-eabi-objdump -d "
                     + args.elf
                     + " | awk '$1 ~ /8.*:/ && $3 !~ /word/ { print $1 }' | tr -d ':'",
-                    shell=True
-                ).decode(
-                    "utf-8"
-                ).split("\n")
+                    shell=True,
+                )
+                .decode("utf-8")
+                .split("\n")
                 if addr
             }
 
