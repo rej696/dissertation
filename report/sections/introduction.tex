@@ -2,6 +2,14 @@
 \graphicspath{{\subfix{../images}}}
 \begin{document}
 
+
+\section{Software Engineering in the New Space Industry}
+% References:
+% - Bousedra_2024: policy paper, may be less useful?
+% - Denis_2020: paper discussing trends in the space industry, more relevent?
+% - Cubesat_Handbook: book with information about designing cubesats, useful for satellite architecture?
+% - Cratere_2024: OBC for Cubesats State of the Art
+
 Historically, designing, manufacturing and operating space missions has been a
 costly undertaking, with a large number risks and specific challenges. Software
 systems in spacecraft have been carefully designed over long time periods to
@@ -9,39 +17,94 @@ ensure that there was the possiblity of failure was minimal, due to the high
 cost and difficulty with trying to resolve issues after launch.
 
 However, the cost of launches to low earth orbit has been reducing, driven by
-the rise in companies like SpaceX [REF]. This, and the development and
-proliferation of the cubesat standard [REF], has enabled a new type of
-organisation to build and operate space missions.
+the comercialisation of the space sector and prolific companies like SpaceX
+\citep{Denis_2020}. This, and the development and proliferation of the cubesat
+standard \citep{CubesatDesignSpec}, has enabled a new type of organisation to
+build and operate space missions.
 
-FIXME comment about intuition 1 landing on the moon
-FIXME comment about companies being small
+% TODO introduce characteristics of new space (low earth orbit, cubesats)
 
-This new space industry does not follow the same rules as the governments and
-heavy industry who previously had exclusive access to space. They manufacture
-smaller, cheaper satellites, in much larger quantities and with shorter lead
-times, often to low earth orbit [REF].
+\citet{Sweeting_2018} defines New Space as
+\begin{quote}
+    The emergence of a different ethos for space where the established
+    aerospace methods and business have been challenged by more entrepreneurial
+    private sector by adopting more agile approaches and exploiting the latest
+    commercial-off-the-shelf technologies
+\end{quote}
 
-Sofware needs to be developed in shorter time frames for lower costs, due to
-tighter profits from contracts and higher competition. Satellites in low earth
-orbit have a shorter lifetime due to atmospheric drag. Cubesats have a
-generally high failure rate due to a long list of possible failure modes which
-can cripple a platform, with no chance of repair. Some examples might be a
-solar panel not deploying, a launch vibration damaging a critical sensor, or an
-issue with the thermal management resulting in the payload having degraded
-operations. Often, the correctness of the software systems only becomes an
-issue when all these barriers have been passed, and so is a risk that is not
-considered worth spending time and money until later in a programme. Thus, new
-space companies have a vastly different approach to software systems compared
-with big space companies, and many of the approaches used by big space
-companies to ensure sofware correctness, such as extensive system and
-integration testing and formal methods, are simply to time consuming and
-expensive to be applicable in the new space environment.
+\citet{Denis_2020} describes the current market trends of New Space as
+"Darwinism in Space". The creation of new markets in the space environments as
+a result of the digital transformation has led to a space industry "gold rush",
+with large venture capital investment and a "winner takes all" incentive
+driving high levels of competition \citep{Denis_2020}. The impact of this is
+that New Space companies must design and manufacture more satellites at a
+faster rate and for lower cost if they wish to be competitive.
 
-FIXME: ( SpaceX's StarLink satellite program is the
-obvious example of this. These satellites have a short mission life of five
-years [REF], )
+As a result of the business environment, many New Space start ups have
+introduced silicon valley concepts into their businesses, such as "DevOps
+culture" and launching Minimum Viable Product (MVP) cubesats. Furthermore, as
+these companies transition from startups to mature businesses with an aim to be
+profitable, LEAN practices become prevalent, resulting in attempts to reduce
+any "wasteful" or expensive practices \citep{Denis_2020}. These market
+conditions have led New Space businesses to become more accepting of risk than
+their Big Space counterparts \citep{Cratere_2024}
 
-* Satellite Architecture (SPAD book?)
+Therefore, Flight Sofware needs to be developed in shorter time frames and with
+lower costs. Satellites in low earth orbit have a shorter lifetime due to
+atmospheric drag. Cubesats have a generally high failure rate due to a long
+list of possible failure modes which can cripple a platform, with no chance of
+repair. Some examples might be a solar panel not deploying, a launch vibration
+damaging a critical sensor, or an issue with the thermal management resulting
+in the payload having degraded operations. Often, the correctness of the
+software systems only becomes an issue when all these barriers have been
+passed, and so is a risk that is not considered worth spending time and money
+until later in a programme. Thus, new space companies have a vastly different
+approach to software systems compared with big space companies, and many of the
+approaches used by big space companies to ensure sofware correctness, such as
+extensive system and integration testing and formal methods, are simply to time
+consuming and expensive to be applicable in the new space environment.
+
+% Discuss Nasa's software development practices, power of ten etc.
+% Code Reuse and COTS parts.
+Cubesat projects tend to make more use of COTS hardware. However, software that
+meets the system requirements often cannot be purchased off the shelf, and so
+development costs shift from hardware to software
+\citep{Cubesat_Handbook_OBSW}. However, there are several flight software
+frameworks, such as NASA's Core Flight System (cFS) \citep{Nasa_cFS}, or Bright
+Ascensions Generation One (Gen1) Flight Software Development Kit (FSDK)
+\citep{Bal_FSDK}. The main aim of these frameworks is to reduce the cost and
+development time for Flight Software through code reuse and hardware
+abstraction.
+
+For example, a cFS application uses software abstractions of the operating
+system and hardware, called the Operating System Abstaction Layer (OSAL) and
+Platform Support Package (PSP). This allows correctly written application
+code to easily be ported between different hardware architectures such as Arm
+Cortex-M or SPARC-V8, and different operating systems like FreeRTOS, RTEMS or
+Linux \citep{Nasa_cFS}.
+
+The Gen1 FSDK provides libraries of pre-defined configurable software
+"Components", which satisfy common Flight Software requirements, such as
+logging telemetry. These pre-defined components can be composed together with
+bespoke components into a "Deployment" which can be compiled for several
+different COTS hardware options, such as the AAC-ClydeSpace Kryten, or the
+GomSpace Nanomind \citep{Bal_Options}.
+
+\citet{Farges_2022} evaluates the use of Software Frameworks in the space
+industry. They find a number of quality related benefits, such as increasing
+reliance on standardised communication interfaces like CCSDS Space Packet
+Protocol; as well as cost related benefits attributable to code reuse between
+satellite missions. However, they also identify risks with relying on software
+frameworks, such as potential issues with licenses, and the limitied
+adaptibility of software that is highly coupled to a framework, as implementing
+functions that aren't currently supported in the framework can be difficult.
+
+% FIXME: ( SpaceX's StarLink satellite program is the
+% obvious example of this. These satellites have a short mission life of five
+% years [REF], )
+
+\section{Satellite Architecture}
+% (SPAD book?, Cubesat Handbook)
 
 Software systems are an essential component of modern satellite designs.
 Satellites usually include a number of distributed embedded systems, each
@@ -67,8 +130,9 @@ isolation and recovery (FDIR).
 
 The OBC or CDH subsystem is responsible for handling communication with a
 ground station via a radio, and so provides the interface between a satellite
-and the operator, who uses the OBC to download data from orbit, schedule
-payload operations, and respond to issues.
+and the operator. This interface is commonly reffered to as Telemetry and
+Telecommand (TMTC). The operator uses the TMTC interface on the OBC to download data
+from orbit, schedule payload operations, and respond to issues.
 
 Payload computers (PLC) are common on satellites with compex payloads and are
 responsible for managing and operating whatever instruments are on board for

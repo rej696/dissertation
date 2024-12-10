@@ -1,0 +1,63 @@
+\documentclass[../report.tex]{subfiles}
+\graphicspath{{\subfix{../images}}}
+\begin{document}
+
+% Requirements and Design
+\section{Requirements}
+
+% FIXME
+\begin{description}
+    \item[REQ-FSW-1]Development of representative minimal flight software system
+    \item[REQ-FSW-2]target software shall be representative of flight software system ([REF]?)
+    \begin{description}
+        \item[REQ-FSW-2-1]target software shall implement the spacepacket protocol for communication with ground software
+        \item[REQ-FSW-2-2]target software shall allow the remote triggering of procedures
+        \item[REQ-FSW-2-3]target software shall allow for the retrieval of telemetry data
+        \item[REQ-FSW-2-4]target software shall allow the setting and retrieval of configuration data
+        \item[REQ-FSW-2-5]Spacepacket interface shall allow communication between the target software and an x86\_64 development computer
+        \item[REQ-FSW-2-6]target software shall implement a real time operating system
+        \item[REQ-FSW-2-7]TODO critique these requirements, do they result in a "representative" flight software?
+
+    \end{description}
+    \item[REQ-EMU-1]Development of rehosting harness for running flight software on development computer
+    \begin{description}
+        \item[REQ-EMU-1-1]rehosting software shall allow the execution of target software on an x86\_64 development computer
+        \item[REQ-EMU-1-2]rehosting software shall include all functionality required to boot and run the target software in a manner representative of the target hardware
+        \item[REQ-EMU-1-3]rehosting software shall allow data to be input via the hardware peripheral interface of the target software
+        \item[REQ-EMU-1-4]rehosting software shall be able to read data from the hardware peripheral interface of the target software
+        \item[REQ-EMU-1-5]rehosting software shall implement features for aiding debugging and introspection of target software execution
+        \item[REQ-EMU-1-6]rehosting software shall allow the target software to be run under a coverage guided fuzzer
+        \item[REQ-EMU-1-7]rehosting software shall allow the target software to be run under a black box fuzzer
+        \item[REQ-EMU-1-8]TODO critique these requirements, do they result in a comprehensive emulation?
+
+    \end{description}
+    \item[REQ-PGF-1]Protocol Grammar Filter:
+    \begin{description}
+        \item[REQ-PGF-1-1]the protocol grammar filter shall generate valid input data to the target software
+        \item[REQ-PGF-1-2]the protocol grammar filter shall generate known invalid input data to the target software
+        \item[REQ-PGF-1-3]the protocol grammar filter shall use a variable length binary stream as input data
+        \item[REQ-PGF-1-4]the protocol grammar filter input data generation shall be deterministic
+
+    \end{description}
+\end{description}
+
+% \item[REQ-]derived requirements?
+%  *\item[REQ-]ground software system shall
+
+% [ ] Outline software design needed to meet requirements
+% - list all software developed, why they are needed, what requirement they satisfy
+% - explain design decisions, such as STM32, DBC, minimal rtos, unicorn
+% [ ] Outline tasks needed to meet requirements
+
+% Software tools required:
+%  * ground software:
+%   ** send and receive spacepackets
+%   ** blackbox fuzzer
+%    *** grammar filter
+%    *** raw data
+%  * rehosting software (emulator)
+%   ** interrupt handling
+
+\section{Design}
+
+\end{document}

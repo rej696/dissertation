@@ -27,7 +27,7 @@ keywords = {Firmware fuzzing, fuzzing, IoT devices, firmware analysis, embedded 
 
 @article{Borsig_2020, title={Fuzzing framework for ESP32 microcontrollers}, DOI={10.1109/wifs49906.2020.9360889}, journal={2020 IEEE International Workshop on Information Forensics and Security (WIFS)}, author={Borsig, Matthias and Nitzsche, Sven and Eisele, Max and Groll, Roland and Becker, Jurgen and Baumgart, Ingmar}, year={2020}}
 
-@article{Beckmann_2023, title={Coverage-guided fuzzing of embedded systems leveraging hardware tracing}, DOI={10.1007/978-3-031-25460-4_21}, journal={Computer Security. ESORICS 2022 International Workshops}, author={Beckmann, Maximilian and Steffan, Jan}, year={2023}, pages={362–378}}
+@article{Beckmann_2023, title={Coverage-guided fuzzing of embedded systems leveraging hardware tracing}, DOI={10.1007/978-3-031-25460-4_21}, journal={Computer Security. ESORICS 2022 International Workshops}, author={Beckmann, Maximilian and Steffan, Jan}, year={2023}, pages={362-378}}
 
 
 @inproceedings{IoTFuzzer_2018,
@@ -49,14 +49,14 @@ url = {https://doi.org/10.1145/3548606.3559367},
 doi = {10.1145/3548606.3559367},
 abstract = {Real-Time Operating System (RTOS) has become the main category of embedded systems. It is widely used to support tasks requiring real-time response such as printers and switches. The security of RTOS has been long overlooked as it was running in special environments isolated from attackers. However, with the rapid development of IoT devices, tremendous RTOS devices are connected to the public network. Due to the lack of security mechanisms, these devices are extremely vulnerable to a wide spectrum of attacks. Even worse, the monolithic design of RTOS combines various tasks and services into a single binary, which hinders the current program testing and analysis techniques working on RTOS. In this paper, we propose SFuzz, a novel slice-based fuzzer, to detect security vulnerabilities in RTOS. Our insight is that RTOS usually divides a complicated binary into many separated but single-minded tasks. Each task accomplishes a particular event in a deterministic way and its control flow is usually straightforward and independent. Therefore, we identify such code from the monolithic RTOS binary and synthesize a slice for effective testing. Specifically, SFuzz first identifies functions that handle user input, constructs call graphs that start from callers of these functions, and leverages forward slicing to build the execution tree based on the call graphs and pruning the paths independent of external inputs. Then, it detects and handles roadblocks within the coarse-grain scope that hinder effective fuzzing, such as instructions unrelated to the user input. And then, it conducts coverage-guided fuzzing on these code snippets. Finally, SFuzz leverages forward and backward slicing to track and verify each path constraint and determine whether a bug discovered in the fuzzer is a real vulnerability. SFuzz successfully discovered 77 zero-day bugs on 35 RTOS samples, and 67 of them have been assigned CVE or CNVD IDs. Our empirical evaluation shows that SFuzz outperforms the state-of-the-art tools (e.g., UnicornAFL) on testing RTOS.},
 booktitle = {Proceedings of the 2022 ACM SIGSAC Conference on Computer and Communications Security},
-pages = {485–498},
+pages = {485-498},
 numpages = {14},
 keywords = {taint analysis, concolic execution, rtos, slice-based fuzzing},
 location = {Los Angeles, CA, USA},
 series = {CCS '22}
 }
 
-@article{Godefroid_2012, title={Sage: Whitebox fuzzing for Security Testing}, volume={10}, DOI={10.1145/2090147.2094081}, number={1}, journal={Queue}, author={Godefroid, Patrice and Levin, Michael Y. and Molnar, David}, year={2012}, pages={20–27}}
+@article{Godefroid_2012, title={Sage: Whitebox fuzzing for Security Testing}, volume={10}, DOI={10.1145/2090147.2094081}, number={1}, journal={Queue}, author={Godefroid, Patrice and Levin, Michael Y. and Molnar, David}, year={2012}, pages={20-27}}
 
 @article{Krishnamoorthy_2010, title={Tackling the path explosion problem in symbolic execution-driven test generation for programs}, DOI={10.1109/ats.2010.19}, journal={2010 19th IEEE Asian Test Symposium}, author={Krishnamoorthy, Saparya and Hsiao, Michael S. and Lingappan, Loganathan}, year={2010}}
 
@@ -111,6 +111,52 @@ doi={10.1109/ACCESS.2020.3045972}}
     year = {2019},
 }
 
+@online{Nasa_cFS,
+    author={NASA},
+    title={The core Flight System},
+    url={https://etd.gsfc.nasa.gov/capabilities/core-flight-system/},
+    urldate={2024-11-25},
+    year={2024},
+}
+@online{Bal_FSDK,
+    author={Bright Ascension Ltd},
+    title={Flight Software Development Kit},
+    url={https://brightascension.com/products/flight-software-development-kit/},
+    urldate={2024-12-10},
+    year={2024},
+}
+
+@online{Bal_Options,
+    author={Bright Ascension Ltd},
+    title={Flight Software Development Kit: Systems and Platforms},
+    url={https://brightascension.com/products/systems-and-platforms/},
+    urldate={2024-12-10},
+    year={2024},
+}
+
+@online{Farges_2022,
+    author = {Farges, Thibault and Levi Cescutti, Ugo},
+    year = {2022},
+    month = {03},
+    pages = {},
+    title = {Space Flight Software Systems: An approach to understanding their Open Source Framework Paradigm},
+    doi = {10.13140/RG.2.2.12451.94244}
+}
+
+
+% Good for satellite architecture and OBC stuff.
+@article{Cratere_2024,
+author = {Cratere, Angela and Sanca, Gabriel and Golmar, Federico and Dell'Olio, Francesco},
+year = {2024},
+month = {01},
+pages = {1-1},
+title = {On-Board Computer for CubeSats: State-of-the-Art and Future Trends},
+volume = {PP},
+journal = {IEEE Access},
+doi = {10.1109/ACCESS.2024.3428388}
+}
+
+
 @inproceedings {Maier_2019,
 author = {Dominik Maier and Benedikt Radtke and Bastian Harren},
 title = {Unicorefuzz: On the Viability of Emulation for Kernelspace Fuzzing},
@@ -125,7 +171,7 @@ month = aug
 @online{gnatfuzz,
     author={AdaCore},
     title={Gnatfuzz User's Guide},
-    url={https://docs.adacore.com/live/wave/gnatdas/html/gnatdas_ug/gnatfuzz/gnatfuzz_part.html#},
+    url={https://docs.adacore.com/live/wave/gnatdas/html/gnatdas_ug/gnatfuzz/gnatfuzz_part.html},
     urldate = {2024-01-02},
     year = {2023},
 }
@@ -224,5 +270,66 @@ month = aug
 
 }
 
+@article{CubesatDesignSpec,
+  title={CubeSat Design Specification, the Cube Sat Program},
+  author={Munakata, R},
+  journal={Cal Poly SLO, San Luis Obispo, Rev},
+  volume={11},
+  year={2008}
+}
+
+@article{Sweeting_2018,
+  title={Modern small satellites-changing the economics of space},
+  author={Sweeting, Martin N},
+  journal={Proceedings of the IEEE},
+  volume={106},
+  number={3},
+  pages={343--361},
+  year={2018},
+  publisher={IEEE}
+}
 
 
+@incollection{Cubesat_Handbook_OBSW,
+title = {12 - Onboard software},
+editor = {Chantal Cappelletti and Simone Battistini and Benjamin K. Malphrus},
+    booktitle = {Cubesat Handbook},
+    publisher = {Academic Press},
+    pages = {237-250},
+    year = {2021},
+    isbn = {978-0-12-817884-3},
+    doi = {https://doi.org/10.1016/B978-0-12-817884-3.00012-6},
+    url = {https://www.sciencedirect.com/science/article/pii/B9780128178843000126},
+    author = {Santiago {Iglesias Cofán} and Arno Formella},
+    keywords = {CubeSat onboard software, Software design and development process, Software architecture, Mission experience},
+    abstract = {This chapter provides an overview of the software engineering process for the development of onboard software for small satellites. Such a process should be guided by clearly specified requirements that are testable and traceable. Two important decisions that must be drawn in a CubeSat satellite project to achieve high-quality software are which software architecture to use and which design methodology to employ. In a CubeSat project one can observe a shift from hardware cost to software cost, as in many cases off the shelf products for hardware components can be used, however, the controlling software that implements all system requirements usually remains to be developed and tested. Simulation and fault analysis are valuable tools from the software engineering point of view that help the mission to succeed. Every part of the software that is not tested rigorously tends to put the entire mission into risk.}
+}
+
+@article{Bousedra_2024,
+    title = {Downstream Space Activities in the New Space Era: Paradigm Shift and Evaluation Challenges},
+    journal = {Space Policy},
+    volume = {64},
+    pages = {101553},
+    year = {2023},
+    issn = {0265-9646},
+    doi = {https://doi.org/10.1016/j.spacepol.2023.101553},
+    url = {https://www.sciencedirect.com/science/article/pii/S0265964623000152},
+    author = {Kenza Bousedra},
+    keywords = {New space, Space sector, Downstream applications, Literature review, Economic size, Evaluation},
+    abstract = {New Space refers to the recent opening-up of the space sector to private companies. The liberalization of space activities, which coincides with the digital evolution of the economy, is associated with the rapid expansion of the downstream space segment, i.e., space-related commercial products and services. In this paper, we address the issue of evaluating the size of the downstream space sector in light of New Space characteristics. We describe New Space as a structural transformation of the space sector associated with the entry of private companies and investors, the adoption of new business models, and the reorientation of space agencies towards market-oriented policies. In this specific context, we claim that assessing the economic weight of downstream space activities is of prime interest. Our review of space sector evaluations shows limitations of the existing methodological tools when identifying and evaluating downstream activities. We conclude this work by outlining theoretical issues regarding New Space and the expansion of space-based services markets to be considered for a new evaluation methodology.}
+}
+
+
+@article{Denis_2020,
+    title = {From new space to big space: How commercial space dream is becoming a reality},
+    journal = {Acta Astronautica},
+    volume = {166},
+    pages = {431-443},
+    year = {2020},
+    issn = {0094-5765},
+    doi = {https://doi.org/10.1016/j.actaastro.2019.08.031},
+    url = {https://www.sciencedirect.com/science/article/pii/S0094576519313451},
+    author = {Gil Denis and Didier Alary and Xavier Pasco and Nathalie Pisot and Delphine Texier and Sandrine Toulza},
+    keywords = {Newspace, Innovation, Space economy, Space ecosystem, Start-ups, Venture capital},
+    abstract = {New space is a misleading expression. Many new trends steer the evolution of space activities. Development of commercial space, with start-ups and space ventures, is one of the most visible trends in space. Stimulated by the first initiatives related to space tourism, access to space and the growing use of small satellites, space activities have attracted new entrepreneurs, both start-ups and big web actors with substantial investment capacity. This revolution started in the Silicon Valley and spread worldwide. Start-ups have attracted around $21.8 billion of investment from 2000 to 2018. It is far below the annual institutional budgets but the pace gained momentum since 2006 and specially 2012. Between teenage crisis and age of reason, New space is now old: the first start-ups shall confirm their promises, while new players pop up and try to find their way. It shakes the legacy players but they demonstrate resilience and adaptation capacity. It is now the right time to take stock of the first lessons learnt. Start-ups disrupt the established industry? Instead of a simplistic shortcut, this paper reports an “organizational ecology” study. With a deliberate industrial viewpoint, its ambition is to help understanding complex evolutions in the space ecosystem. The first part of the paper introduces the current ecosystem, its actors, the key trends and the main types of activities. Through facts and figures on technology, investments and markets, the second part reviews how “new space” trends are preparing the advent of big space. The third part summarises lessons from other industries and typical disruption scenarios that could affect space activities. The drivers of New space are discussed in section four. The last part is a foresight exercise, discussing possible evolutions and impacts, threats and opportunities. The decisive role of institutional actors and the « new space » with more and more space-faring nations is also highlighted. Something big is happening in space. While it is too early to depict the new landscape, this study shows that the future picture will not be black and white but more colourful. The size and the age of the company are less important than agility, mindset, ability to manage risks and to cooperate. A big vision for the future, from entrepreneurs or from nations, is also needed.}
+}

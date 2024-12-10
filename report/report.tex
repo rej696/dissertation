@@ -7,7 +7,7 @@
 \usepackage{Bath-CS-Dissertation}
 \usepackage{subfiles}
 
-\title{\bf $\langle$Dissertation Title$\rangle$}
+\title{\bf An Investigation into Emulation and Fuzz Testing as a Methodology for Spacecraft Flight Software Development}
 \author{Rowan Saunders}
 \date{MSc $\langle$EngD$\rangle$ in Computer Science\\
                                  % E.g.: Bachelor of Science in Computer Science
@@ -23,7 +23,7 @@
 \hypersetup{pageanchor=false}
 
 % Set this to the language you want to use in your code listings (if any)
-\lstset{language=Java,breaklines,breakatwhitespace,basicstyle=\small}
+\lstset{language=C,breaklines,breakatwhitespace,basicstyle=\small}
 
 \setcounter{page}{0}
 \pagenumbering{roman}
@@ -35,7 +35,7 @@
 \consultation{0}
 \newpage
 
-\declaration{$\langle$Dissertation Title$\rangle$}{Rowan Saunders}
+\declaration{An Investigation into Emulation and Fuzz Testing as a Methodology for Spacecraft Flight Software Development}{Rowan Saunders}
 \newpage
 
 \hypersetup{pageanchor=true}
@@ -60,7 +60,6 @@
 \chapter*{Acknowledgements}
 
 \subfile{sections/acknowledgements}
-Add any acknowledgements here.
 
 \newpage
 \setcounter{page}{1}
@@ -70,139 +69,62 @@ Add any acknowledgements here.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Introduction}
 
+% [ ] Explanation of developing software in new space
+% [ ] Explanation of Emulation and Fuzzing
+% [ ] Literature Review of existing Embedded Emulation/Fuzzing Techniques
+%      - Fuzzware, Hoedur
+%      - Fuzzing Protocols with Fuzzware/Hoedur, introduce grammar filter?
+%      - Papers don't emulate/fuzz rtos behaviours?
+% [ ] Research Questions and Objective
+
+% RQ1: Analyse the effectiveness of different fuzzing methods for incremental development of flight software
+% RQ2: Analyse the impact of using a protocol grammar filter on fuzzer performance, measured in coverage
+
 \subfile{sections/introduction}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Example Section}
-
-Like all chapters, it will have a number of sections \dots
-
-%-------------------------------------------------------------------------------
-\subsection{Example Subsection}
-\dots\ and subsections \dots
-
-\subsubsection{Example Sub-subsection}
-\dots\ and sub-subsections.
-
-\section[Short Section Title]{Another Section With a Long Title and Whose Title Is Abbreviated in the Table of Contents}
-
-%-------------------------------------------------------------------------------
-\begin{table}[htb]
-\caption{An example table}
-\bigskip
-\begin{center}
-\label{Example-Table}
-\begin{tabular}{|l|l|}
-\hline
-Items & Values \\
-\hline
-\hline
-Item 1 & Value 1 \\
-Item 2 & Value 2 \\
-\hline
-\end{tabular}
-\end{center}
-\end{table}
-
-Another section, just for good measure. You can reference a table, figure or equation using \verb|\ref|, just like this reference to Table \ref{Example-Table}.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Example Lists}
-
-%-------------------------------------------------------------------------------
-\subsection{Enumerated}
-
-\begin{enumerate}
-\item Example enumerated list:
-  \begin{itemize}
-  \item a nested enumerated list item;
-  \item and another one.
-  \end{itemize}
-\item Second item in the list.
-\end{enumerate}
-
-%-------------------------------------------------------------------------------
-\subsection{Itemised}
-
-\begin{itemize}
-\item Example itemised list.
-  \begin{itemize}
-  \item A nested itemised list item.
-  \end{itemize}
-\item Second item in the list.
-\end{itemize}
-
-%-------------------------------------------------------------------------------
-\subsection{Description}
-
-\begin{description}
-\item[Item 1]First item in the list.
-\item[Item 2]Second item in the list.
-\end{description}
+% FIXME literature review in with the introduction?
+%
+% You will wish to cite authors like \citep{Yun_2022} or \citep{Yun_2022}. Alternate
+% commands are used to cite \citet{Yun_2022} as a noun, or add text to the citation, \citep[\emph{e.g.},][]{Yun_2022}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Literature and Technology Survey}
+\chapter{Requirements and Design}
 
-\subfile{sections/literature-review}
+% [ ] Outline high level requirements to meet to research questions
+% [ ] Outline software design needed to meet requirements
+% [ ] Outline tasks needed to meet requirements
 
-This is the chapter for your Literature and Technology Survey.
-
-You will wish to cite authors like \citep{Yun_2022} or \citep{Yun_2022}. Alternate
-commands are used to cite \citet{Yun_2022} as a noun, or add text to the citation, \citep[\emph{e.g.},][]{Yun_2022}.
-
-%% NOTE Replace the following with chapters that are appropriate for your
-%%      style of project.  It is unlikely these will fit your project perfectly.
+\subfile{sections/requirements-and-design}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Requirements}
+\chapter{Implementation (and Testing?)}
 
-If you are doing a primarily software development project, this is the chapter in which you review the requirements decisions and critique the requirements process.
+% What goes in implementation and what goes in design?
+% Discuss tooling, rationale for development decisions?
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Design}
-
-This is the chapter in which you review your design decisions at various
-levels and critique the design process.
+\subfile{sections/implementation}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Implementation and Testing}
+\chapter{Discussion (and Results?)}
 
-This is the chapter in which you review the implementation and testing decisions and issues, and critique these processes.
+% Review thoughts about fuzzing
+% Present Fuzzing Results, show coverage graphs
 
-Code can be output inline using \verb@\lstinline|some code|@.  For example, this code is inline: \lstinline|public static int example = 0;| (we have used the character \verb@|@ as a delimiter, but any non-reserved character not in the code text can be used.)
-
-Code snippets can be output using the \verb|\begin{lstlisting} ... \end{lstlisting}|
-environment with the code given in the environment. For example, consider listing \ref{Example-Code}, below.
-
-\begin{lstlisting}[breaklines,breakatwhitespace,caption={Example code},label=Example-Code]
-public static void main() {
-
-  System.out.println("Hello World");
-
-}
-\end{lstlisting}
-
-Code listings are produced using the package `listings'.  This has many useful options, so have a look at the package documentation for further ideas.
+\subfile{sections/discussion}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Results}
+\chapter{Conclusions and Future Work}
 
-This is the chapter in which you review the outcomes, and critique the outcomes process. You may include user evaluation here too.
+\subfile{sections/conclusion.tex}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Conclusions}
-
-%%
-%% Now we are back to the standard project contents that you should include
-%%
-
-This is the chapter in which you review the major achievements in the light of your original objectives, critique the process, critique your own learning and identify possible future work.
+% Future Work:
+% - Implement Spacepacket Grammar Filter for Hoedur
+% - Investigate running flight sotfware under Hoedur
+% -
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
