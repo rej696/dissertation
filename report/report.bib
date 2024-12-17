@@ -19,6 +19,19 @@ publisher = {USENIX Association},
 month = aug,
 }
 
+@inproceedings {kAFL_2017,
+author = {Sergej Schumilo and Cornelius Aschermann and Robert Gawlik and Sebastian Schinzel and Thorsten Holz},
+title = {{kAFL}: {Hardware-Assisted} Feedback Fuzzing for {OS} Kernels},
+booktitle = {26th USENIX Security Symposium (USENIX Security 17)},
+year = {2017},
+isbn = {978-1-931971-40-9},
+address = {Vancouver, BC},
+pages = {167--182},
+url = {https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/schumilo},
+publisher = {USENIX Association},
+month = aug
+}
+
 @inproceedings{Hernandez_2022,
     title = "FirmWire: Transparent Dynamic Analysis for Cellular Baseband Firmware",
     abstract = "Smartphones today leverage baseband processors to implement the multitude of cellular protocols. Basebands execute firmware, which is responsible for decoding hundreds of message types developed from three decades of cellular standards. Despite its large over-the-air attack surface, baseband firmware has received little security analysis. Previous work mostly analyzed only a handful of firmware images from a few device models, but often relied heavily on time-consuming manual static analysis or single-function fuzzing.To fill this gap, we present FirmWire, the first full-system emulation platform for baseband processors that executes unmodified baseband binary firmware. FirmWire provides baseband-specific APIs to easily add support for new vendors, firmware images, and security analyses. To demonstrate FirmWire{\textquoteright}s scalability, we support 213 firmware images across 2 vendors and 9 phone models, allowing them to be executed and tested. With these images, FirmWire automatically discovers and bridges internal baseband APIs, allowing protocol messages to be injected with ease. Using these entry points, we selected the LTE and GSM protocols for fuzzing and discovered 7 pre-authentication memory corruptions that could lead to remote code execution--4 of which were previously unknown. We reproduced these crashes over-the-air on real devices, proving FirmWire{\textquoteright}s emulation accuracy. FirmWire is a scalable platform for baseband security testing and we release it as open-source to the community for future research.",
@@ -310,6 +323,23 @@ doi={10.1109/ACCESS.2020.3045972}
     year = {2024},
 }
 
+@online{stm32hal,
+    author={STMicroelectronics},
+    title = {STM32CubeF4 HAL Driver MCU Component},
+    url = {https://github.com/STMicroelectronics/stm32f4xx-hal-driver},
+    urldate = {2024-11-11},
+    year = {2024},
+}
+
+@online{Unicorn,
+    author={Nguyen, Anh Quynh and Dang, Hoang Vu},
+    title = {Unicorn: Next Generation CPU Emulator Framework},
+    url = {https://www.unicorn-engine.org/BHUSA2015-unicorn.pdf},
+    urldate = {2024-12-05},
+    year = {2015},
+}
+
+https://www.unicorn-engine.org/docs/beyond_qemu.html
 @online{UnicornMode,
     author={Maier, Dominik and Voss, Nathan and Fioraldi, Andrea},
     title = {Unicorn-based binary-only instrumentation for afl-fuzz},

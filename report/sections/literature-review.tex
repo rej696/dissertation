@@ -180,6 +180,8 @@ schedule to meet tight deadlines.
 % prevent the presence of security exploits and critical bugs in these devices.
 % CUT?
 
+% use information from generic survey papers like Yun_2022, Eisele_et_al_2022 in the introductory section.
+
 Many software programs use a methodology called fuzz testing to automatically
 verify software. Fuzz testing is typically used to identify and resolve
 security vulnerabilities for programs running on general purpose computers
@@ -193,9 +195,7 @@ to execute, will uncover many exploitable bugs with the system, such as memory
 leaks, buffer overflows, and off by one errors. Basic black-box fuzzing on an
 embedded system will require some fuzzing harness \citep{Eisele_et_al_2022} and
 some method of detecting a fault, such as performing a liveness check
-\citep{Yun_2022}. Borsig et al. do not consider black-box fuzzing as a
-promising methodology for fuzzing an esp32 based IOT device, and conclude that
-white-box and grey-box fuzzing techniques are more capable \citep{Borsig_2020}.
+\citep{Yun_2022}.
 
 Compared to black-box fuzzing, white-box fuzzing involves targeted test case
 generation through static program analysis techniques, generating a test case
@@ -217,9 +217,12 @@ that is linked into the program at compile time, along with several sanitisers,
 to instrument the program. This allows AFL to receive coverage information from
 the running program during fuzzing \citep{AFL_2019}. Embedded systems often run on
 constrained environments, where running the fuzzer on the target hardware would
-be unfeasible. As such, the fuzzer and the SUT are run in different
+be unfeasible.
+% FIXME move this/reword this / find different reference
+As such, the fuzzer and the SUT are run in different
 environments, and it is difficult to instrument and forward runtime information
 for grey-box fuzzing \citep{Muench_2018}.
+%
 
 Attempts to solve this problem focus either on fuzzing a program running on
 target hardware, or in an emulated environment \citep{Eisele_et_al_2022}.
@@ -228,25 +231,12 @@ fuzzer, and potentially faster running and parallel tests
 \citep{Eisele_et_al_2022}. However, emulating embedded systems correctly is a
 hard problem, and due to the diversity in operating systems, hardware,
 peripherals etc. often means that development effort spent on emulating one
-system cannot be easily transferred to another. Attempts have been made to
-automate emulator development, such as Clements et al. HALucinator, which
-allows Hardware Abstraction Layer (HAL) functions in a compiled binary to be
-stubbed and fuzzed \citep{Clements_2021}.
-Chen et al. investigate a novel approach to fuzzing Real Time Operating Systems
-(RTOS) which involves slicing a single program into its constituent tasks and
-fuzzing them separately on an emulator based on the call graph of the program
-\citep{Chen_2022}.
+system cannot be easily transferred to another.
 
 Yun et al. note that most embedded systems fuzzers rely on emulation
 \citep{Yun_2022}. However, most bugs found through emulation still need to be
 validated on hardware, and so being able to run the fuzz tests directly on the
-target hardware is preferable \citep{Eisele_et_al_2022}. Several methods have
-been discussed to improve instrumentation and feedback from running fuzz tests
-on target hardware. Beckmann et al. propose making use of the tracing
-facilities on modern Arm Cortex-M microcontrollers to stream coverage
-information back to the fuzzer \citep{Beckmann_2023}. Eisele proposes using a
-debugger as a method of inspecting the SUT and providing coverage feedback to a
-fuzzer \citep{Eisele_2022}.
+target hardware is preferable \citep{Eisele_et_al_2022}.
 
 During the development of an embedded system, engineers often require access to
 representative development hardware to effectively design and write software.
@@ -269,6 +259,8 @@ is reliant on Ada's extended runtime constraint checking when compared to C
 more complex issues resulting from interactions with hardware peripherals and
 state.
 
+% paragraph on challenges of rehosting? Wright?
+
 While research into the fuzz testing of embedded systems has been increasing
 year by year \citep{Yun_2022}, there are few generic solutions
 \citep{Eisele_et_al_2022}. The two main challenges to embedded system fuzzing
@@ -277,10 +269,9 @@ architectures in embedded systems, and the lack of an operating system such as
 linux for bare metal systems \citep{Eisele_et_al_2022}. Currently, the
 availability and ease of use of fuzzing tooling for embedded systems does not
 match that of desktop applications.
+% FIXME this feels like an end, figure out what to do with it.
 
-\section{Fuzz Testing}
-
-\citet{IOTFuzzer_2018} implement IoTFuzzer, an automated black box fuzzing
+\citet{IOTFuzzer_2018} implemented IoTFuzzer, an automated black box fuzzing
 framework that conduct protocol guided fuzzing on the communication interfaces
 of IoT devices. IoTFuzzer performs dynamic analysis on the companion
 application to the IoT device to identify the methods for creating valid
@@ -291,23 +282,46 @@ often not available. However, the tool developed has no real use case in other
 classes of embedded devices, such as industrial control systems or safety
 critical software, where there is unlikely to be a companion android
 application that implements the protocol over the communication interface.
-However, the study does show the effectiveness of using a protocol guided
+The study does show the effectiveness of using a protocol guided
 fuzzer on a communication interface to discover memory errors. Specifically,
-they identify the ability to run data generated by the fuzzer through the same
+they identified the ability to run data generated by the fuzzer through the same
 cryptographic functions used in the application to allow the fuzzer to bypass
-the barrier of message encryption.
+the barrier of message encryption. Standard fuzzers struggle with common
+protocol features, like encryption, authentication, or message validity checks,
+because mutating the input data will invalidate a checksum or render a message
+unable to be decrypted correctly. [REF]?
 % They also identify the use of liveness checks using a heartbeat mechanism to be able to detect crashes.
 
-\citet{Muench_2018} investigates challenges in embedded fuzzing, and reviews
+% talk about other attempts to fuzz test hardware?
+\citet{Borsig_2020} Fuzzing on ESP32
+\citet{Borsig_2020} do not consider black-box fuzzing as a
+promising methodology for fuzzing an esp32 based IOT device, and conclude that
+white-box and grey-box fuzzing techniques are more capable.
+
+\citet{Eisele_2022} investigates coverage guided fuzzing on embedded hardware through the use of a debugger and hardware breakpoints
+
+\citet{Beckmann_2023} Coverage guided fuzzing using hardware tracing (through jlink). similar to \citet{Eisele_2022}, but tracing rather than debugging.
+
+% FIXME
+Several methods have been discussed to improve instrumentation and feedback
+from running fuzz tests on target hardware. Beckmann et al. propose making use
+of the tracing facilities on modern Arm Cortex-M microcontrollers to stream
+coverage information back to the fuzzer \citep{Beckmann_2023}. Eisele proposes
+using a debugger as a method of inspecting the SUT and providing coverage
+feedback to a fuzzer \citep{Eisele_2022}.
+%
+
+% Emulation/rehosting story
+\citet{Muench_2018} investigated challenges in embedded fuzzing, and reviews
 the potential effects of memory corruption bugs on embedded systems.
 They identify how to detect different categories of faults through methods such
 as liveness tests and [FIXME]. They outline different strategies to fuzzing embedded
 systems, such as native, partial emulation, and full emulation. Partial
 emulation is where the firmware runs in an emulator, and the peripheral devices
 are either modelled in some program, or the memory forwarded to the hardware
-peripherals. They conduct an experiment to compare different fuzzing
-strategies, and find full emulation to be the most successful in detecting
-different categories of memory corruption bugs. They also find that fuzzing
+peripherals. They conducted an experiment to compare different fuzzing
+strategies, and found full emulation to be the most successful in detecting
+different categories of memory corruption bugs. They also found that fuzzing
 against a fully emulated target is significantly faster than fuzzing against a
 native device. However, they acknowledge the limited availability of emulators
 which include full peripheral emulation, and identify peripheral modelling with
@@ -315,39 +329,127 @@ partial emulation as a good compromise between performance and the availability 
 both emulators and hardware.
 % Muench finds liveness checks to be an unreliable method for detecting all different categories of faults
 
-\citet{Maier_2019} UnicoreFuzz (use of unicorn for emulation of linux kernel for fuzz testing)
+\citet{Maier_2019} developed a tool called UnicoreFuzz for fuzzing operating
+system kernel code by running the kernel code using an emulator. Traditional
+coverage guided fuzzers rely on feedback mechanisms provided by the kernel, and
+using the host operating system as both the fuzzer target and to run the fuzzer
+means crashes resulting from fuzz testing would stop the fuzzer.
+\citet{kAFL_2017} had previously tried to solve this problem through fuzzing an
+operating system kernel running in a separate, virtualised environment, making
+use of hardware virtualisation tracing features to gather feedback for the
+fuzzer. UnicoreFuzz was built on top of a tool called UnicornAFL
+\citep{Maier_2019}. Unicorn is a framework for building emulators, which builds
+on top of the instruction set emulation capabilities of QEMU \citep{Unicorn}.
+UnicornAFL is a patched version of Unicorn which allows rehosted binaries to be
+run under American Fuzzy Lop (AFL), a popular coverage guided fuzzing tool
+\citep{UnicornMode, AFL_2019}.
+\citet{Maier_2019} focuses on emulating and fuzzing parser code in the kernel,
+as parser code usually does not have hardware dependencies, and they
+acknowledge modelling hardware peripherals is not an easy task in unicorn.
+UnicoreFuzz uses gdb to dump register and memory data at a breakpoint, and then
+loads the dumped state into UnicornAFL, allowing the code beginning at the
+breakpoint to be fuzzed with the emulator. \citet{Maier_2019} found that while
+the performance of UnicoreFuzz was worse than other methods, it was able to
+fuzz test any code on any hardware architecture supported by unicorn. Due to
+the similarity in constraints between kernel and embedded software, They
+posited that porting UnicoreFuzz to embedded operating systems would be viable,
+so long as the embedded processor had a debug interface that could export pages
+of memory and register values.
 
-\citet{Hernandez_2022} FirmWire (dynamic analysis of cellular baseband firmware)
+UnicoreFuzz was able to fuzz sections of software with no hardware interaction.
+However, this ignores the fact that all embedded software programs will have
+dependencies on hardware peripherals. However a series of developments have
+been made to enable generic rehosting of firmware using the unicorn emulator.
 
-\citet{Borsig_2020} Fuzzing on ESP32
+\citet{HALucinator_2020} developed HALucinator, a tool for firmware rehosting
+through emulating the hardware abstraction layer. Embedded software typically
+relies on a hardware abstraction layer (HAL) to interact with hardware
+peripherals. For example, to set the value of a GPIO pin on an STM32 chip, you
+would call the \lstinline{HAL_GPIO_WritePin} HAL function \citep{stm32hal}.
+This function then handles writing the value to the correct memory location
+(MMIO) for that chip to set the GPIO, abstracting the hardware specific
+implementation from the functionality. HALucinator parses HAL libraries to
+provide a high level emulation (HLE) environment on top of QEMU by assigning
+abstract peripheral models to HAL functions in the binary
+\citep{HALucinator_2020}. This allows firmware to be run on the emulator
+interactively, as well as under a fuzzer like AFL. HALucinator has a number of
+prerequisites. The firmware needs to make use of a HAL library for all hardware
+interaction. The HAL library either needs to already be supported, or the
+handler functions for the library need to be implemented. This is a manual
+process, but when completed can be reused for any device using that HAL
+library. There also needs to be valid peripheral models implemented for all the
+HAL functions used. \citet{HALucinator_2020} demonstrated the use of
+HALucinator for fuzzing and dynamic analysis using CPUs and HALs from three
+different vendors, using it to detect security bugs in firmware samples.
 
-\citet{Clements_2021} case study for rehosting vxworks based control system firmware
+% FIXME move/reword/find different reference
+Attempts have been made to automate emulator development, such as Clements et
+al. HALucinator, which allows Hardware Abstraction Layer (HAL) functions in a
+compiled binary to be stubbed and fuzzed \citep{Clements_2021}.
+
+% Halucinator has to generate all the hal stubs, what about other embedded libraries that make use of hardware features, like RTOS?
+\citet{Clements_2021} extended HALucinator to work with systems that use the
+VxWorks real time operating system (RTOS) as a case study. VxWorks is a
+commercial RTOS that is used in many safety critical and space applications.
+RTOSes often have their own hardware abstractions, and make use of Board
+Support Packages (BSP) to adapt the core RTOS code to different hardware.
+While \citet{Clements_2021} successfully run three different VxWorks firmwares
+on the emulator, the process for doing so was involved, and required extensions
+and modifications to the original HALucinator tool. However, they do review
+their original process and outline an approach for rehosting other RTOSes with
+HALucinator.
+
+% FIXME SFuzz stuff
+% \citet{Chen_2022} created a different tool for fuzzing embedded software with
+% an RTOS, called SFuzz. They develop a technique to slice a firmware image
+% running an RTOS into distinct code snippets which SFuzz identifies independent
+% RTOS tasks within a binary, and divides \citet{Chen_2022} SFuzz, slice based
+% fuzzing for real time operating systems, analysis of call graphs, seperating
+% individual rtos threads into separate code snippets and coverage guided fuzzing
+% on each snippet. out performs tools such as unicornafl when testing rtos.
+% FIXME
+\citet{Chen_2022} investigated a novel approach to fuzzing Real Time Operating
+Systems (RTOS) which involves slicing a single program into its constituent
+tasks and construct a call graph of program based on critical functions such as
+external data entrypoints. Each tailored execution tree is was then fuzzed
+separately using a UnicornAFL based emulator. The tool is able to detect and
+skip "input-irrelevant" function calls as well code that is "emulation-hard",
+such as HAL functions. The tool focuses on code paths that handle input data,
+so there are minimal side effects from ignoring these functions.
+
+
+% Fuzzware expands upon HALucinator, but rather than using the hal as the boundary for the fuzzer and the SUT, it models the MMIO, such that each MMIO access uses fuzzer input. dynamic analysis etc.
+\citet{Fuzzware_2022} firmware rehosting and fuzz testing using precise MMIO modelling through dynamic analysis and unicornafl
+
+\citet{Hoedur_2023} extention of fuzzware, with multistream inputs. moves away from afl to implement its own fuzzer.
+% future work? implementing grammar fuzzers for the multiple streams, to resolve issues surrounding encryption/checksums?
+
+% Fuzztruction moves away from AFL entirely to resolve these issues surrounding encryption/checksums by creating a new type of fuzzer that mutates not just the input data, but the generator that generates the input data, allowing it to adapt to information about protocols contained in the binaries themselves. This is not too disimilar to IOTFuzz using the generators in mobile applications?
+\citet{Fuzztruction_2023} using fault injection based fuzzing to leverage implicit domain knowledge? not using grammars, but by finding how the interface works by using the knowledge already encoded in the binaries, by mutating the code that generates the input, rather than
+
+\citet{Seidel_2023} forming faster firmware fuzzers by running emulated arm instructions on native arm64 hardware?
+
+% application of fuzz testing to space domain
+
+\citet{Gutierrez_2021} fuzz testing techniques on nano satellite flight software
+
+\citet{Willbold_2024} Analysis of different fuzz testing techniques in satellites.
+
+
+% surveys?
 
 \citet{Yun_2022} conducts a survey of state of the art technologies for fuzz testing embedded systems, and suggests directions for further development.
 
 \citet{Eisele_et_al_2022} reviews challenges, tools and solutions to embedded fuzz testing
 
-\citet{Eisele_2022} investigates coverage guided fuzzing on embedded hardware through the use of a debugger and hardware breakpoints
-
-\citet{Chen_2022} SFuzz, slice based fuzzing for real time operating systems, analysis of call graphs, seperating individual rtos threads into separate code snippets and coverage guided fuzzing on each snippet. out performs tools such as unicornafl when testing rtos.
-
-\citet{Beckmann_2023} Coverage guided fuzzing using hardware tracing (through jlink). similar to \citet{Eisele_2022}, but tracing rather than debugging.
-
-\citet{HALucinator_2020} firmware rehosting through hardware abstraction layer emulation
-
-\citet{Fuzzware_2022} firmware rehosting and fuzz testing using precise MMIO modelling through dynamic analysis and unicornafl
-
-\citet{Hoedur_2023} extention of fuzzware, with multistream inputs. moves away from afl to implement its own fuzzer.
-
-\citet{Fuzztruction_2023} using fault injection based fuzzing to leverage implicit domain knowledge?
-
-\citet{Seidel_2023} forming faster firmware fuzzers
+% Another Survey/review of firmware rehosting challenges
+% C. Wright, W. A. Moeglein, S. Bagchi, M. Kulkarni, and A. A.
+% Clements, “Challenges in firmware re-hosting, emulation, and
+% analysis,” ACM Computer Surveys, vol. 54, no. 1, Jan. 2021. [Online].
+% Available: https://doi.org/10.1145/3423167
 
 \citet{Zhang_2024} survey of protocol fuzzing techniques
 
-\citet{Gutierrez_2021} fuzz testing techniques on nano satellite flight software
-
-\citet{Willbold_2024} Analysis of different fuzz testing techniques in satellites.
 
 % 19 papers, any more, we have other references for information:
 % - Cratere_2024
@@ -356,19 +458,8 @@ both emulators and hardware.
 % - Krishnamoorthy_2010 (symbolic execution test generation...)
 % - Svoboda_2021 (how exploitable is c code)
 % - Abdumohasan_2021 (analytical review of cybersecurity for embedded systems)
+% - \citet{Hernandez_2022} FirmWire (dynamic analysis of cellular baseband firmware) less relevent maybe?
 
-% Consolidation? of different papers?
-For firmware rehosting, emulation with unicorn and afl++ is a common choice?
-
-% Talk about the promise of rehosting/emulation/
-% IOTFuzz
-% HALucinator
-% FuzzWare
-% Hoedur
-% Faster Fuzzers (near Native?)
-% unicorn?
-
-% Outstanding problems for firmware fuzzing?
 
 % CUT? TODO reword to remove NRF52 and make generic about embedded fuzzing
 The design and implementation of embedded software and its verification is
