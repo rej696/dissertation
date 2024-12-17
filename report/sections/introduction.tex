@@ -2,8 +2,50 @@
 \graphicspath{{\subfix{../images}}}
 \begin{document}
 
+% short background, modivation, Outlining of Research Questions
+% backwards conclusion, saying what we want to find out, what the expectations are the only real difference is the tense
+% don't make it too long
 
-\section{Software Engineering in the New Space Industry}
+% [ ] Explanation of developing software in new space
+% [ ] Explanation of Emulation and Fuzzing
+% [ ] Research Questions and Objective
+
+% RQ1: Analyse the effectiveness of different fuzzing methods for incremental development of flight software
+% RQ2: Analyse the impact of using a protocol grammar filter on fuzzer performance, measured in coverage
+
+\section{Research Questions} \label{sec:rq}
+This project aims to analyse the effectiveness of using rehosting techniques
+for coverage guided fuzz testing of embedded software in the context of space
+flight software development. The work will investigate the state of the art in
+embedded software fuzz testing, and apply these techniques during the
+development of a representative flight software program, in order to determine
+if the use of fuzz testing and emulation can improve code quality, reduce costs
+and increase productivity for software developed in the new space industry. Any
+dificulties or concerns arising as a result of completing the work will be
+raised and discussed.
+
+Furthermore, the use of a protocol grammar filter for rehosted coverage guided
+fuzzing of embeded software will be evaluated. A simple filter will be
+developed and used to fuzz test the developed flight software. The results will
+be compared against a the same fuzzer, without the protocol grammar filter, and
+any findings and observations will be discussed.
+
+Therefore, the work will aim to answer the following two research questions:
+
+\begin{description}
+    \item[\definerq{1}]Analyse the effectiveness of different fuzzing methods for incremental development of flight software
+    \item[\definerq{2}]Analyse the impact of using a protocol grammar filter on fuzzer performance, measured in coverage
+
+\end{description}
+
+\section{Motivation} \label{sec:motivation}
+
+% Rationale/Motivation:
+% - Comprehensive testing without hardware?
+% - Security threats over space links?
+% - Difficulty of coverage guided fuzzing on embedded targets
+%   - Identified future work from hoedur paper regarding protocol fuzzer and streams (explain more in literature review)
+
 % References:
 % - Bousedra_2024: policy paper, may be less useful?
 % - Denis_2020: paper discussing trends in the space industry, more relevent?
@@ -18,328 +60,41 @@ cost and difficulty with trying to resolve issues after launch.
 
 However, the cost of launches to low earth orbit has been reducing, driven by
 the comercialisation of the space sector and prolific companies like SpaceX
-\citep{Denis_2020}. This, and the development and proliferation of the cubesat
-standard \citep{CubesatDesignSpec}, has enabled a new type of organisation to
-build and operate space missions.
+\citep{Denis_2020}. This, and the development and proliferation of the CubeSat
+standard \citep{CubesatDesignSpec}, has enabled lower cost space missions with
+shorter development times.
 
-% TODO introduce characteristics of new space (low earth orbit, cubesats)
+The software written for CubeSats typically runs on embedded microcontrollers,
+and has a high level of interaction with hardware interfaces
+\citep{Cratere_2024}. The development of software for these systems therefore
+often has a crtical dependency on hardware. However, hardware designs are
+subject to the same cost and time constraints as software designs. This can
+lead to prototype hardware being unavailable (or only available for a short
+time) for development and testing of software.
 
-\citet{Sweeting_2018} defines New Space as
-\begin{quote}
-    The emergence of a different ethos for space where the established
-    aerospace methods and business have been challenged by more entrepreneurial
-    private sector by adopting more agile approaches and exploiting the latest
-    commercial-off-the-shelf technologies
-\end{quote}
+Developing software for CubeSats under budget and on time also requires cost
+effective verification techniques. Fuzz testing has been effectively used to
+verify non-embedded software. For example, Google has used fuzz testing to
+detect over 10000 security vulnerabilities in over 1000 open source projects
+through its OSS-Fuzz project \citep{Google_2023}. State of the art coverage
+guided fuzzers typically rely on using operating system features to instrument
+and test target software applications for general purpose computers. Embedded
+devices typically use different processor architectures and instruction sets,
+and do not include the operating system features required for coverage guided
+fuzzers to run natively \citep{Muench_2018}.
 
-\citet{Denis_2020} describes the current market trends of New Space as
-"Darwinism in Space". The creation of new markets in the space environments as
-a result of the digital transformation has led to a space industry "gold rush",
-with large venture capital investment and a "winner takes all" incentive
-driving high levels of competition \citep{Denis_2020}. The impact of this is
-that New Space companies must design and manufacture more satellites at a
-faster rate and for lower cost if they wish to be competitive.
-
-As a result of the business environment, many New Space start ups have
-introduced silicon valley concepts into their businesses, such as "DevOps
-culture" and launching Minimum Viable Product (MVP) cubesats. Furthermore, as
-these companies transition from startups to mature businesses with an aim to be
-profitable, LEAN practices become prevalent, resulting in attempts to reduce
-any "wasteful" or expensive practices \citep{Denis_2020}. These market
-conditions have led New Space businesses to become more accepting of risk than
-their Big Space counterparts \citep{Cratere_2024}
-
-Therefore, Flight Sofware needs to be developed in shorter time frames and with
-lower costs. Satellites in low earth orbit have a shorter lifetime due to
-atmospheric drag. Cubesats have a generally high failure rate due to a long
-list of possible failure modes which can cripple a platform, with no chance of
-repair. Some examples might be a solar panel not deploying, a launch vibration
-damaging a critical sensor, or an issue with the thermal management resulting
-in the payload having degraded operations. Often, the correctness of the
-software systems only becomes an issue when all these barriers have been
-passed, and so is a risk that is not considered worth spending time and money
-until later in a programme. Thus, new space companies have a vastly different
-approach to software systems compared with big space companies, and many of the
-approaches used by big space companies to ensure sofware correctness, such as
-extensive system and integration testing and formal methods, are simply to time
-consuming and expensive to be applicable in the new space environment.
-
-% Discuss Nasa's software development practices, power of ten etc.
-% Code Reuse and COTS parts.
-Cubesat projects tend to make more use of COTS hardware. However, software that
-meets the system requirements often cannot be purchased off the shelf, and so
-development costs shift from hardware to software
-\citep{Cubesat_Handbook_OBSW}. However, there are several flight software
-frameworks, such as NASA's Core Flight System (cFS) \citep{Nasa_cFS}, or Bright
-Ascensions Generation One (Gen1) Flight Software Development Kit (FSDK)
-\citep{Bal_FSDK}. The main aim of these frameworks is to reduce the cost and
-development time for Flight Software through code reuse and hardware
-abstraction.
-
-For example, a cFS application uses software abstractions of the operating
-system and hardware, called the Operating System Abstaction Layer (OSAL) and
-Platform Support Package (PSP). This allows correctly written application
-code to easily be ported between different hardware architectures such as Arm
-Cortex-M or SPARC-V8, and different operating systems like FreeRTOS, RTEMS or
-Linux \citep{Nasa_cFS}.
-
-The Gen1 FSDK provides libraries of pre-defined configurable software
-"Components", which satisfy common Flight Software requirements, such as
-logging telemetry. These pre-defined components can be composed together with
-bespoke components into a "Deployment" which can be compiled for several
-different COTS hardware options, such as the AAC-ClydeSpace Kryten, or the
-GomSpace Nanomind \citep{Bal_Options}.
-
-\citet{Farges_2022} evaluates the use of Software Frameworks in the space
-industry. They find a number of quality related benefits, such as increasing
-reliance on standardised communication interfaces like CCSDS Space Packet
-Protocol; as well as cost related benefits attributable to code reuse between
-satellite missions. However, they also identify risks with relying on software
-frameworks, such as potential issues with licenses, and the limitied
-adaptibility of software that is highly coupled to a framework, as implementing
-functions that aren't currently supported in the framework can be difficult.
-
-% FIXME: ( SpaceX's StarLink satellite program is the
-% obvious example of this. These satellites have a short mission life of five
-% years [REF], )
-
-\section{Satellite Architecture}
-% (SPAD book?, Cubesat Handbook)
-
-Software systems are an essential component of modern satellite designs.
-Satellites usually include a number of distributed embedded systems, each
-tasked with monitoring and controlling different critical subsystems such as
-power, attitude control, communication etc. Typically, a satellite will have a
-central on board computer (OBC), or command and data handling subsystem (CDH).
-
-There may be a dedicated guidance navigation and control (GNC) or attitude
-determination and control (ADCS) subsystem which runs complex algorithms using
-data retrieved from sensors like star trackers, rate sensors, magnetometers and
-sun sensors to drive actuators like reaction wheels and magnetorquers in order
-to point the satellite. Pointing is critical for many tasks. Payload operation
-tasks such as imaging require a high degree of accuracy and responsiveness.
-Propulsion manouvers, managing thermal loads, power generation (i.e. pointing
-the solar panels at the sun to improve the efficiency) all require an effective
-ADCS subsystem.
-
-The OBC will be connected to many lower power telemetry (TM) nodes, which are
-tasked with monitoring temperatures, voltages and currents, and toggling switches
-to enable/disable different subsystems. The OBC will log the telemetry reported
-by the TM nodes, and if telemery exceeds limits, handle fault detection,
-isolation and recovery (FDIR).
-
-The OBC or CDH subsystem is responsible for handling communication with a
-ground station via a radio, and so provides the interface between a satellite
-and the operator. This interface is commonly reffered to as Telemetry and
-Telecommand (TMTC). The operator uses the TMTC interface on the OBC to download data
-from orbit, schedule payload operations, and respond to issues.
-
-Payload computers (PLC) are common on satellites with compex payloads and are
-responsible for managing and operating whatever instruments are on board for
-delivery of the mission, such as radios, imagers, scientific experiments etc.
-On smaller satellites, like cubesats where payloads are less complex, the
-responsiblilties of the PLC can be handled by the OBC.
-
-** Flight Software security and protocols
-...spacepacket, framing, checksums etc? Fuzzware and Hoedur
-
-** Flight Software Development Challenges
-
-Developing flight software for satellite systems is a complex process due to
-the large number of different interfaces and interdepencies in the
-architecture. Furthermore, due to the space environment, computers used in
-satellite systems can have stringent environmental requirements, such as high
-radiation tolerance to reduce the likelyhood of single event upsets (SEU), low
-power consumption and consideration of thermal management. The embedded
-microcontrollers that meet these requiremetns can be more expensive than those
-commonly used for other applications, like in automotive systems or IOT devices.
-
-Developing software for embedded systems often has a critical dependency on
-hardware. Writing drivers for devices using only a datasheet can result in long
-periods of rework when hardware is available to test against due to incorrect
-information or a misinterpretation. The number of interdependent systems, the
-costs of these components, and smaller budgets of new space companies, results
-in dedicated engineering hardware required for effective development of
-embedded flight software being unavailable. Often engineers are only being able
-to test with flight hardware, and then have to fit their testing into a packet
-schedule to meet tight deadlines.
-
-
-
-** Emulation and Fuzz testing
-
-Fuzz testing is an approach to testing ....
-* FIXME take stuff from below and put into here, but rework to be more about how fuzzing could be a lower cost automated solution to system testing
-
-* FIXME should probably talk about protocols
-
-\section{Motivation}
-
-- Writing software for satellites
-
-\section{Background}
-
-\section{Research Questions and Objectives}
-
-% Build on Hoedur and Willbold to integrate a protocol fuzzer for spacepacket/ccsds protocols?
-% - investigate Hoedur, how does it work, how can it be extended?
-% - investigate protocol fuzzers, what do we need to do to build one?
-% - test against Willbolds open source satellite software with the protocol fuzzer, and compare results?
-
-\section{Overview}
-
-% Problem Description from prep report
-
-Embedded systems are becoming more prevalent in today's society, due to the
-rise of the Internet of Things (IOT) \citep{Abdumohasan_2021}. Embedded
-software is often written in low level languages such as C where errors and
-security vulnerabilities are easy to introduce \citep{Svoboda_2021}, and have
-many many attack surfaces where these mistakes could be exploited
-\citep{Abdumohasan_2021}. Furthermore, many embedded systems have stringent
-reliability requirements, such as safety critical software in automotive
-devices. As such, verification and testing of embedded systems is paramount to
-prevent the presence of security exploits and critical bugs in these devices.
-
-In the non-embedded space, many software programs use a methodology called fuzz
-testing to automatically verify the software. Google has used fuzzing to great
-effect, detecting over 10000 security vulnerabilities in over 1000 open source
-projects through its OSS-Fuzz project \citep{Google_2023}. In its most basic
-form, fuzz testing, or fuzzing, consists of generating some input test data and
-monitoring the response of the software/system under test (SUT) to this input.
-If the fuzzer detects the program has crashed, it saves the generated test data
-for analysis by an engineer, and mutates the input data in some way to produce
-a different result. This brute force approach is known as black-box fuzzing,
-and given enough time to execute, will uncover many exploitable bugs with the
-system, such as memory leaks, buffer overflows, and off by one errors. Basic
-black-box fuzzing on an embedded system will require some fuzzing harness
-\citep{Eisele_et_al_2022} and some method of detecting a fault, such as
-performing a liveness check \citep{Yun_2022}. Borsig et al. do not consider
-black-box fuzzing as a promising methodology for fuzzing an esp32 based IOT
-device, and conclude that white-box and grey-box fuzzing techniques are more
-capable \citep{Borsig_2020}.
-
-Compared to black-box fuzzing, white-box fuzzing involves targeted test case
-generation through static program analysis techniques, generating a test case
-to match every statically identified code path. Microsoft have had success
-using white-box fuzzing to identify difficult bugs that were missed by
-black-box fuzzing \citep{Godefroid_2012}. However, symbolic execution
-techniques used in white-box fuzzing can become unfeasably computationally
-expensive for larger projects \citep{Krishnamoorthy_2010}.
-
-Grey-box fuzzing is a middle ground between black-box and white-box fuzzing.
-Grey-box fuzzing relies on the fuzzer receiving feedback regarding code
-coverage for each generated test-case to mutate and generate further test
-cases. This approach allows it to find code paths faster than black-box
-testing, but without requiring any static code analysis \citep{Yun_2022}.
-
-Grey-box fuzzing of a program can be easily implemented for application (i.e
-non-embedded) software using popular fuzzers like AFL. AFL provides a library
-that is linked into the program at compile time, along with several sanitisers,
-to instrument the program. This allows AFL to receive coverage information from
-the running program during fuzzing \citep{AFL_2019}. Embedded systems often run on
-constrained environments, where running the fuzzer on the target hardware would
-be unfeasible. As such, the fuzzer and the SUT are run in different
-environments, and it is difficult to instrument and forward runtime information
-for grey-box fuzzing \citep{Muench_2018}.
-
-Attempts to solve this problem focus either on fuzzing a program running on
-target hardware, or in an emulated environment \citep{Eisele_et_al_2022}.
-Running in an emulated environment allows easy inspection of the SUT by the
-fuzzer, and potentially faster running and parallel tests
-\citep{Eisele_et_al_2022}. However, emulating embedded systems correctly is a
-hard problem, and due to the diversity in operating systems, hardware,
-peripherals etc. often means that development effort spent on emulating one
-system cannot be easily transferred to another. Attempts have been made to
-automate emulator development, such as Clements et al. HALucinator, which
-allows Hardware Abstraction Layer (HAL) functions in a compiled binary to be
-stubbed and fuzzed \citep{Clements_2021}.
-Chen et al. investigate a novel approach to fuzzing Real Time Operating Systems
-(RTOS) which involves slicing a single program into its constituent tasks and
-fuzzing them separately on an emulator based on the call graph of the program
-\citep{Chen_2022}.
-
-Yun et al. note that most embedded systems fuzzers rely on emulation
-\citep{Yun_2022}. However, most bugs found through emulation still need to be
-validated on hardware, and so being able to run the fuzz tests directly on the
-target hardware is preferable \citep{Eisele_et_al_2022}. Several methods have
-been discussed to improve instrumentation and feedback from running fuzz tests
-on target hardware. Beckmann et al. propose making use of the tracing
-facilities on modern Arm Cortex-M microcontrollers to stream coverage
-information back to the fuzzer \citep{Beckmann_2023}. Eisele proposes using a
-debugger as a method of inspecting the SUT and providing coverage feedback to a
-fuzzer \citep{Eisele_2022}.
-
-During the development of an embedded system, engineers often require access to
-representative development hardware to effectively design and write software.
-Often, waiting for prototype hardware to start software development does not
-align with business deadlines. The use of emulators improves enables engineers
-to write embedded software without access to development hardware, improving
-productivity and reducing development time.
-
-Existing research into embedded systems fuzzing often focuses on its
-cybersecurity applications and benefits. However, fuzz testing can also be an
-effective method for general verification of software. AdaCore provide a fuzz
-testing tool called GNATfuzz, which enables subprogram level fuzz testing as a
-supplement to unit testing for Ada and SPARK embedded software
-\citep{gnatfuzz}. By isolating subprograms and building isolated fuzz test
-executables in a manner similar to a unit testing framework, GNATfuzz removes
-the need to be able to run the full program under a fuzzer, and thus the need
-for an emulator or target hardware. However, the effectiveness of this approach
-is relient on Ada's extended runtime constraint checking when compared to C
-\citep{gnatfuzz}. Furthermore, subprogram level fuzzing is less able detect
-more complex issues resulting from interactions with hardware peripherals and
-state.
-
-While research into the fuzz testing of embedded systems has been increasing
-year by year \citep{Yun_2022}, there are few generic solutions
-\citep{Eisele_et_al_2022}. The two main challenges to embedded system fuzzing
-when compared to desktop or server systems remain the variety in CPU
-architectures in embedded systems, and the lack of an operating system such as
-linux for bare metal systems \citep{Eisele_et_al_2022}. Currently, the
-availability and ease of use of fuzzing tooling for embedded systems does not
-match that of desktop applications.
-
-% Talk about the promise of rehosting/emulation/
-% IOTFuzz
-% HALucinator
-% FuzzWare
-% Hoedur
-% Faster Fuzzers (near Native?)
-
-% Outstanding problems for firmware fuzzing?
-
-% Introduce the Space Context? (maybe earlier) reference willbold and gutierrez
-
-
-% CUT?
-However, while much research outlines the
-challenges with current embedded systems fuzzing techniques, it is unclear how
-these challenges compare with the effort required to verify embedded software
-using traditional techniques. In order to prove that embedded fuzz testing is a
-viable alternative to existing verification methods, a comparison of the cost
-effectiveness of conducting embedded fuzzing with other verification techniques
-is required.
-% ENDCUT
-
-% CUT?
-The design and implementation of embedded software and its verification is
-highly coupled to hardware. The nordic semiconductor NRF52 family of
-microcontrollers are a common choice for IOT devices. NRF52s are based on the
-ARM Cortex-M architecture, and include embedded radio peripherals, such as
-bluetooth low energy and wifi (amongst others). Another common IOT radio
-microcontroller is the ESP32, for which Borsig et al. previously developed a
-fuzzing framework \citep{Borsig_2020}. Furthermore, Yun suggested the need for
-further research into emulation of specific architectures and devices
-\citep{Yun_2022}. An NRF52 was used by Beckmann for on-target coverage guided
-fuzzing of a bare metal ARM Cortex-M system using instruction tracing over a
-single wire output (SWO) interface \citep{Beckmann_2023}. Additionally, Behrang
-outlines a method for using the unicorn cpu emulator to execute NRF52 based
-bare-metal radio firmware \citep{Behrang_2023}. The desktop fuzzer AFL++
-includes an implementation called "unicorn\_mode" which allows the unicorn
-engine to be built with AFL++ support \citep{UnicornMode}. Maier develops the
-Unicorefuzz framework and presents an example use of AFL++ Unicorn Mode for
-fuzzing kernel modules, which have similar challenges to embedded systems
-\citep{Maier_2019}.
-% ENDCUT?
+Emulating embedded software on general purpose computers has become the most
+popular methodology for fuzz testing embedded systems \citep{Yun_2022}. The
+process of using an emulator to host an embedded software program to run on a
+general purpose computer with a fuzzer is often called "rehosting". The variety
+in architectures, operating systems, and hardware integration in embedded
+software makes a general purpose solution difficult to achieve. However, there
+have been several developments trying to improve the process of fuzz testing
+rehosted embedded software. One of the most recent developments is called
+Hoedur, which improves the interface between the emulation software and fuzzer,
+such that each virtual memory location uses a seperate input data stream
+\citep{Hoedur_2023}. \citet{Hoedur_2023} posit that further improvements to the
+fuzzer could be made if specialised grammar fuzzers were used for input streams
+corresponding to embedded system communication interfaces.
 
 \end{document}

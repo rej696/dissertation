@@ -2,47 +2,292 @@
 \graphicspath{{\subfix{../images}}}
 \begin{document}
 
+In order to ensure the research questions outlined in \textbf{\autoref{sec:rq}}, a set of requirements needed to identified to drive the
+design of any software needed.
+
 % Requirements and Design
-\section{Requirements}
+\section{User Requirements} \label{sec:user-req}
 
-% FIXME
-\begin{description}
-    \item[REQ-FSW-1]Development of representative minimal flight software system
-    \item[REQ-FSW-2]target software shall be representative of flight software system ([REF]?)
-    \begin{description}
-        \item[REQ-FSW-2-1]target software shall implement the spacepacket protocol for communication with ground software
-        \item[REQ-FSW-2-2]target software shall allow the remote triggering of procedures
-        \item[REQ-FSW-2-3]target software shall allow for the retrieval of telemetry data
-        \item[REQ-FSW-2-4]target software shall allow the setting and retrieval of configuration data
-        \item[REQ-FSW-2-5]Spacepacket interface shall allow communication between the target software and an x86\_64 development computer
-        \item[REQ-FSW-2-6]target software shall implement a real time operating system
-        \item[REQ-FSW-2-7]TODO critique these requirements, do they result in a "representative" flight software?
+\textbf{\autoref{tab:rq1-reqs}} shows user requirements derived to satisfy
+\refrq{1}. This requirement set shows the developments fundamental to the
+project, namely the development of flight software (\refreq{RQ1-1}), emulator
+(\refreq{RQ1-2}) and coverage guided fuzzer (\refreq{RQ1-3}), as "Must"
+requirements. The development of a blackbox fuzzer was deemed to be a "Should"
+requirement (\refreq{RQ1-6}, \refreq{RQ1-7}). Running fuzz tests on the
+hardware (\refreq{RQ1-5} and \refreq{RQ1-8}) were identified as "Could"
+requirements, as potential extensions to the work.
 
-    \end{description}
-    \item[REQ-EMU-1]Development of rehosting harness for running flight software on development computer
-    \begin{description}
-        \item[REQ-EMU-1-1]rehosting software shall allow the execution of target software on an x86\_64 development computer
-        \item[REQ-EMU-1-2]rehosting software shall include all functionality required to boot and run the target software in a manner representative of the target hardware
-        \item[REQ-EMU-1-3]rehosting software shall allow data to be input via the hardware peripheral interface of the target software
-        \item[REQ-EMU-1-4]rehosting software shall be able to read data from the hardware peripheral interface of the target software
-        \item[REQ-EMU-1-5]rehosting software shall implement features for aiding debugging and introspection of target software execution
-        \item[REQ-EMU-1-6]rehosting software shall allow the target software to be run under a coverage guided fuzzer
-        \item[REQ-EMU-1-7]rehosting software shall allow the target software to be run under a black box fuzzer
-        \item[REQ-EMU-1-8]TODO critique these requirements, do they result in a comprehensive emulation?
+\begin{table}[H]
+    \centering
+    \begin{tabular}[c]{|l|l|p{10cm}|}
+        \hline
+        \definereq{RQ1-1} & \textbf{Must} &
+        A target software program must be developed that is representative of space flight command and data handling software
+        \\
+        \hline
+        \definereq{RQ1-2} & \textbf{Must} &
+        An emulator must be developed that is able to execute the target software on an x86\_64 linux computer
+        \\
+        \hline
+        \definereq{RQ1-3} & \textbf{Must} &
+        A coverage guided fuzzer must be implemented to fuzz test the target software
+        \\
+        \hline
+        \definereq{RQ1-4} & \textbf{Must} &
+        The coverage guided fuzzer must be able to fuzz the target software running on the emulator
+        \\
+        \hline
+        \definereq{RQ1-5} & \textit{Could} &
+        The coverage guided fuzzer could be able to fuzz the target software running on the target hardware
+        \\
+        \hline
+        \definereq{RQ1-6} & Should &
+        A blackbox fuzzer should be implemented to fuzz test the communication interface of the target software
+        \\
+        \hline
+        \definereq{RQ1-7} & Should &
+        The blackbox fuzzer should be able to fuzz the target software running on the emulator
+        \\
+        \hline
+        \definereq{RQ1-8} & \textit{Could} &
+        The blackbox fuzzer could be able to fuzz the target software running on the target hardware
+        \\
+        % \hline
+        % \definereq{A} & Should &
+        % \\
+        % \hline
+        % \definereq{B} & \textit{Could} &
+        % \\
+        % \hline
+        % \definereq{C} & \textbf{Must} &
+        % \\
+        \hline
+    \end{tabular}
+    \caption{User Requirements to satisfy Research Question 1}
+    \label{tab:rq1-reqs}
+\end{table}
 
-    \end{description}
-    \item[REQ-PGF-1]Protocol Grammar Filter:
-    \begin{description}
-        \item[REQ-PGF-1-1]the protocol grammar filter shall generate valid input data to the target software
-        \item[REQ-PGF-1-2]the protocol grammar filter shall generate known invalid input data to the target software
-        \item[REQ-PGF-1-3]the protocol grammar filter shall use a variable length binary stream as input data
-        \item[REQ-PGF-1-4]the protocol grammar filter input data generation shall be deterministic
+\textbf{\autoref{tab:rq2-reqs}} shows user requirements derived to satisfy \refrq{2}.
+This requirement set has some overlap with those identified to satisfy
+\refrq{1} in \textbf{\autoref{tab:rq1-reqs}}. Both require some target software
+to be developed (\refreq{RQ1-1}, \refreq{RQ2-1}) and both require the
+implementation of a coverage guided fuzzer (\refreq{RQ1-3}, \refreq{RQ2-2}).
 
-    \end{description}
-\end{description}
+\begin{table}[H]
+    \centering
+    \begin{tabular}[c]{|l|l|p{10cm}|}
+        \hline
+        \definereq{RQ2-1} & \textbf{Must} &
+        A target software program must be developed that implements a communication protocol
+        \\
+        \hline
+        \definereq{RQ2-2} & \textbf{Must} &
+        The communication interface of the target software must be representative of a space flight command and data handling system
+        \\
+        \hline
+        \definereq{RQ2-3} & \textbf{Must} &
+        A coverage guided fuzzer must be implemented to fuzz test the communication interface of the target software
+        \\
+        \hline
+        \definereq{RQ2-4} & \textbf{Must} &
+        A protocol grammar filter must be developed that ensures a random bytestream satisfies the grammar of the protocol
+        \\
+        \hline
+        \definereq{RQ2-5} & \textbf{Must} &
+        The protocol grammar filter must be able to be integrated with the coverage guided fuzzer
+        \\
+        \hline
+    \end{tabular}
+    \caption{User Requirements to satisfy Research Question 2}
+    \label{tab:rq2-reqs}
+\end{table}
 
-% \item[REQ-]derived requirements?
-%  *\item[REQ-]ground software system shall
+% TODO how will both these requirements sets satisfy the research questions?
+
+\section{Derived Requirements} \label{sec:derived-req}
+
+The user requirements outlined to satisfy the research questions in
+\autoref{sec:user-req} identified three main pieces of software that needed to
+be developed. A representative flight software (\refreq{RQ1-1},
+\refreq{RQ2-2}), some emulation software capable of being used as a test
+harness for a coverage guided fuzzer (\refreq{RQ1-2}, \refreq{RQ2-3}), and some
+software for generating some valid communication according to a protocol
+grammar (\refreq{RQ2-4}).
+
+Additional requirements for each of these programs, namely the Flight Software
+(FSW), Emulation (EMU) and Protocol Grammar Filter (PGF), were derived from the
+user requirements and are outlined and discussed below.
+
+%% TODO how to show what was derived from where? a seperate table after defining the requirements?
+
+%% FSW Requirements
+% Target software must be implemented to target arm cortex m
+% Target software must implement the CCSDS spacepacket protocol as a communication interface
+% The communication interface should include a packet verification method, such as a checksum or CRC
+% The target software must allow the remote triggering of procedures
+% The target software must allow the retrieval of telemetry data
+% The target software could allow the setting of configuration data
+% The target software could allow the retrieval of configuration data
+% There must be a method to communicate with the target software from an x86\_64 development computer
+% The target software should implement functionality similar to a real time operating system
+%% TODO critique these requirements and provide rationale, showing how they will satisfy the research question
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}[c]{|l|p{10cm}|}
+        \hline
+        \definereq{FSW-1} &
+        The target software must be implemented to target an ARM Cortex-M microcontroller
+        \\
+        \hline
+        \definereq{FSW-2} &
+        The target software must be implement the spacepacket protocol over a hardware communication interface
+        \\
+        \hline
+        \definereq{FSW-3} &
+        The target software should include a method of verifying packets received over the communication interface, such as a checksum
+        \\
+        \hline
+        \definereq{FSW-4} &
+        The target software must allow the remote triggering of procedures
+        \\
+        \hline
+        \definereq{FSW-5} &
+        The target software must allow the retrieval of telemetry data
+        \\
+        \hline
+        \definereq{FSW-6} &
+        The target software could allow the setting of configuration data
+        \\
+        \hline
+        \definereq{FSW-7} &
+        The target software could allow the retrieval of configuration data
+        \\
+        \hline
+        \definereq{FSW-8} &
+        There must be a method to communicate with the target software from an x86\_64 development computer
+        \\
+        \hline
+        \definereq{FSW-9} &
+        The target software should implement functionality similar to a real time operating system
+        \\
+        \hline
+    \end{tabular}
+    \caption{Derived Requirements for the target flight software}
+    \label{tab:fsw-reqs}
+\end{table}
+
+\autoref{tab:fsw-reqs} shows the derived flight software requirements.
+\refrq{2} is focused on fuzz testing the communication interface with the
+flight software, and so several of these requirements clarify that interface.
+The use of spacepacket protocol (\refreq{FSW-2}), the implementation of RTOS
+functionality (\refreq{FSW-9}), and the need for remote procedure triggering
+(\refreq{FSW-4}), are all identified to ensure the FSW follows standard FSW
+design decisions (outlined in \autoref{chap:lit-rev}), as required by
+\refreq{RQ1-1}.
+
+Other requirements, such as \refreq{FSW-8}, are included to ensure that the
+design of the FSW is easy to fuzz test, and thus satisfy both \refrq{1} and
+\refrq{2}.
+
+\refreq{FSW-1} specifies that the target software be designed to run on an ARM
+Cortex-M microcontroller. This microcontroller architechture is very common in
+space applications \citep{Cratere_2024}, so also helps to satisfy \refreq{RQ1-1}.
+
+\autoref{tab:emu-reqs} outlines derived requirements for the emulator. Some of
+these requirements are directly derived from the User Requirements, such as
+\refreq{EMU-1} and \refreq{RQ1-2}. Others are fundamental for the emulator to
+be able to be used to answer \refrq{2}, such as \refreq{EMU-6}.
+
+\refreq{EMU-5} aims to enable the emulator to be used to debug the target
+software. This "Should" requirement may make the emulator a more useful tool
+beyond just acting as a fuzz testing harness, and allow the emulator to be used
+to investigate bugs identified by fuzz testing. Using the emulator in this way
+may give additional insight when answering \refrq{1}.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}[c]{|l|p{10cm}|}
+        \hline
+        \definereq{EMU-1} &
+        The emulation software must allow the execution of target software on an x86\_64 development computer
+        \\
+        \hline
+        \definereq{EMU-2} &
+        The emulation software must include all functionality required to boot and run the target software in a manner representative of the target hardware
+        \\
+        \hline
+        \definereq{EMU-3} &
+        The emulation software must allow data to be input via the hardware peripheral interface of the target software
+        \\
+        \hline
+        \definereq{EMU-4} &
+        The emulation software should be able to read data from the hardware peripheral interface of the target software
+        \\
+        \hline
+        \definereq{EMU-5} &
+        The emulation software should implement features for aiding debugging and introspection of target software execution
+        \\
+        \hline
+        \definereq{EMU-6} &
+        The emulation software must allow the target software to be able to be used as a test harness for a coverage guided fuzzer
+        \\
+        \hline
+        \definereq{EMU-7} &
+        The emulation software should allow the target software to be able to be used as a test harness for a black box fuzzer
+        \\
+        \hline
+    \end{tabular}
+    \caption{Derived Requirements for the emulator}
+    \label{tab:emu-reqs}
+\end{table}
+
+%% Protocol Grammar Filter requirements
+% the protocol grammar filter shall generate valid input data to the target software
+% the protocol grammar filter shall generate known invalid input data to the target software
+% the protocol grammar filter shall use a variable length binary stream as input data
+% the protocol grammar filter input data generation shall be deterministic
+
+The grammar filter derived requirements are mostly focused towards satisfying \refrq{2}.
+% TODO need more here about the pgf filter.
+For the filter to be valid for use with a fuzzer, the output of the filter must
+be ensured to always be the same given the same input (\refreq{PGF-4}). If this
+were not the case, the algorithms in the fuzzer for mutating the input data
+would not work correctly. Additionally, any test cases identified by the fuzzer
+would not be able to be replayed to investigate any bugs found.
+
+Coverage guided fuzzers typically provide input in the form of a stream of
+bytes, and so the protocol grammar filter also needs to be able to handle
+streams of bytes of differrent sizes (\refreq{PGF-3}).
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}[c]{|l|p{10cm}|}
+        \hline
+        \definereq{PGF-1} &
+        The protocol grammer filter must generate valid input data to the target software
+        \\
+        \hline
+        \definereq{PGF-2} &
+        The protocol grammer filter must generate known invalid input data to the target software
+        \\
+        \hline
+        \definereq{PGF-3} &
+        The protocol grammer filter must use a variable length stream of bytes as input data
+        \\
+        \hline
+        \definereq{PGF-4} &
+        The protocol grammer filter must generate input data in a deterministic manner
+        \\
+        \hline
+    \end{tabular}
+    \caption{Derived Requirements for the protocol grammar filter}
+    \label{tab:pgf-reqs}
+\end{table}
+
+
+
+%% Software Design?
 
 % [ ] Outline software design needed to meet requirements
 % - list all software developed, why they are needed, what requirement they satisfy
@@ -59,5 +304,80 @@
 %   ** interrupt handling
 
 \section{Design}
+
+
+\subsection{Target Hardware}
+The first design decision that had to be made, building on \refreq{FSW-1}, was
+to select a microcontroller on which to build the flight software. This was
+especially critical, not just to ensure the flight software was representative,
+but as the hardware selected would have a large impact on the design of the
+emulator and fuzzer.
+
+\citet{Cratere_2024} outlines alot of useful information about the state of the
+art cubesat OBC technology, and this information was used as a reference when
+designing the flight software component of the work. They identify Arm Cortex-M
+microcontrollers as the most popular option. They also compose a list of flight
+hardware analysed, identifying the operating system and processor on each.
+From this comprehensive list, many different cubesat OBC's can be seen to use
+STM32 devices, such as EnduroSat \citep{EnduroSat_OBC} and NanoAvionics
+\citep{Nano_OBC}. Many other OBC's, such as the AAC-ClydeSpace Kryten
+\citep{Clydespace_Kryten}, use System On Chip (SoC) processors, where an FPGA
+and ARM microcontroller are integrated with memory into the same package. The
+Kryten uses a Microsemi SmartFusion 2 SoC, which includes an ARM Cortex-M3
+microcontroller.
+
+Real flight hardware, such as those mentioned above, is expensive. The
+EnduroSat OBC is listed as €4,300 \citep{EnduroSat_OBC}. Therefore, for this
+work an STM32F411 device was chosen. The STM32F411 is a ARM Cortex-M4, and is
+available as a consumer development board called BlackPill, which was used as
+the target hardware throughout the work \citep{blackpill_info}. The Cortex-M4
+architechture is similar to Cortex-M3, like as used in the Kryten
+\citep{Clydespace_Kryten}, except that Cortex-M4 may includes support for
+hardware floating point arithmetic and DSP instructions \citep{Cortex_M3}
+\citep{Cortex_M4}. The STM32 chip used in the EnduroSat OBC is a Cortex-M7
+\citep{EnduroSat_OBC}, which is very similar to a Cortex-M4, but with better
+performance and power efficiency, and a larger 64-bit instruction and data bus
+\citep{Cortex_M7}.
+
+Additionally, STM32F411 microcontrollers have many peripherals and interfaces
+which are common in cubesat OBC boards, such as Inter-Integrated Circuit (I2C),
+Serial Peripheral Interface (SPI), and Universal Synchronous and Asynchronous
+Receiver Transmitter (USART) \citep{Cratere_2024}. Therefore, the STM32F411
+blackpill development board is sufficiently representative of OBC hardware used
+in the New Space industry for the purposes of this work.
+
+Typically, a CubeSat OBC communicates with a ground station using a S-band
+radio (known as a TMTC Radio). The radio is usually connected to the OBC using
+a communication bus such as CAN, Serial or SpaceWire. An example TMTC radio is
+the Satlab SRS-3, which provides both CAN and RS-422 interfaces
+\citep{Satlab_SRS3}. Therefore, a serial communication interface (between the
+OBC and Radio) will be representative. The system boundary for emulating and
+fuzzing the flight software is at the OBC peripherals, and so for this work any
+processing carried out by the TMTC radio, such as foward error correction, does
+not need to be considered in the design.
+
+\subsection{Flight Software}
+
+% - Written in C? The only real choice
+% - Bare Metal
+%   - HAL
+%   - Startup Code
+%   - Design by Contract
+% - Actions, Parameters, Telemetries, RPC
+% - Spacepacket Interface
+% - Bare Metal RTOS inspired by MIROS (rather than FreeRTOS or RTEMS, easier to reason about and emulate for the demonstration of the project)
+% - CMSIS? Avoid using relying on CMSIS to reduce the amount of perhipherals and mmio that would need to be emulated.
+
+\subsection{Emulator}
+
+% - Python
+% - Unicorn
+%   - Integration with AFL for coverage guided fuzzing
+%   - Options include QEMU, Unicorn is QEMU, cite papers stating it as a form of emulation?
+% - Peripheral Models
+%   - use unicorn hooks to capture memory accesses to specific mmio addresses, and store those in python models
+
+% Design Rationale:
+% - why unicorn / python for peripheral modelling
 
 \end{document}

@@ -7,6 +7,8 @@
 \usepackage{Bath-CS-Dissertation}
 \usepackage{subfiles}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \title{\bf An Investigation into Emulation and Fuzz Testing as a Methodology for Spacecraft Flight Software Development}
 \author{Rowan Saunders}
 \date{MSc $\langle$EngD$\rangle$ in Computer Science\\
@@ -69,23 +71,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Introduction}
 
-% [ ] Explanation of developing software in new space
-% [ ] Explanation of Emulation and Fuzzing
-% [ ] Literature Review of existing Embedded Emulation/Fuzzing Techniques
-%      - Fuzzware, Hoedur
-%      - Fuzzing Protocols with Fuzzware/Hoedur, introduce grammar filter?
-%      - Papers don't emulate/fuzz rtos behaviours?
-% [ ] Research Questions and Objective
-
-% RQ1: Analyse the effectiveness of different fuzzing methods for incremental development of flight software
-% RQ2: Analyse the impact of using a protocol grammar filter on fuzzer performance, measured in coverage
-
 \subfile{sections/introduction}
 
-% FIXME literature review in with the introduction?
-%
-% You will wish to cite authors like \citep{Yun_2022} or \citep{Yun_2022}. Alternate
-% commands are used to cite \citet{Yun_2022} as a noun, or add text to the citation, \citep[\emph{e.g.},][]{Yun_2022}.
+\chapter{Literature Review and Technology Survey} \label{chap:lit-rev}
+
+\subfile{sections/literature-review}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -99,20 +89,16 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Implementation (and Testing?)}
+\chapter{Implementation}
 
-% What goes in implementation and what goes in design?
-% Discuss tooling, rationale for development decisions?
-
+% RQ1?
 \subfile{sections/implementation}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Discussion (and Results?)}
+\chapter{Fuzzer Integration Results and Discussion}
 
-% Review thoughts about fuzzing
-% Present Fuzzing Results, show coverage graphs
-
+% RQ2?
 \subfile{sections/discussion}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -120,11 +106,6 @@
 \chapter{Conclusions and Future Work}
 
 \subfile{sections/conclusion.tex}
-
-% Future Work:
-% - Implement Spacepacket Grammar Filter for Hoedur
-% - Investigate running flight sotfware under Hoedur
-% -
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -141,19 +122,19 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Design Diagrams}
+% \chapter{Design Diagrams}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{User Documentation}
+% \chapter{User Documentation}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Raw Results Output}
+% \chapter{Raw Results Output}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Code}
+% \chapter{Code}
 
 %% NOTE For this to typeset correctly, ensure you use the pdflatex
 %%      command in preference to the latex command.  If you do not have

@@ -82,3 +82,31 @@ This copy of the dissertation has been supplied on condition that anyone who con
 This dissertation is submitted to the University of Bath in accordance with the requirements of the degree of Masters of Science in the Department of Computer Science. No portion of the work in this dissertation has been submitted in support of an application for any other degree or qualification of this or any other university or institution of learning. Except where specifically acknowledged, it is the work of the author.
   \end{centrespaced}
   }
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Custom declarations
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{csquotes}
+
+\DeclareCaptionFormat{custom}
+{%
+    \textbf{#1#2}#3
+}
+\captionsetup{format=custom}
+\captionsetup{width=0.8\textwidth}
+
+% \usepackage[hidelinks]{hyperref}
+\newcommand{\refreq}[1]{\textbf{\hyperlink{req#1}{REQ-#1}}}
+\newcommand{\definereq}[1]{\hypertarget{req#1}{REQ-#1}}
+
+\newcommand{\refrq}[1]{\textbf{\hyperlink{rq#1}{RQ#1}}}
+\newcommand{\definerq}[1]{\hypertarget{rq#1}{RQ#1}}
+
+% Set up nicer table spacing
+\setlength{\arrayrulewidth}{0.5mm}
+\setlength{\tabcolsep}{18pt}
+\renewcommand{\arraystretch}{1.5}

@@ -4,4 +4,24 @@
 
 Discussion
 
+% Review thoughts about fuzzing
+
+% discuss implementation of grammar filter
+
+% blackbox fuzzing with and without grammar filter
+
+% coverage guided fuzzing implementation, explain AFL, show some screen shots.
+% - describe the process of integrating and running the fuzzer under unicorn.
+%    - input callback, forkserver, etc.
+% - difficulty with taking a long time to fuzz?
+% - discuss potential improvements such as parallel builds
+% - reducing fuzzing area (i.e target specific functions)
+% - fuzzing potential more useful for analysis or verification of finished software, rather than software still in development.
+% - fuzzing results somewhat invalidated after any changes, which is an issue when there is churn in implementation, and while fuzzing takes 6 days + to get meaningful coverage
+
+% Present Fuzzing Results, show coverage graphs
+% tradeoffs between grammar fuzzing and normal data
+% - checksum and frameing means more data gets through to application
+% - have to inject known errors to get coverage in protocol layer (e.g. invalid headers), reduces the effectiveness of fuzzing for finding bugs/vulnerabilities in this area.
+
 \end{document}
