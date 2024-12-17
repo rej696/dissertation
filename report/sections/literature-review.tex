@@ -399,15 +399,6 @@ and modifications to the original HALucinator tool. However, they do review
 their original process and outline an approach for rehosting other RTOSes with
 HALucinator.
 
-% FIXME SFuzz stuff
-% \citet{Chen_2022} created a different tool for fuzzing embedded software with
-% an RTOS, called SFuzz. They develop a technique to slice a firmware image
-% running an RTOS into distinct code snippets which SFuzz identifies independent
-% RTOS tasks within a binary, and divides \citet{Chen_2022} SFuzz, slice based
-% fuzzing for real time operating systems, analysis of call graphs, seperating
-% individual rtos threads into separate code snippets and coverage guided fuzzing
-% on each snippet. out performs tools such as unicornafl when testing rtos.
-% FIXME
 \citet{Chen_2022} investigated a novel approach to fuzzing Real Time Operating
 Systems (RTOS) which involves slicing a single program into its constituent
 tasks and construct a call graph of program based on critical functions such as
@@ -417,12 +408,51 @@ skip "input-irrelevant" function calls as well code that is "emulation-hard",
 such as HAL functions. The tool focuses on code paths that handle input data,
 so there are minimal side effects from ignoring these functions.
 
+Where SFuzz is only interested in fuzzing a single input to firmware, Fuzzware
+is a tool that takes a different approach by considering all memory available
+to the firmware as input \citep{Fuzzware_2022}. Fuzzware expands upon
+HALucinator, but rather than using the HAL as the boundary for the fuzzer and
+the SUT, it models the MMIO, such that each MMIO access uses fuzzer input.
+Fuzzware is also based on UnicornAFL, and uses symbolic execution to apply
+"access models" to MMIO locations. These access models guide the fuzzer to only
+generate meaningful values for memory accesses. For example, in the case where
+an MMIO location is only read and compared to a magic number, the symbolic
+execution engine will tell Fuzzware to use a "constant" access model for that
+MMIO, with the magic number as the constant value. Alternatively, if an MMIO
+register is accessed, and only certain bits of the register are used (a common
+occurrence when working with embedded software), Fuzzware will use the
+"bitfield" access model, and so the fuzzer will only generate input data for
+the bits used by the firmware. This massively reduces the "input overhead" of
+the fuzzer, i.e. input data that isn't actively used by the firmware during the
+fuzz test. \citet{Fuzzware_2022} show that this approach makes the fuzzer much
+more effective at discovering coverage than other rehosting-based fuzzing
+tools.
 
-% Fuzzware expands upon HALucinator, but rather than using the hal as the boundary for the fuzzer and the SUT, it models the MMIO, such that each MMIO access uses fuzzer input. dynamic analysis etc.
-\citet{Fuzzware_2022} firmware rehosting and fuzz testing using precise MMIO modelling through dynamic analysis and unicornafl
-
-\citet{Hoedur_2023} extention of fuzzware, with multistream inputs. moves away from afl to implement its own fuzzer.
-% future work? implementing grammar fuzzers for the multiple streams, to resolve issues surrounding encryption/checksums?
+AFL traditionally expects the program being fuzzed to require a flat binary input.
+While Fuzzware removes a lot of "input overhead", it reinterprets the flat
+input from AFL as a series of MMIO accesses, but AFL still only has one input
+stream. This can result in the input being hard to mutate effectively, as
+changing a bit could result in a different execution path in the program, and
+so changing the semantics of later bits in the stream.
+Hoedur \citep{Hoedur_2023} is an extension of Fuzzware, which includes a novel
+multi-stream fuzzer, rather than AFL, such that each MMIO access consumes input
+data from its own input stream. This greatly improves the ability of the fuzzer
+to mutate MMIO input data. Unlike HALucinator before them, both Fuzzware and
+Hoedur perform automated firmware rehosting, as the only manual work needed to
+fuzz a firmware is knowledge and configuration of the firmwares memory map and
+architecture. Generating data for MMIO locations means that modelling
+peripherals, like HALucinator, is not necessary. However, this means that
+unlike HALucinator, firmware run on Hoedur or Fuzzware cannot be run
+interactively, it must be run under the fuzzer. While both are based on
+Unicorn, which supports multiple target architectures, Fuzzware and Hoedur are
+only currently available on ARM Cortex-M, chosen for its popularity, and use in
+other state of the art fuzzers to allow fair comparisons. Given Hoedur's
+independent input streams for each MMIO, \citet{Hoedur_2023} identified the
+integration of specialized grammar fuzzers into Hoedur as an area for future
+work. This would further reduce "input overhead" on communication interfaces,
+as grammar fuzzers are better able to correctly handle encryption or packet
+validation. These are common features of embedded communication protocols, as
+demonstrated by IoTFuzzer \citep{IOTFuzzer_2018}.
 
 % Fuzztruction moves away from AFL entirely to resolve these issues surrounding encryption/checksums by creating a new type of fuzzer that mutates not just the input data, but the generator that generates the input data, allowing it to adapt to information about protocols contained in the binaries themselves. This is not too disimilar to IOTFuzz using the generators in mobile applications?
 \citet{Fuzztruction_2023} using fault injection based fuzzing to leverage implicit domain knowledge? not using grammars, but by finding how the interface works by using the knowledge already encoded in the binaries, by mutating the code that generates the input, rather than
