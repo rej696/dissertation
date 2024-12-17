@@ -19,37 +19,37 @@ requirements, as potential extensions to the work.
 
 \begin{table}[H]
     \centering
-    \begin{tabular}[c]{|l|l|p{10cm}|}
+    \begin{tabular}[c]{|l|p{10cm}|}
         \hline
-        \definereq{RQ1-1} & \textbf{Must} &
+        \definereq{RQ1-1} &
         A target software program must be developed that is representative of space flight command and data handling software
         \\
         \hline
-        \definereq{RQ1-2} & \textbf{Must} &
+        \definereq{RQ1-2} &
         An emulator must be developed that is able to execute the target software on an x86\_64 linux computer
         \\
         \hline
-        \definereq{RQ1-3} & \textbf{Must} &
+        \definereq{RQ1-3} &
         A coverage guided fuzzer must be implemented to fuzz test the target software
         \\
         \hline
-        \definereq{RQ1-4} & \textbf{Must} &
+        \definereq{RQ1-4} &
         The coverage guided fuzzer must be able to fuzz the target software running on the emulator
         \\
         \hline
-        \definereq{RQ1-5} & \textit{Could} &
+        \definereq{RQ1-5} &
         The coverage guided fuzzer could be able to fuzz the target software running on the target hardware
         \\
         \hline
-        \definereq{RQ1-6} & Should &
+        \definereq{RQ1-6} &
         A blackbox fuzzer should be implemented to fuzz test the communication interface of the target software
         \\
         \hline
-        \definereq{RQ1-7} & Should &
+        \definereq{RQ1-7} &
         The blackbox fuzzer should be able to fuzz the target software running on the emulator
         \\
         \hline
-        \definereq{RQ1-8} & \textit{Could} &
+        \definereq{RQ1-8} &
         The blackbox fuzzer could be able to fuzz the target software running on the target hardware
         \\
         % \hline
@@ -77,23 +77,23 @@ implementation of a coverage guided fuzzer (\refreq{RQ1-3}, \refreq{RQ2-2}).
     \centering
     \begin{tabular}[c]{|l|l|p{10cm}|}
         \hline
-        \definereq{RQ2-1} & \textbf{Must} &
+        \definereq{RQ2-1} &
         A target software program must be developed that implements a communication protocol
         \\
         \hline
-        \definereq{RQ2-2} & \textbf{Must} &
+        \definereq{RQ2-2} &
         The communication interface of the target software must be representative of a space flight command and data handling system
         \\
         \hline
-        \definereq{RQ2-3} & \textbf{Must} &
+        \definereq{RQ2-3} &
         A coverage guided fuzzer must be implemented to fuzz test the communication interface of the target software
         \\
         \hline
-        \definereq{RQ2-4} & \textbf{Must} &
+        \definereq{RQ2-4} &
         A protocol grammar filter must be developed that ensures a random bytestream satisfies the grammar of the protocol
         \\
         \hline
-        \definereq{RQ2-5} & \textbf{Must} &
+        \definereq{RQ2-5} &
         The protocol grammar filter must be able to be integrated with the coverage guided fuzzer
         \\
         \hline
@@ -327,11 +327,11 @@ Kryten uses a Microsemi SmartFusion 2 SoC, which includes an ARM Cortex-M3
 microcontroller.
 
 Real flight hardware, such as those mentioned above, is expensive. The
-EnduroSat OBC is listed as €4,300 \citep{EnduroSat_OBC}. Therefore, for this
-work an STM32F411 device was chosen. The STM32F411 is a ARM Cortex-M4, and is
-available as a consumer development board called BlackPill, which was used as
-the target hardware throughout the work \citep{blackpill_info}. The Cortex-M4
-architechture is similar to Cortex-M3, like as used in the Kryten
+EnduroSat OBC is listed as 4,300 euros \citep{EnduroSat_OBC}. Therefore, for
+this work an STM32F411 device was chosen. The STM32F411 is a ARM Cortex-M4, and
+is available as a consumer development board called BlackPill, which was used
+as the target hardware throughout the work \citep{blackpill_info}. The
+Cortex-M4 architechture is similar to Cortex-M3, like as used in the Kryten
 \citep{Clydespace_Kryten}, except that Cortex-M4 may includes support for
 hardware floating point arithmetic and DSP instructions \citep{Cortex_M3}
 \citep{Cortex_M4}. The STM32 chip used in the EnduroSat OBC is a Cortex-M7

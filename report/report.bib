@@ -1,3 +1,43 @@
+@inproceedings{IoTFuzzer_2018,
+    title={IoTFuzzer: Discovering Memory Corruptions in IoT Through App-based Fuzzing},
+    author={Jiongyi Chen and Wenrui Diao and Qingchuan Zhao and Chaoshun Zuo and Zhiqiang Lin and XiaoFeng Wang and Wing Cheong Lau and Menghan Sun and Ronghai Yang and Kehuan Zhang},
+    booktitle={Network and Distributed System Security Symposium},
+    year={2018},
+    url={https://api.semanticscholar.org/CorpusID:158965}
+}
+
+@article{Muench_2018, title={What you corrupt is not what you crash: Challenges in fuzzing embedded devices}, DOI={10.14722/ndss.2018.23166}, journal={Proceedings 2018 Network and Distributed System Security Symposium}, author={Muench, Marius and Stijohann, Jan and Kargl, Frank and Francillon, Aurelien and Balzarotti, Davide}, year={2018}}
+
+@inproceedings {Maier_2019,
+author = {Dominik Maier and Benedikt Radtke and Bastian Harren},
+title = {Unicorefuzz: On the Viability of Emulation for Kernelspace Fuzzing},
+booktitle = {13th USENIX Workshop on Offensive Technologies (WOOT 19)},
+year = {2019},
+address = {Santa Clara, CA},
+url = {https://www.usenix.org/conference/woot19/presentation/maier},
+publisher = {USENIX Association},
+month = aug,
+}
+
+@inproceedings{Hernandez_2022,
+    title = "FirmWire: Transparent Dynamic Analysis for Cellular Baseband Firmware",
+    abstract = "Smartphones today leverage baseband processors to implement the multitude of cellular protocols. Basebands execute firmware, which is responsible for decoding hundreds of message types developed from three decades of cellular standards. Despite its large over-the-air attack surface, baseband firmware has received little security analysis. Previous work mostly analyzed only a handful of firmware images from a few device models, but often relied heavily on time-consuming manual static analysis or single-function fuzzing.To fill this gap, we present FirmWire, the first full-system emulation platform for baseband processors that executes unmodified baseband binary firmware. FirmWire provides baseband-specific APIs to easily add support for new vendors, firmware images, and security analyses. To demonstrate FirmWire{\textquoteright}s scalability, we support 213 firmware images across 2 vendors and 9 phone models, allowing them to be executed and tested. With these images, FirmWire automatically discovers and bridges internal baseband APIs, allowing protocol messages to be injected with ease. Using these entry points, we selected the LTE and GSM protocols for fuzzing and discovered 7 pre-authentication memory corruptions that could lead to remote code execution--4 of which were previously unknown. We reproduced these crashes over-the-air on real devices, proving FirmWire{\textquoteright}s emulation accuracy. FirmWire is a scalable platform for baseband security testing and we release it as open-source to the community for future research.",
+    keywords = "classbinary, projintersect, projtropics, typeconf, typepaper, typetier1, typetop",
+    author = "Grant Hernandez and Marius Muench and Dominik Maier and Alyssa Milburn and Shinjo Park and Tobias Scharnowski and Tyler Tucker and Patrick Traynor and Butler, {Kevin R. B.}",
+    year = "2022",
+    month = apr,
+    day = "28",
+    doi = "10.14722/ndss.2022.23136",
+    pages = "1--19",
+    booktitle = "NDSS Symposium 2022 Accepted Papers",
+    publisher = "The Internet Society",
+    address = "United States",
+}
+% note = "Network and Distributed Systems Security (NDSS) Symposium 2022, NDSS 2022 ; Conference date: 24-04-2022 Through 28-04-2022",
+
+@article{Borsig_2020, title={Fuzzing framework for ESP32 microcontrollers}, DOI={10.1109/wifs49906.2020.9360889}, journal={2020 IEEE International Workshop on Information Forensics and Security (WIFS)}, author={Borsig, Matthias and Nitzsche, Sven and Eisele, Max and Groll, Roland and Becker, Jurgen and Baumgart, Ingmar}, year={2020}}
+
+@article{Clements_2021, title={Is your firmware real or re-hosted? A case study in re-hosting vxworks control system firmware}, DOI={10.14722/bar.2021.23006}, journal={Proceedings 2021 Workshop on Binary Analysis Research}, author={Clements, Abraham A. and Carpenter, Logan and Moeglein, William A. and Wright, Christopher}, year={2021}}
 
 @article{Yun_2022,
 author = {Yun, Joobeom and Rustamov, Fayozbek and Kim, Juhwan and Shin, Youngjoo},
@@ -19,24 +59,9 @@ numpages = {33},
 keywords = {Firmware fuzzing, fuzzing, IoT devices, firmware analysis, embedded systems, software testing, symbolic execution, concolic execution}
 }
 
-@article{Eisele_2022, title={Debugger-driven embedded fuzzing}, DOI={10.1109/icst53961.2022.00062}, journal={2022 IEEE Conference on Software Testing, Verification and Validation (ICST)}, author={Eisele, Max}, year={2022}}
-
 @article{Eisele_et_al_2022, title={Embedded fuzzing: A review of challenges, tools, and solutions}, volume={5}, DOI={10.1186/s42400-022-00123-y}, number={1}, journal={Cybersecurity}, author={Eisele, Max and Maugeri, Marcello and Shriwas, Rachna and Huth, Christopher and Bella, Giampaolo}, year={2022}}
 
-@article{Muench_2018, title={What you corrupt is not what you crash: Challenges in fuzzing embedded devices}, DOI={10.14722/ndss.2018.23166}, journal={Proceedings 2018 Network and Distributed System Security Symposium}, author={Muench, Marius and Stijohann, Jan and Kargl, Frank and Francillon, Aurelien and Balzarotti, Davide}, year={2018}}
-
-@article{Borsig_2020, title={Fuzzing framework for ESP32 microcontrollers}, DOI={10.1109/wifs49906.2020.9360889}, journal={2020 IEEE International Workshop on Information Forensics and Security (WIFS)}, author={Borsig, Matthias and Nitzsche, Sven and Eisele, Max and Groll, Roland and Becker, Jurgen and Baumgart, Ingmar}, year={2020}}
-
-@article{Beckmann_2023, title={Coverage-guided fuzzing of embedded systems leveraging hardware tracing}, DOI={10.1007/978-3-031-25460-4_21}, journal={Computer Security. ESORICS 2022 International Workshops}, author={Beckmann, Maximilian and Steffan, Jan}, year={2023}, pages={362-378}}
-
-
-@inproceedings{IoTFuzzer_2018,
-    title={IoTFuzzer: Discovering Memory Corruptions in IoT Through App-based Fuzzing},
-    author={Jiongyi Chen and Wenrui Diao and Qingchuan Zhao and Chaoshun Zuo and Zhiqiang Lin and XiaoFeng Wang and Wing Cheong Lau and Menghan Sun and Ronghai Yang and Kehuan Zhang},
-    booktitle={Network and Distributed System Security Symposium},
-    year={2018},
-    url={https://api.semanticscholar.org/CorpusID:158965}
-}
+@article{Eisele_2022, title={Debugger-driven embedded fuzzing}, DOI={10.1109/icst53961.2022.00062}, journal={2022 IEEE Conference on Software Testing, Verification and Validation (ICST)}, author={Eisele, Max}, year={2022}}
 
 @inproceedings{Chen_2022,
 author = {Chen, Libo and Cai, Quanpu and Ma, Zhenbang and Wang, Yanhao and Hu, Hong and Shen, Minghang and Liu, Yue and Guo, Shanqing and Duan, Haixin and Jiang, Kaida and Xue, Zhi},
@@ -56,11 +81,180 @@ location = {Los Angeles, CA, USA},
 series = {CCS '22}
 }
 
+@article{Beckmann_2023, title={Coverage-guided fuzzing of embedded systems leveraging hardware tracing}, DOI={10.1007/978-3-031-25460-4_21}, journal={Computer Security. ESORICS 2022 International Workshops}, author={Beckmann, Maximilian and Steffan, Jan}, year={2023}, pages={362-378}}
+
+@inproceedings {HALucinator_2020,
+    author = {Abraham A Clements and Eric Gustafson and Tobias Scharnowski and Paul Grosen and David Fritz and Christopher Kruegel and Giovanni Vigna and Saurabh Bagchi and Mathias Payer},
+    title = {{HALucinator}: Firmware Re-hosting Through Abstraction Layer Emulation},
+    booktitle = {29th USENIX Security Symposium (USENIX Security 20)},
+    year = {2020},
+    isbn = {978-1-939133-17-5},
+    pages = {1201--1218},
+    url = {https://www.usenix.org/conference/usenixsecurity20/presentation/clements},
+    publisher = {USENIX Association},
+    month = aug
+}
+
+@inproceedings {Fuzzware_2022,
+    title = {Fuzzware: Using Precise {MMIO} Modeling for Effective Firmware Fuzzing},
+    booktitle = {31st USENIX Security Symposium (USENIX Security 22)},
+    year = {2022},
+    address = {Boston, MA},
+    url = {https://www.usenix.org/conference/usenixsecurity22/presentation/scharnowski},
+    publisher = {USENIX Association},
+    author={Scharnowski, Tobias and Bars, Nils and Schloegel, Moritz and Gustafson, Eric and Muench, Marius and Vigna, Giovanni and Kruegel, Christopher and Holz, Thorsten and Abbasi, Ali},
+    month = aug,
+}
+
+@inproceedings {Hoedur_2023,
+    title = {Hoedur: Embedded Firmware Fuzzing using Multi-Stream Inputs},
+    booktitle = {32nd USENIX Security Symposium (USENIX Security 23)},
+    year = {2023},
+    address = {Boston, MA},
+    url = {https://www.usenix.org/conference/usenixsecurity23/presentation/scharnowski},
+    publisher = {USENIX Association},
+    author={Scharnowski, Tobias and Woerner, Simon and Buchmann, Felix and Bars, Nils and Schloegel, Moritz and Holz, Thorsten},
+    month = aug,
+}
+
+@inproceedings {Fuzztruction_2023,
+    author = {Nils Bars and Moritz Schloegel and Tobias Scharnowski and Nico Schiller and Thorsten Holz},
+    title = {Fuzztruction: Using Fault Injection-based Fuzzing to Leverage Implicit Domain Knowledge},
+    booktitle = {32nd USENIX Security Symposium (USENIX Security 23)},
+    year = {2023},
+    isbn = {978-1-939133-37-3},
+    address = {Anaheim, CA},
+    pages = {1847--1864},
+    url = {https://www.usenix.org/conference/usenixsecurity23/presentation/bars},
+    publisher = {USENIX Association},
+    month = aug
+}
+
+@inproceedings{Seidel_2023,
+    title = "Forming Faster Firmware Fuzzers",
+    abstract = "A recent trend for assessing the security of an embedded system{\textquoteright}s firmware is rehosting, the art of running the firmware in a virtualized environment, rather than on the original hardware platform. One significant use case for firmware rehosting is fuzzing to dynamically uncover security vulnerabilities.However, state-of-the-art implementations suffer from high emulator-induced overhead, leading to less-than-optimal execution speeds. Instead of emulation, we propose near-native rehosting: running embedded firmware as a Linux userspace process on a high-performance system that shares the instruction set family with the targeted device. We implement this approach with SAFIREFUZZ, a throughput-optimized rehosting and fuzzing framework for ARM Cortex-M firmware. SAFIREFUZZ takes monolithic binary-only firmware images and uses high-level emulation (HLE) and dynamic binary rewriting to run them on far more powerful hardware with low overhead. By replicating experiments of HALucinator, the state-of-the-art HLE-based rehosting system for binary firmware, we show that SAFIREFUZZ can provide a 690x throughput increase on average during 24-hour fuzzing campaigns while covering up to 30% more basic blocks.",
+    author = "Lukas Seidel and Dominik Maier and Marius Muench",
+    year = "2023",
+    month = aug,
+    day = "9",
+    isbn = "9781939133373",
+    pages = "2903--2920",
+    booktitle = "Proceedings of the 32nd USENIX Security Symposium",
+    publisher = "USENIX Association",
+}
+% note = "Acknowledgments: This work was supported by the European Union{\textquoteright}s Horizon 2020 research and innovation programme under project TESTABLE, grant agreement No. 101019206, the Dutch Ministry of Economic Affairs and Climate through the AVR program (Memo project) and the Dutch Science Organization NWO through projects Theseus and NWA ORC Intersect. ; 32nd USENIX Security Symposium ; Conference date: 09-08-2023 Through 11-08-2023",
+
+@article{Zhang_2024,
+   title={A Survey of Protocol Fuzzing},
+   volume={57},
+   ISSN={1557-7341},
+   url={http://dx.doi.org/10.1145/3696788},
+   DOI={10.1145/3696788},
+   number={2},
+   journal={ACM Computing Surveys},
+   publisher={Association for Computing Machinery (ACM)},
+   author={Zhang, Xiaohan and Zhang, Cen and Li, Xinghua and Du, Zhengjie and Mao, Bing and Li, Yuekang and Zheng, Yaowen and Li, Yeting and Pan, Li and Liu, Yang and Deng, Robert},
+   year={2024},
+   month=oct, pages={1-36}
+}
+
+% same thing as me basically:
+
+@ARTICLE{Gutierrez_2021,
+  author={Gutierrez, Tamara and Bergel, Alexandre and Gonzalez, Carlos E. and Rojas, Camilo J. and Diaz, Marcos A.},
+  journal={IEEE Access},
+  title={Systematic Fuzz Testing Techniques on a Nanosatellite Flight Software for Agile Mission Development},
+  year={2021},
+  volume={9},
+  number={},
+  pages={114008-114021},
+  keywords={Software;Testing;CubeSat;Fuzzing;Hardware;Space vehicles;Space missions;CubeSat;embedded software;flight software;nanosatellites;testing;fuzz testing;software quality;open source},
+  doi={10.1109/ACCESS.2021.3104283}
+}
+
+
+@INPROCEEDINGS{Willbold_2024,
+    author={Willbold, Johannes and Schloegel, Moritz and Göhler, Florian and Scharnowski, Tobias and Bars, Nils and Wörner, Simon and Schiller, Nico and Holz, Thorsten},
+    booktitle={2024 IEEE Aerospace Conference},
+    title={Scaling Software Security Analysis to Satellites: Automated Fuzz Testing and Its Unique Challenges},
+    year={2024},
+    volume={},
+    number={},
+    pages={1-12},
+    keywords={Space vehicles;Satellites;Computer bugs;Fuzzing;Aerospace electronics;Software;Internet},
+    doi={10.1109/AERO58975.2024.10521316}
+}
+
+% Space technical references:
+% Good for satellite architecture and OBC stuff.
+
+@online{Farges_2022,
+    author = {Farges, Thibault and Levi Cescutti, Ugo},
+    year = {2022},
+    month = {03},
+    pages = {},
+    title = {Space Flight Software Systems: An approach to understanding their Open Source Framework Paradigm},
+    doi = {10.13140/RG.2.2.12451.94244}
+}
+
+@article{Cratere_2024,
+author = {Cratere, Angela and Sanca, Gabriel and Golmar, Federico and Dell'Olio, Francesco},
+year = {2024},
+month = {01},
+pages = {1-1},
+title = {On-Board Computer for CubeSats: State-of-the-Art and Future Trends},
+volume = {PP},
+journal = {IEEE Access},
+doi = {10.1109/ACCESS.2024.3428388}
+}
+
+@incollection{Cubesat_Handbook_OBSW,
+title = {12 - Onboard software},
+editor = {Chantal Cappelletti and Simone Battistini and Benjamin K. Malphrus},
+    booktitle = {Cubesat Handbook},
+    publisher = {Academic Press},
+    pages = {237-250},
+    year = {2021},
+    isbn = {978-0-12-817884-3},
+    doi = {https://doi.org/10.1016/B978-0-12-817884-3.00012-6},
+    url = {https://www.sciencedirect.com/science/article/pii/B9780128178843000126},
+    author = {Santiago {Iglesias Cofán} and Arno Formella},
+    keywords = {CubeSat onboard software, Software design and development process, Software architecture, Mission experience},
+    abstract = {This chapter provides an overview of the software engineering process for the development of onboard software for small satellites. Such a process should be guided by clearly specified requirements that are testable and traceable. Two important decisions that must be drawn in a CubeSat satellite project to achieve high-quality software are which software architecture to use and which design methodology to employ. In a CubeSat project one can observe a shift from hardware cost to software cost, as in many cases off the shelf products for hardware components can be used, however, the controlling software that implements all system requirements usually remains to be developed and tested. Simulation and fault analysis are valuable tools from the software engineering point of view that help the mission to succeed. Every part of the software that is not tested rigorously tends to put the entire mission into risk.}
+}
+
+% Space business stuff
+
+@article{Sweeting_2018,
+  title={Modern small satellites-changing the economics of space},
+  author={Sweeting, Martin N},
+  journal={Proceedings of the IEEE},
+  volume={106},
+  number={3},
+  pages={343--361},
+  year={2018},
+  publisher={IEEE}
+}
+
+@article{Bousedra_2024,
+    title = {Downstream Space Activities in the New Space Era: Paradigm Shift and Evaluation Challenges},
+    journal = {Space Policy},
+    volume = {64},
+    pages = {101553},
+    year = {2023},
+    issn = {0265-9646},
+    doi = {https://doi.org/10.1016/j.spacepol.2023.101553},
+    url = {https://www.sciencedirect.com/science/article/pii/S0265964623000152},
+    author = {Kenza Bousedra},
+    keywords = {New space, Space sector, Downstream applications, Literature review, Economic size, Evaluation},
+    abstract = {New Space refers to the recent opening-up of the space sector to private companies. The liberalization of space activities, which coincides with the digital evolution of the economy, is associated with the rapid expansion of the downstream space segment, i.e., space-related commercial products and services. In this paper, we address the issue of evaluating the size of the downstream space sector in light of New Space characteristics. We describe New Space as a structural transformation of the space sector associated with the entry of private companies and investors, the adoption of new business models, and the reorientation of space agencies towards market-oriented policies. In this specific context, we claim that assessing the economic weight of downstream space activities is of prime interest. Our review of space sector evaluations shows limitations of the existing methodological tools when identifying and evaluating downstream activities. We conclude this work by outlining theoretical issues regarding New Space and the expansion of space-based services markets to be considered for a new evaluation methodology.}
+}
+
+% extra references not too relevent:
+
 @article{Godefroid_2012, title={Sage: Whitebox fuzzing for Security Testing}, volume={10}, DOI={10.1145/2090147.2094081}, number={1}, journal={Queue}, author={Godefroid, Patrice and Levin, Michael Y. and Molnar, David}, year={2012}, pages={20-27}}
 
 @article{Krishnamoorthy_2010, title={Tackling the path explosion problem in symbolic execution-driven test generation for programs}, DOI={10.1109/ats.2010.19}, journal={2010 19th IEEE Asian Test Symposium}, author={Krishnamoorthy, Saparya and Hsiao, Michael S. and Lingappan, Loganathan}, year={2010}}
-
-@article{Clements_2021, title={Is your firmware real or re-hosted? A case study in re-hosting vxworks control system firmware}, DOI={10.14722/bar.2021.23006}, journal={Proceedings 2021 Workshop on Binary Analysis Research}, author={Clements, Abraham A. and Carpenter, Logan and Moeglein, William A. and Wright, Christopher}, year={2021}}
 
 @INPROCEEDINGS{Svoboda_2021,
   author={Svoboda, David},
@@ -70,7 +264,8 @@ series = {CCS '22}
   volume={},
   number={},
   pages={7-8},
-  doi={10.1109/SecDev51306.2021.00015}}
+  doi={10.1109/SecDev51306.2021.00015}
+}
 
 @ARTICLE{Abdumohasan_2021,
 author={Aloseel, Abdulmohsan and He, Hongmei and Shaw, Carl and Khan, Muhammad Ali},
@@ -80,7 +275,18 @@ year={2021},
 volume={9},
 number={},
 pages={961-982},
-doi={10.1109/ACCESS.2020.3045972}}
+doi={10.1109/ACCESS.2020.3045972}
+}
+
+% Links and things
+
+@article{CubesatDesignSpec,
+  title={CubeSat Design Specification, the Cube Sat Program},
+  author={Munakata, R},
+  journal={Cal Poly SLO, San Luis Obispo, Rev},
+  volume={11},
+  year={2008}
+}
 
 @online{Google_2023,
     author={Google},
@@ -142,28 +348,6 @@ doi={10.1109/ACCESS.2020.3045972}}
     year={2024},
 }
 
-@online{Farges_2022,
-    author = {Farges, Thibault and Levi Cescutti, Ugo},
-    year = {2022},
-    month = {03},
-    pages = {},
-    title = {Space Flight Software Systems: An approach to understanding their Open Source Framework Paradigm},
-    doi = {10.13140/RG.2.2.12451.94244}
-}
-
-
-% Good for satellite architecture and OBC stuff.
-@article{Cratere_2024,
-author = {Cratere, Angela and Sanca, Gabriel and Golmar, Federico and Dell'Olio, Francesco},
-year = {2024},
-month = {01},
-pages = {1-1},
-title = {On-Board Computer for CubeSats: State-of-the-Art and Future Trends},
-volume = {PP},
-journal = {IEEE Access},
-doi = {10.1109/ACCESS.2024.3428388}
-}
-
 @online{EnduroSat_OBC,
     author = {EnduroSat},
     title={On Board Computer},
@@ -220,17 +404,6 @@ doi = {10.1109/ACCESS.2024.3428388}
     year = {2024},
 }
 
-@inproceedings {Maier_2019,
-author = {Dominik Maier and Benedikt Radtke and Bastian Harren},
-title = {Unicorefuzz: On the Viability of Emulation for Kernelspace Fuzzing},
-booktitle = {13th USENIX Workshop on Offensive Technologies (WOOT 19)},
-year = {2019},
-address = {Santa Clara, CA},
-url = {https://www.usenix.org/conference/woot19/presentation/maier},
-publisher = {USENIX Association},
-month = aug
-}
-
 @online{gnatfuzz,
     author={AdaCore},
     title={Gnatfuzz User's Guide},
@@ -239,150 +412,8 @@ month = aug
     year = {2023},
 }
 
-@inproceedings {Hoedur_2023,
-    title = {Hoedur: Embedded Firmware Fuzzing using Multi-Stream Inputs},
-    booktitle = {32nd USENIX Security Symposium (USENIX Security 23)},
-    year = {2023},
-    address = {Boston, MA},
-    url = {https://www.usenix.org/conference/usenixsecurity23/presentation/scharnowski},
-    publisher = {USENIX Association},
-    author={Scharnowski, Tobias and Woerner, Simon and Buchmann, Felix and Bars, Nils and Schloegel, Moritz and Holz, Thorsten},
-    month = aug,
-}
 
-@inproceedings {Fuzzware_2022,
-    title = {Fuzzware: Using Precise {MMIO} Modeling for Effective Firmware Fuzzing},
-    booktitle = {31st USENIX Security Symposium (USENIX Security 22)},
-    year = {2022},
-    address = {Boston, MA},
-    url = {https://www.usenix.org/conference/usenixsecurity22/presentation/scharnowski},
-    publisher = {USENIX Association},
-    author={Scharnowski, Tobias and Bars, Nils and Schloegel, Moritz and Gustafson, Eric and Muench, Marius and Vigna, Giovanni and Kruegel, Christopher and Holz, Thorsten and Abbasi, Ali},
-    month = aug,
-}
-
-@INPROCEEDINGS{Willbold_2024,
-    author={Willbold, Johannes and Schloegel, Moritz and Göhler, Florian and Scharnowski, Tobias and Bars, Nils and Wörner, Simon and Schiller, Nico and Holz, Thorsten},
-    booktitle={2024 IEEE Aerospace Conference},
-    title={Scaling Software Security Analysis to Satellites: Automated Fuzz Testing and Its Unique Challenges},
-    year={2024},
-    volume={},
-    number={},
-    pages={1-12},
-    keywords={Space vehicles;Satellites;Computer bugs;Fuzzing;Aerospace electronics;Software;Internet},
-    doi={10.1109/AERO58975.2024.10521316}
-}
-
-@inproceedings {HALucinator_2020,
-    author = {Abraham A Clements and Eric Gustafson and Tobias Scharnowski and Paul Grosen and David Fritz and Christopher Kruegel and Giovanni Vigna and Saurabh Bagchi and Mathias Payer},
-    title = {{HALucinator}: Firmware Re-hosting Through Abstraction Layer Emulation},
-    booktitle = {29th USENIX Security Symposium (USENIX Security 20)},
-    year = {2020},
-    isbn = {978-1-939133-17-5},
-    pages = {1201--1218},
-    url = {https://www.usenix.org/conference/usenixsecurity20/presentation/clements},
-    publisher = {USENIX Association},
-    month = aug
-}
-
-@inproceedings {Fuzztruction_2023,
-    author = {Nils Bars and Moritz Schloegel and Tobias Scharnowski and Nico Schiller and Thorsten Holz},
-    title = {Fuzztruction: Using Fault Injection-based Fuzzing to Leverage Implicit Domain Knowledge},
-    booktitle = {32nd USENIX Security Symposium (USENIX Security 23)},
-    year = {2023},
-    isbn = {978-1-939133-37-3},
-    address = {Anaheim, CA},
-    pages = {1847--1864},
-    url = {https://www.usenix.org/conference/usenixsecurity23/presentation/bars},
-    publisher = {USENIX Association},
-    month = aug
-}
-
-
-@inproceedings{Seidel_2023,
-    title = "Forming Faster Firmware Fuzzers",
-    abstract = "A recent trend for assessing the security of an embedded system{\textquoteright}s firmware is rehosting, the art of running the firmware in a virtualized environment, rather than on the original hardware platform. One significant use case for firmware rehosting is fuzzing to dynamically uncover security vulnerabilities.However, state-of-the-art implementations suffer from high emulator-induced overhead, leading to less-than-optimal execution speeds. Instead of emulation, we propose near-native rehosting: running embedded firmware as a Linux userspace process on a high-performance system that shares the instruction set family with the targeted device. We implement this approach with SAFIREFUZZ, a throughput-optimized rehosting and fuzzing framework for ARM Cortex-M firmware. SAFIREFUZZ takes monolithic binary-only firmware images and uses high-level emulation (HLE) and dynamic binary rewriting to run them on far more powerful hardware with low overhead. By replicating experiments of HALucinator, the state-of-the-art HLE-based rehosting system for binary firmware, we show that SAFIREFUZZ can provide a 690x throughput increase on average during 24-hour fuzzing campaigns while covering up to 30% more basic blocks.",
-    author = "Lukas Seidel and Dominik Maier and Marius Muench",
-    note = "Acknowledgments: This work was supported by the European Union{\textquoteright}s Horizon 2020 research and innovation programme under project TESTABLE, grant agreement No. 101019206, the Dutch Ministry of Economic Affairs and Climate through the AVR program (Memo project) and the Dutch Science Organization NWO through projects Theseus and NWA ORC Intersect. ; 32nd USENIX Security Symposium ; Conference date: 09-08-2023 Through 11-08-2023",
-    year = "2023",
-    month = aug,
-    day = "9",
-    language = "English",
-    isbn = "9781939133373",
-    pages = "2903--2920",
-    booktitle = "Proceedings of the 32nd USENIX Security Symposium",
-    publisher = "USENIX Association",
-}
-
-
-@inproceedings{Hernandez_2022,
-    title = "FirmWire: Transparent Dynamic Analysis for Cellular Baseband Firmware",
-    abstract = "Smartphones today leverage baseband processors to implement the multitude of cellular protocols. Basebands execute firmware, which is responsible for decoding hundreds of message types developed from three decades of cellular standards. Despite its large over-the-air attack surface, baseband firmware has received little security analysis. Previous work mostly analyzed only a handful of firmware images from a few device models, but often relied heavily on time-consuming manual static analysis or single-function fuzzing.To fill this gap, we present FirmWire, the first full-system emulation platform for baseband processors that executes unmodified baseband binary firmware. FirmWire provides baseband-specific APIs to easily add support for new vendors, firmware images, and security analyses. To demonstrate FirmWire{\textquoteright}s scalability, we support 213 firmware images across 2 vendors and 9 phone models, allowing them to be executed and tested. With these images, FirmWire automatically discovers and bridges internal baseband APIs, allowing protocol messages to be injected with ease. Using these entry points, we selected the LTE and GSM protocols for fuzzing and discovered 7 pre-authentication memory corruptions that could lead to remote code execution--4 of which were previously unknown. We reproduced these crashes over-the-air on real devices, proving FirmWire{\textquoteright}s emulation accuracy. FirmWire is a scalable platform for baseband security testing and we release it as open-source to the community for future research.",
-    keywords = "classbinary, projintersect, projtropics, typeconf, typepaper, typetier1, typetop",
-    author = "Grant Hernandez and Marius Muench and Dominik Maier and Alyssa Milburn and Shinjo Park and Tobias Scharnowski and Tyler Tucker and Patrick Traynor and Butler, {Kevin R. B.}",
-    year = "2022",
-    month = apr,
-    day = "28",
-    doi = "10.14722/ndss.2022.23136",
-    language = "English",
-    pages = "1--19",
-    booktitle = "NDSS Symposium 2022 Accepted Papers",
-    publisher = "The Internet Society",
-    address = "United States",
-    note = "Network and Distributed Systems Security (NDSS) Symposium 2022, NDSS 2022 ; Conference date: 24-04-2022 Through 28-04-2022",
-
-}
-
-@article{CubesatDesignSpec,
-  title={CubeSat Design Specification, the Cube Sat Program},
-  author={Munakata, R},
-  journal={Cal Poly SLO, San Luis Obispo, Rev},
-  volume={11},
-  year={2008}
-}
-
-@article{Sweeting_2018,
-  title={Modern small satellites-changing the economics of space},
-  author={Sweeting, Martin N},
-  journal={Proceedings of the IEEE},
-  volume={106},
-  number={3},
-  pages={343--361},
-  year={2018},
-  publisher={IEEE}
-}
-
-
-@incollection{Cubesat_Handbook_OBSW,
-title = {12 - Onboard software},
-editor = {Chantal Cappelletti and Simone Battistini and Benjamin K. Malphrus},
-    booktitle = {Cubesat Handbook},
-    publisher = {Academic Press},
-    pages = {237-250},
-    year = {2021},
-    isbn = {978-0-12-817884-3},
-    doi = {https://doi.org/10.1016/B978-0-12-817884-3.00012-6},
-    url = {https://www.sciencedirect.com/science/article/pii/B9780128178843000126},
-    author = {Santiago {Iglesias Cofán} and Arno Formella},
-    keywords = {CubeSat onboard software, Software design and development process, Software architecture, Mission experience},
-    abstract = {This chapter provides an overview of the software engineering process for the development of onboard software for small satellites. Such a process should be guided by clearly specified requirements that are testable and traceable. Two important decisions that must be drawn in a CubeSat satellite project to achieve high-quality software are which software architecture to use and which design methodology to employ. In a CubeSat project one can observe a shift from hardware cost to software cost, as in many cases off the shelf products for hardware components can be used, however, the controlling software that implements all system requirements usually remains to be developed and tested. Simulation and fault analysis are valuable tools from the software engineering point of view that help the mission to succeed. Every part of the software that is not tested rigorously tends to put the entire mission into risk.}
-}
-
-@article{Bousedra_2024,
-    title = {Downstream Space Activities in the New Space Era: Paradigm Shift and Evaluation Challenges},
-    journal = {Space Policy},
-    volume = {64},
-    pages = {101553},
-    year = {2023},
-    issn = {0265-9646},
-    doi = {https://doi.org/10.1016/j.spacepol.2023.101553},
-    url = {https://www.sciencedirect.com/science/article/pii/S0265964623000152},
-    author = {Kenza Bousedra},
-    keywords = {New space, Space sector, Downstream applications, Literature review, Economic size, Evaluation},
-    abstract = {New Space refers to the recent opening-up of the space sector to private companies. The liberalization of space activities, which coincides with the digital evolution of the economy, is associated with the rapid expansion of the downstream space segment, i.e., space-related commercial products and services. In this paper, we address the issue of evaluating the size of the downstream space sector in light of New Space characteristics. We describe New Space as a structural transformation of the space sector associated with the entry of private companies and investors, the adoption of new business models, and the reorientation of space agencies towards market-oriented policies. In this specific context, we claim that assessing the economic weight of downstream space activities is of prime interest. Our review of space sector evaluations shows limitations of the existing methodological tools when identifying and evaluating downstream activities. We conclude this work by outlining theoretical issues regarding New Space and the expansion of space-based services markets to be considered for a new evaluation methodology.}
-}
-
-
+% Breaks other references unless last
 @article{Denis_2020,
     title = {From new space to big space: How commercial space dream is becoming a reality},
     journal = {Acta Astronautica},
