@@ -7,3 +7,4 @@ pyserial==3.5
 setuptools==70.0.0
 spacepackets==0.25.0
 unicorn==2.0.1.post1
+unicornafl==2.1.0

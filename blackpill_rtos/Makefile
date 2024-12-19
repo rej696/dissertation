@@ -121,6 +121,12 @@ cov: $(TARGET).bin
 cov-raw: $(TARGET).bin
 	$(PYTHON) -m emu $< -c raw_fuzz_outputs/default/queue
 
+run: $(TARGET).bin
+	$(PYTHON) -m emu $< -g -m $(FILE)
+
+run-raw: $(TARGET).bin
+	$(PYTHON) -m emu $< -m $(FILE)
+
 emu_install: venv
 
 venv: requirements.txt

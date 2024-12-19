@@ -29,6 +29,22 @@ def fuzz_handler(filename, fuzz_input_filename, grammar, debug, dbc_addr):
     )
 
 
+def manual_handler(filename, input_file, grammar, debug, dbc_addr, address_space):
+    emu = Emulator(filename, FLASH_START_ADDRESS, False, dbc_addr, False)
+
+    print(f"Input: {input_file}")
+    with open(input_file, "rb") as f:
+        input = bytearray(f.read())
+        if grammar:
+            emu.spp_handler.set_input(input)
+        else:
+            emu.spp_handler.set_raw_input(input)
+
+    result = fuzz_start(emu.uc, emu)
+    print(f"\tResult: {result}")
+    print(f"\tCoverage: {(len(emu.cov) / len(address_space))* 100: .2f}%")
+
+
 def cov_handler(
     filename, fuzz_input_filename, grammar, debug, dbc_addr, cov_path, address_space
 ):
@@ -149,6 +165,14 @@ def main():
     )
 
     parser.add_argument(
+        "-m",
+        "--manual-input",
+        type=str,
+        default="",
+        help="Path to the file containing the manually defined input to load",
+    )
+
+    parser.add_argument(
         "-c",
         "--cov",
         type=str,
@@ -196,7 +220,7 @@ def main():
         dbc_size = int(dbc[2])
         dbc_range = range(dbc_addr, dbc_size + dbc_addr)
 
-        if args.cov:
+        if args.cov or args.manual_input:
             address_space = {
                 int(addr, 16)
                 for addr in subprocess.check_output(
@@ -243,6 +267,22 @@ def main():
         )
         fuzz_thread.start()
         fuzz_thread.join()
+    if args.manual_input:
+        signal.signal(signal.SIGINT, sigint_handler)
+        manual_thread = threading.Thread(
+            target=partial(
+                manual_handler,
+                args.firmware,
+                args.manual_input,
+                args.grammar,
+                args.debug,
+                dbc_range,
+                address_space,
+            )
+        )
+        manual_thread.start()
+        manual_thread.join()
+
     elif args.blackbox:
         # blackbox fuzz mode
         # Run emu in thread to kill application on KeyboardInterrupt <C-c>
