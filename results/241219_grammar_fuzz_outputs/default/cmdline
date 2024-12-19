@@ -1,0 +1,7 @@
+python
+-m
+emu
+build/firmware.bin
+-g
+-i
+@@

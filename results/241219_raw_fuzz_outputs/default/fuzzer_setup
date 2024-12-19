@@ -1,0 +1,10 @@
+# environment variables:
+AFL_AUTORESUME=1
+AFL_CUSTOM_INFO_PROGRAM=python
+AFL_CUSTOM_INFO_PROGRAM_ARGV=-m emu build/firmware.bin -i @@F
+AFL_CUSTOM_INFO_OUT=raw_fuzz_outputs/default
+AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1
+AFL_TRY_AFFINITY=1
+AFL_SKIP_CPUFREQ=1
+# command line:
+'afl-fuzz' '-U' '-t' '+50000' '-i' 'raw_fuzz_inputs' '-o' 'raw_fuzz_outputs' 'python' '-m' 'emu' 'build/firmware.bin' '-i' '@@F'
