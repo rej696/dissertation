@@ -273,7 +273,7 @@ match that of desktop applications.
 
 \citet{IOTFuzzer_2018} implemented IoTFuzzer, an automated black box fuzzing
 framework that conduct protocol guided fuzzing on the communication interfaces
-of IoT devices. IoTFuzzer performs dynamic analysis on the companion
+of Internet of Things (IoT) devices. IoTFuzzer performs dynamic analysis on the companion
 application to the IoT device to identify the methods for creating valid
 communication messages to the device, without needing to reverse engineer the
 protocol or access to the binary file loaded on the IoT device. This approach
@@ -292,30 +292,11 @@ because mutating the input data will invalidate a checksum or render a message
 unable to be decrypted correctly. [REF]?
 % They also identify the use of liveness checks using a heartbeat mechanism to be able to detect crashes.
 
-% talk about other attempts to fuzz test hardware?
-\citet{Borsig_2020} Fuzzing on ESP32
-\citet{Borsig_2020} do not consider black-box fuzzing as a
-promising methodology for fuzzing an esp32 based IOT device, and conclude that
-white-box and grey-box fuzzing techniques are more capable.
-
-\citet{Eisele_2022} investigates coverage guided fuzzing on embedded hardware through the use of a debugger and hardware breakpoints
-
-\citet{Beckmann_2023} Coverage guided fuzzing using hardware tracing (through jlink). similar to \citet{Eisele_2022}, but tracing rather than debugging.
-
-% FIXME
-Several methods have been discussed to improve instrumentation and feedback
-from running fuzz tests on target hardware. Beckmann et al. propose making use
-of the tracing facilities on modern Arm Cortex-M microcontrollers to stream
-coverage information back to the fuzzer \citep{Beckmann_2023}. Eisele proposes
-using a debugger as a method of inspecting the SUT and providing coverage
-feedback to a fuzzer \citep{Eisele_2022}.
-%
-
 % Emulation/rehosting story
 \citet{Muench_2018} investigated challenges in embedded fuzzing, and reviews
 the potential effects of memory corruption bugs on embedded systems.
 They identify how to detect different categories of faults through methods such
-as liveness tests and [FIXME]. They outline different strategies to fuzzing embedded
+as liveness tests. They outline different strategies to fuzzing embedded
 systems, such as native, partial emulation, and full emulation. Partial
 emulation is where the firmware runs in an emulator, and the peripheral devices
 are either modelled in some program, or the memory forwarded to the hardware
@@ -325,9 +306,71 @@ different categories of memory corruption bugs. They also found that fuzzing
 against a fully emulated target is significantly faster than fuzzing against a
 native device. However, they acknowledge the limited availability of emulators
 which include full peripheral emulation, and identify peripheral modelling with
-partial emulation as a good compromise between performance and the availability of
-both emulators and hardware.
+partial emulation as a good compromise between performance and the availability
+of both emulators and hardware.
 % Muench finds liveness checks to be an unreliable method for detecting all different categories of faults
+
+% talk about other attempts to fuzz test hardware?
+\citet{Borsig_2020} investigated different fuzzing techniques for ESP32
+microcontrollers, which are commonly used for IoT devices. They carried out
+blackbox fuzzing of a simple http server application running on hardware, and
+detected crashes by monitoring the serial debug for a fault message. They found
+this to be the simplest method for fuzzing an ESP32, but also was very
+inefficient for triggering bugs. They also carried out whitebox coverage guided
+fuzzing with the HONGGFUZZ coverage guided fuzzer \citep{Honggfuzz}, both on
+hardware and using an adapted QEMU emulator. For coverage guided fuzzing on
+hardware, the same liveness check was used as blackbox fuzzing. Coverage
+information of basic block execution was collected by compiling the binary with
+additional instrumentation that could run on hardware and fed to HONGGFUZZ over
+a JTAG interface. \citet{Borsig_2020} found that using the coverage guided
+fuzzer improved the efficiency of the fuzzing to find bugs, but slowed down the
+fuzzing execution when compared to blackbox fuzzing. Given the major drawback
+to whitebox fuzzing is the availability of the source code to compile in
+instrumentation, they concluded that whitebox on target fuzzing would be an
+excellent process for testing ESP32 applications as part of agile development.
+When trying to fuzz testing using the modified QEMU emulator,
+\citet{Borsig_2020} had difficulty emulating the wifi module integrated into
+the ESP32 chip. For whitebox fuzzing, they were able to compile the application
+to use an ethernet driver provided by QEMU, rather than the hardware wifi
+module. However, for blackbox and greybox fuzzing, they manually located the
+code section that handled the wifi driver and manually instructed the fuzzer to
+insert input data at that location, fuzzing specific sections of the
+application. Overall, they concluded that greybox fuzzing using QEMU would be
+an effective tool for security analysts looking to fuzz test specific sections
+of ESP32 firmware, such as communication stacks \citep{Borsig_2020}.
+
+\citet{Eisele_2022} aims to investigate on target coverage guided fuzzing. They
+proposed using the GNU Debugger (GDB) and hardware breakpoints as an
+architecture and source code agnostic method of collecting feedback for a
+coverage guided fuzzer. Given the limited number of hardware breakpoints
+avaiable on embedded systems, They propose several algorithms for selecting
+their location for generating feedback. They present initial results, which
+show that even with a small number of breakpoints, all their strategies gain
+greater coverage overall compared to blackbox fuzzing. They concede that
+emulation based fuzzing is likely to produce better results than their method.
+However, they state the aim of debugger driven fuzzing is to make coverage
+guided fuzz testing easier to conduct for embedded devices, with an assumption
+that setting up and running emulation based coverage guided fuzzing for
+embedded systems is too complex.
+
+\citet{Beckmann_2023} proposed an alternative method for on target coverage
+guided fuzzing, making use of the tracing facilities on modern Arm Cortex-M
+microcontrollers to stream coverage information back to the fuzzer. They use
+the Serial Wire Debug interface to periodically sample the value of the Program
+Counter (PC) on the target, which they used to generate instruction coverage.
+Using this technique alone gave worse fuzzing efficiency compared to a blackbox
+fuzzer. The fuzzer generated "false positive" inputs, where because not every
+instruction was sampled, some semanitically different inputs could be
+considered identical. To combat this, they proposed several improvements. One
+was to configure the tracing interface to notify upon entry and exit from an
+interrupt handler, during which instruction coverage feedback could be ignored.
+However, the most effective modification was to make use of hardware
+breakpoints to validate any new coverage identified by the fuzzer. After the
+fuzzer identified new coverage, a breakpoint would be set at that instruction,
+and the input re-run. If the breakpoint was hit and the target halted, then the
+coverage was valid. \citet{Becmann_2023} concluded that their methodology
+outperforms on target blackbox fuzzing, providing a reasonable trade-off
+between fuzzing speed and effectiveness.
 
 \citet{Maier_2019} developed a tool called UnicoreFuzz for fuzzing operating
 system kernel code by running the kernel code using an emulator. Traditional
@@ -454,7 +497,15 @@ as grammar fuzzers are better able to correctly handle encryption or packet
 validation. These are common features of embedded communication protocols, as
 demonstrated by IoTFuzzer \citep{IOTFuzzer_2018}.
 
-% Fuzztruction moves away from AFL entirely to resolve these issues surrounding encryption/checksums by creating a new type of fuzzer that mutates not just the input data, but the generator that generates the input data, allowing it to adapt to information about protocols contained in the binaries themselves. This is not too disimilar to IOTFuzz using the generators in mobile applications?
+Fuzztruction \citep{Fuzztruction_2023} moves away from AFL entirely to resolve
+these issues surrounding encryption/checksums by creating a new type of fuzzer
+that mutates not just the input data, but the generator that generates the
+input data, allowing it to adapt to information about protocols contained in
+the binaries themselves.
+
+This is not too disimilar to IOTFuzz using the
+generators in mobile applications?
+
 \citet{Fuzztruction_2023} using fault injection based fuzzing to leverage implicit domain knowledge? not using grammars, but by finding how the interface works by using the knowledge already encoded in the binaries, by mutating the code that generates the input, rather than
 
 \citet{Seidel_2023} forming faster firmware fuzzers by running emulated arm instructions on native arm64 hardware?
