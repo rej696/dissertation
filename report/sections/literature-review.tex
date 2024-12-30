@@ -2,13 +2,6 @@
 \graphicspath{{\subfix{../images}}}
 \begin{document}
 
-% literature-review
-% [ ] Literature Review of existing Embedded Emulation/Fuzzing Techniques
-%      - Fuzzware, Hoedur
-%      - Fuzzing Protocols with Fuzzware/Hoedur, introduce grammar filter?
-%      - Papers don't emulate/fuzz rtos behaviours?
-
-
 \section{Software Engineering in the New Space Industry}
 % References:
 % - Bousedra_2024: policy paper, may be less useful?
@@ -48,6 +41,7 @@ any "wasteful" or expensive practices \citep{Denis_2020}. These market
 conditions have led New Space businesses to become more accepting of risk than
 their Big Space counterparts \citep{Cratere_2024}
 
+% FIXME should this be edited?
 Therefore, Flight Software needs to be developed in shorter time frames and with
 lower costs. Satellites in low earth orbit have a shorter lifetime due to
 atmospheric drag. CubeSats have a generally high failure rate due to a long
@@ -103,8 +97,6 @@ responsibilities of the PLC can be handled by the OBC.
 
 \section{Flight Software Development Challenges}
 
-% Discuss Nasa's software development practices, power of ten etc.
-% Code Reuse and COTS parts.
 CubeSats projects tend to make more use of COTS hardware. However, software that
 meets the system requirements often cannot be purchased off the shelf, and so
 development costs shift from hardware to software
@@ -138,10 +130,6 @@ frameworks, such as potential issues with licenses, and the limited
 adaptability of software that is highly coupled to a framework, as implementing
 functions that aren't currently supported in the framework can be difficult.
 
-% FIXME: ( SpaceX's StarLink satellite program is the
-% obvious example of this. These satellites have a short mission life of five
-% years [REF], )
-
 Developing flight software for satellite systems is a complex process due to
 the large number of different interfaces and interdependencies in the
 architecture. Furthermore, due to the space environment, computers used in
@@ -151,34 +139,28 @@ power consumption and consideration of thermal management. The embedded
 microcontrollers that meet these requirements can be more expensive than those
 commonly used for other applications, like in automotive systems or IOT devices.
 
-Developing software for embedded systems often has a critical dependency on
-hardware. Writing drivers for devices using only a datasheet can result in long
-periods of rework when hardware is available to test against due to incorrect
-information or a misinterpretation. The number of interdependent systems, the
-costs of these components, and smaller budgets of new space companies, results
-in dedicated engineering hardware required for effective development of
-embedded flight software being unavailable. Often engineers are only being able
-to test with flight hardware, and then have to fit their testing into a packet
-schedule to meet tight deadlines.
+When writing software for embedded systems there is often a critical dependency
+on hardware. Writing drivers for devices using only a datasheet can result in
+long periods of rework when hardware is available to test against due to
+incorrect information or a misinterpretation. The number of interdependent
+systems, the costs of these components, and smaller budgets of new space
+companies, results in dedicated engineering hardware required for effective
+development of embedded flight software being unavailable. Often engineers are
+only being able to test with flight hardware, and then have to fit their
+testing into a packed schedule to meet tight deadlines.
+
+% Discuss Nasa's software development practices, power of ten etc.
+% Code Reuse and COTS parts.
+Software development standards, such as MISRA and NASA's the power of ten exist
+to provide guidelines for successfully creating correct software, and hopefully
+reduce the burden of testing \citep{MISRA} \citep{NASA}. % FIXME!!!
+However, while applying these techniques can
+reduce the occurrence of introducing bugs during development, they are not a
+substitute for system verification.
 
 % * FIXME should probably talk about protocols?
 
 \section{Fuzz Testing}
-
-% Problem Description from prep report
-% FIXME rework to be more about how fuzzing could be a lower cost automated solution to system testing?
-
-% CUT? Reword for space software? security concerns attack surfaces in space?
-% Embedded systems are becoming more prevalent in today's society, due to the
-% rise of the Internet of Things (IOT) \citep{Abdumohasan_2021}. Embedded
-% software is often written in low level languages such as C where errors and
-% security vulnerabilities are easy to introduce \citep{Svoboda_2021}, and have
-% many many attack surfaces where these mistakes could be exploited
-% \citep{Abdumohasan_2021}. Furthermore, many embedded systems have stringent
-% reliability requirements, such as safety critical software in automotive
-% devices. As such, verification and testing of embedded systems is paramount to
-% prevent the presence of security exploits and critical bugs in these devices.
-% CUT?
 
 % use information from generic survey papers like Yun_2022, Eisele_et_al_2022 in the introductory section.
 
@@ -217,7 +199,7 @@ that is linked into the program at compile time, along with several sanitisers,
 to instrument the program. This allows AFL to receive coverage information from
 the running program during fuzzing \citep{AFL_2019}. Embedded systems often run on
 constrained environments, where running the fuzzer on the target hardware would
-be unfeasible.
+be unfeasible. % FIXME[REF] from yun/eisele?
 % FIXME move this/reword this / find different reference
 As such, the fuzzer and the SUT are run in different
 environments, and it is difficult to instrument and forward runtime information
@@ -232,6 +214,8 @@ fuzzer, and potentially faster running and parallel tests
 hard problem, and due to the diversity in operating systems, hardware,
 peripherals etc. often means that development effort spent on emulating one
 system cannot be easily transferred to another.
+
+% paragraph on challenges of rehosting? Wright?
 
 Yun et al. note that most embedded systems fuzzers rely on emulation
 \citep{Yun_2022}. However, most bugs found through emulation still need to be
@@ -259,8 +243,6 @@ is reliant on Ada's extended runtime constraint checking when compared to C
 more complex issues resulting from interactions with hardware peripherals and
 state.
 
-% paragraph on challenges of rehosting? Wright?
-
 While research into the fuzz testing of embedded systems has been increasing
 year by year \citep{Yun_2022}, there are few generic solutions
 \citep{Eisele_et_al_2022}. The two main challenges to embedded system fuzzing
@@ -269,7 +251,6 @@ architectures in embedded systems, and the lack of an operating system such as
 linux for bare metal systems \citep{Eisele_et_al_2022}. Currently, the
 availability and ease of use of fuzzing tooling for embedded systems does not
 match that of desktop applications.
-% FIXME this feels like an end, figure out what to do with it.
 
 \citet{IOTFuzzer_2018} implemented IoTFuzzer, an automated black box fuzzing
 framework that conduct protocol guided fuzzing on the communication interfaces
@@ -308,9 +289,7 @@ native device. However, they acknowledge the limited availability of emulators
 which include full peripheral emulation, and identify peripheral modelling with
 partial emulation as a good compromise between performance and the availability
 of both emulators and hardware.
-% Muench finds liveness checks to be an unreliable method for detecting all different categories of faults
 
-% talk about other attempts to fuzz test hardware?
 \citet{Borsig_2020} investigated different fuzzing techniques for ESP32
 microcontrollers, which are commonly used for IoT devices. They carried out
 blackbox fuzzing of a simple http server application running on hardware, and
@@ -425,12 +404,6 @@ HAL functions used. \citet{HALucinator_2020} demonstrated the use of
 HALucinator for fuzzing and dynamic analysis using CPUs and HALs from three
 different vendors, using it to detect security bugs in firmware samples.
 
-% FIXME move/reword/find different reference
-Attempts have been made to automate emulator development, such as Clements et
-al. HALucinator, which allows Hardware Abstraction Layer (HAL) functions in a
-compiled binary to be stubbed and fuzzed \citep{Clements_2021}.
-
-% Halucinator has to generate all the hal stubs, what about other embedded libraries that make use of hardware features, like RTOS?
 \citet{Clements_2021} extended HALucinator to work with systems that use the
 VxWorks real time operating system (RTOS) as a case study. VxWorks is a
 commercial RTOS that is used in many safety critical and space applications.
@@ -451,9 +424,9 @@ skip "input-irrelevant" function calls as well code that is "emulation-hard",
 such as HAL functions. The tool focuses on code paths that handle input data,
 so there are minimal side effects from ignoring these functions.
 
-Where SFuzz is only interested in fuzzing a single input to firmware, Fuzzware
-is a tool that takes a different approach by considering all memory available
-to the firmware as input \citep{Fuzzware_2022}. Fuzzware expands upon
+While SFuzz is focused fuzzing a single input interface of a given firmware,
+Fuzzware is a tool that takes a different approach by considering all memory
+available to the firmware as input \citep{Fuzzware_2022}. Fuzzware expands upon
 HALucinator, but rather than using the HAL as the boundary for the fuzzer and
 the SUT, it models the MMIO, such that each MMIO access uses fuzzer input.
 Fuzzware is also based on UnicornAFL, and uses symbolic execution to apply
@@ -499,17 +472,54 @@ demonstrated by IoTFuzzer \citep{IOTFuzzer_2018}.
 
 Fuzztruction \citep{Fuzztruction_2023} moves away from AFL entirely to resolve
 these issues surrounding encryption/checksums by creating a new type of fuzzer
-that mutates not just the input data, but the generator that generates the
-input data, allowing it to adapt to information about protocols contained in
-the binaries themselves.
+that mutates not just the input data, but the code that generates the input
+data. This enables the tool to make use of the domain knowledge encoded in some
+generator software, without needing complex program analysis or a human domain
+expert. Fuzztruction is proposed in part as an alternative to grammar based
+techniques for generating well structured inputs in order to reach deeper into
+the state space of a program \citep{Fuzztruction_2023}. Grammar fuzzing
+requires pre-existing knowledge of the program being tested, where as
+Fuzztruction does not. This makes Fuzztruction more useful in situations where
+only blackbox and greybox testing can be carried out, such as for cybersecurity
+applications \citep{Fuzztruction_2023}. Several processes, such as identifying
+instructions that read/write to/from memory, are carried out on the generator
+program to ensure only impactful mutations are applied to the program.
+\citet{Fuzztruction_2023} also proposed using Fuzztruction in combination with
+a traditional coverage guided fuzzer, such as AFL++. In this configuration,
+Fuzztruction and AFL++ are both used to generate input data, with a scheduling
+component that enables AFL++ to mutate inputs found by Fuzztruction.
+Fuzztruction was compared against existing state of the art general purpose
+fuzzers: AFL++, SymCC and Weizz; and was shown to outperform all of them in
+terms of coverage over time. While the result is very promising, the fuzzer is
+currently not integrated with any rehosting based tools, like unicorn, and so
+is unable to fuzz embedded software.
 
-This is not too disimilar to IOTFuzz using the
-generators in mobile applications?
+% This is not too disimilar to IOTFuzz using the
+% generators in mobile applications?
 
-\citet{Fuzztruction_2023} using fault injection based fuzzing to leverage implicit domain knowledge? not using grammars, but by finding how the interface works by using the knowledge already encoded in the binaries, by mutating the code that generates the input, rather than
+\citet{Seidel_2023} investigated techniques for creating faster firmware
+fuzzers by running emulated arm instructions on native arm64 hardware. They
+implemented SafireFuzz, which used high level emulation techniques from
+HALucintor \citep{HALucinator_2020}, and relied on the fact that the ARM
+Thumb-v2 instruction set implemented in embedded microcontrollers (ARM Cortex-M
+\citep{Cortex-M}) is available as an execution state in application level
+processors (ARM Cortex-A \citep{Cortex-A}). They implemented a dynamic binary
+rewriting engine to translate basic blocks in firmware into compatible native
+arm64 instructions. This near-native execution greatly outperformed existing
+unicorn based rehosting fuzzers, like HALucinator \citep{HALucinator_2020} and
+Fuzzware \citep{Fuzzware_2022}, in terms of coverage over time.
 
-\citet{Seidel_2023} forming faster firmware fuzzers by running emulated arm instructions on native arm64 hardware?
 
+\section{Fuzz Testing in the Space Industry}
+% Introduce the Space Context? (maybe earlier) reference willbold and gutierrez
+
+% ** Flight Software security and protocols
+% ...spacepacket, framing, checksums etc? Fuzzware and Hoedur
+
+% Build on Hoedur and Willbold to integrate a protocol fuzzer for spacepacket/ccsds protocols?
+% - investigate Hoedur, how does it work, how can it be extended?
+% - investigate protocol fuzzers, what do we need to do to build one?
+% - test against Willbolds open source satellite software with the protocol fuzzer, and compare results?
 % application of fuzz testing to space domain
 
 \citet{Gutierrez_2021} fuzz testing techniques on nano satellite flight software
@@ -563,16 +573,6 @@ fuzzing kernel modules, which have similar challenges to embedded systems
 \citep{Maier_2019}.
 % ENDCUT?
 
-\section{Fuzz Testing in the Space Industry}
-% Introduce the Space Context? (maybe earlier) reference willbold and gutierrez
-
-% ** Flight Software security and protocols
-% ...spacepacket, framing, checksums etc? Fuzzware and Hoedur
-
-% Build on Hoedur and Willbold to integrate a protocol fuzzer for spacepacket/ccsds protocols?
-% - investigate Hoedur, how does it work, how can it be extended?
-% - investigate protocol fuzzers, what do we need to do to build one?
-% - test against Willbolds open source satellite software with the protocol fuzzer, and compare results?
 
 % CUT?
 % However, while much research outlines the
