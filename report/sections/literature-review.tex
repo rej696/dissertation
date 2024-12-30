@@ -14,8 +14,6 @@ corporations and governments due to the costs involved. Recently, In order to
 take advantage of cheaper access to space (\autoref{sec:motivation}), a new
 type of organisation has begun to build and operate space missions.
 
-% TODO introduce characteristics of new space (low earth orbit, cubesats)
-
 \citet{Sweeting_2018} defines New Space as
 \begin{quote}
     The emergence of a different ethos for space where the established
@@ -58,7 +56,6 @@ extensive system and integration testing and formal methods, are simply to time
 consuming and expensive to be applicable in the new space environment.
 
 \section{Satellite Architecture}
-% (SPAD book?, Cubesat Handbook)
 
 Software systems are an essential component of modern satellite designs.
 Satellites usually include a number of distributed embedded systems, each
@@ -149,20 +146,13 @@ development of embedded flight software being unavailable. Often engineers are
 only being able to test with flight hardware, and then have to fit their
 testing into a packed schedule to meet tight deadlines.
 
-% Discuss Nasa's software development practices, power of ten etc.
-% Code Reuse and COTS parts.
 Software development standards, such as MISRA and NASA's the power of ten exist
 to provide guidelines for successfully creating correct software, and hopefully
-reduce the burden of testing \citep{MISRA} \citep{NASA}. % FIXME!!!
-However, while applying these techniques can
-reduce the occurrence of introducing bugs during development, they are not a
-substitute for system verification.
-
-% * FIXME should probably talk about protocols?
+reduce the burden of testing \citep{NASA_10}. However, while applying these
+techniques can reduce the occurrence of introducing bugs during development,
+they are not a substitute for system verification.
 
 \section{Fuzz Testing}
-
-% use information from generic survey papers like Yun_2022, Eisele_et_al_2022 in the introductory section.
 
 Many software programs use a methodology called fuzz testing to automatically
 verify software. Fuzz testing is typically used to identify and resolve
@@ -199,23 +189,16 @@ that is linked into the program at compile time, along with several sanitisers,
 to instrument the program. This allows AFL to receive coverage information from
 the running program during fuzzing \citep{AFL_2019}. Embedded systems often run on
 constrained environments, where running the fuzzer on the target hardware would
-be unfeasible. % FIXME[REF] from yun/eisele?
-% FIXME move this/reword this / find different reference
-As such, the fuzzer and the SUT are run in different
-environments, and it is difficult to instrument and forward runtime information
-for grey-box fuzzing \citep{Muench_2018}.
-%
+be unfeasible \citep{Yun_2022}.
 
-Attempts to solve this problem focus either on fuzzing a program running on
-target hardware, or in an emulated environment \citep{Eisele_et_al_2022}.
-Running in an emulated environment allows easy inspection of the SUT by the
-fuzzer, and potentially faster running and parallel tests
-\citep{Eisele_et_al_2022}. However, emulating embedded systems correctly is a
-hard problem, and due to the diversity in operating systems, hardware,
-peripherals etc. often means that development effort spent on emulating one
-system cannot be easily transferred to another.
-
-% paragraph on challenges of rehosting? Wright?
+Attempts to solve this problem focus either on using a fuzzer on a general
+purpose computer, testing a program running on target hardware, or in an
+emulated environment \citep{Eisele_et_al_2022}. Running in an emulated
+environment allows easy inspection of the SUT by the fuzzer, and potentially
+faster running and parallel tests \citep{Eisele_et_al_2022}. However, emulating
+embedded systems correctly is a hard problem, and due to the diversity in
+operating systems, hardware, peripherals etc. often means that development
+effort spent on emulating one system cannot be easily transferred to another.
 
 Yun et al. note that most embedded systems fuzzers rely on emulation
 \citep{Yun_2022}. However, most bugs found through emulation still need to be
@@ -270,10 +253,8 @@ cryptographic functions used in the application to allow the fuzzer to bypass
 the barrier of message encryption. Standard fuzzers struggle with common
 protocol features, like encryption, authentication, or message validity checks,
 because mutating the input data will invalidate a checksum or render a message
-unable to be decrypted correctly. [REF]?
-% They also identify the use of liveness checks using a heartbeat mechanism to be able to detect crashes.
+unable to be decrypted correctly \citep{Fuzztruction_2023}.
 
-% Emulation/rehosting story
 \citet{Muench_2018} investigated challenges in embedded fuzzing, and reviews
 the potential effects of memory corruption bugs on embedded systems.
 They identify how to detect different categories of faults through methods such
@@ -347,7 +328,7 @@ However, the most effective modification was to make use of hardware
 breakpoints to validate any new coverage identified by the fuzzer. After the
 fuzzer identified new coverage, a breakpoint would be set at that instruction,
 and the input re-run. If the breakpoint was hit and the target halted, then the
-coverage was valid. \citet{Becmann_2023} concluded that their methodology
+coverage was valid. \citet{Beckmann_2023} concluded that their methodology
 outperforms on target blackbox fuzzing, providing a reasonable trade-off
 between fuzzing speed and effectiveness.
 
@@ -470,6 +451,11 @@ as grammar fuzzers are better able to correctly handle encryption or packet
 validation. These are common features of embedded communication protocols, as
 demonstrated by IoTFuzzer \citep{IOTFuzzer_2018}.
 
+Additionally, \citet{Zhang_2024} conducted a comprehensive survey of existing
+protocol fuzzing techniques and found that domain specific protocols are
+underrepresented in protocol fuzzing research. They identified the development
+of protocol fuzzers for satellite communications as a research opportunity.
+
 Fuzztruction \citep{Fuzztruction_2023} moves away from AFL entirely to resolve
 these issues surrounding encryption/checksums by creating a new type of fuzzer
 that mutates not just the input data, but the code that generates the input
@@ -494,52 +480,138 @@ terms of coverage over time. While the result is very promising, the fuzzer is
 currently not integrated with any rehosting based tools, like unicorn, and so
 is unable to fuzz embedded software.
 
-% This is not too disimilar to IOTFuzz using the
-% generators in mobile applications?
-
 \citet{Seidel_2023} investigated techniques for creating faster firmware
 fuzzers by running emulated arm instructions on native arm64 hardware. They
 implemented SafireFuzz, which used high level emulation techniques from
 HALucintor \citep{HALucinator_2020}, and relied on the fact that the ARM
-Thumb-v2 instruction set implemented in embedded microcontrollers (ARM Cortex-M
-\citep{Cortex-M}) is available as an execution state in application level
-processors (ARM Cortex-A \citep{Cortex-A}). They implemented a dynamic binary
-rewriting engine to translate basic blocks in firmware into compatible native
-arm64 instructions. This near-native execution greatly outperformed existing
-unicorn based rehosting fuzzers, like HALucinator \citep{HALucinator_2020} and
-Fuzzware \citep{Fuzzware_2022}, in terms of coverage over time.
-
+Thumb-v2 instruction set implemented in embedded microcontrollers (ARM
+Cortex-M) is available as an execution state in application level processors
+(ARM Cortex-A). They implemented a dynamic binary rewriting engine to translate
+basic blocks in firmware into compatible native arm64 instructions. This
+near-native execution greatly outperformed existing unicorn based rehosting
+fuzzers, like HALucinator \citep{HALucinator_2020} and Fuzzware
+\citep{Fuzzware_2022}, in terms of coverage over time.
 
 \section{Fuzz Testing in the Space Industry}
-% Introduce the Space Context? (maybe earlier) reference willbold and gutierrez
 
-% ** Flight Software security and protocols
-% ...spacepacket, framing, checksums etc? Fuzzware and Hoedur
+\citet{Gutierrez_2021} conducted black-box fuzz testing aginst the Suchai
+CubeSat flight software \citep{Suchai_FSW}. The Suchai FSW was designed to be
+able to run on Cubesat OBCs, such as the GomSpace Nanomind, microcontrollers
+such as ESP32's, or both embedded and desktop computers running Linux. Due to
+the flexibility in the target hardware, \citet{Gutierrez_2021} were able to
+run both the flight software and the fuzzer natively on a general purpose linux
+computer, without any emulation software like unicorn or QEMU. The Suchai FSW
+used a Cubesat Space Protocol (CSP) communication interface for receiving
+commands. \citet{Gutierrez_2021} implemented a black-box fuzzer that sends
+random data to the CSP command handler using four different strategies, which
+constrain input data to different levels of correctness to target different
+aspects of the FSW. For example, the first strategy is to generate random
+commands, most of which should be safely rejected by the command handler, while
+the third strategy is to generate syntatcially valid sets of commands and
+parameters, but with randomised parameter values. Their implementation doesn't
+seem to have a strategy that randomised the structure of a CSP packet, so it is
+assumed that the CSP implmentation isn't fuzz tested in their work. However, as
+the Suchai FSW uses libCSP as an external library to implement the protocol,
+which may have infulenced their decision to not fuzz test the protocol stack.
+\citet{Gutierrez_2021} showed that using their black-box fuzz testing
+techniques against the Suchai FSW as part of an agile development process
+enabled them to find and resolve bugs in the software that had not been
+identified with other testing techniques, and so prove the utility of fuzz
+testing flight software. % FIXME despite the simple fuzzing strategy and testing the embedded software binary.
 
-% Build on Hoedur and Willbold to integrate a protocol fuzzer for spacepacket/ccsds protocols?
-% - investigate Hoedur, how does it work, how can it be extended?
-% - investigate protocol fuzzers, what do we need to do to build one?
-% - test against Willbolds open source satellite software with the protocol fuzzer, and compare results?
-% application of fuzz testing to space domain
+\citet{Scharnowski_2023} presented a case study where they used Fuzzware
+\citep{Fuzzware_2022} to fuzz test three CubeSat FSW images that run on ARM
+Cortex-M STM32F4 microcontrollers. This showed Fuzzware to be effective at
+identifying bugs in flight software, and demonstrated different methods of
+configuring Fuzzware to improve fuzzing effectiveness. The specific focus of
+these configurations in a flight software context was to enable the fuzzer to
+correctly move through the complex boot process present in the satellite
+firmware, to be able to fuzz the application. These configurations included
+manually specifying MMIO accesses to move through the boot section,
+snapshotting the firmware state after booting to allow future runs to fuzz test
+from that state, or extending Fuzzware to implement AFL++ features not
+previously implemented in UnicornAFL \citep{Scharnowski_2023}. In addition to
+the complexity of satellite FSW boot processes, another challenge identified
+was that Fuzzware's MMIO based approach does not automatically analyse
+interrupt timing requirements, which can make it difficult for the fuzzer to
+reach code that have dependencies on hardware features like DMA (direct memory
+access). Ultimately, they conclude that while their methodology was effecitive,
+the current need for a human expert to configure the fuzzer to be effective
+makes the use of Fuzzware less feasible as part of continuous integration of
+satellite firmware \citep{Scharnowski_2023}.
 
-\citet{Gutierrez_2021} fuzz testing techniques on nano satellite flight software
+\citet{Willbold_2024} conducted an investigation into the application of
+current state of the art fuzz testing methodologies in the context of security
+analysis of satellite flight software. They identify the attack surfaces of
+satellites, such as telecommands from the ground, or components integrated in
+the satellite sufferring from supply chain attacks. They also outline
+challenges with fuzz testing specific to satellites, including the complexity
+of satellite computer boot processes (discussed previously by
+\citet{Scharnowski_2023}), and the difficulty of on target fuzzing. They
+identify that most fuzzers use crashes as the measure of failure, and state
+that for satellite software a crash/reboot may not be the most problematic
+outcome. Examples of a more severe outcomes include triggering end of life
+procedures such as deorbiting and battery passivation, modifying orbit
+parameters, disabling radios, etc. They also comment on the general complexity
+of software systems in satellites, with most being highly integrated bespoke
+distributed systems with unique combinations of peripherals and payloads. This
+makes it difficult to build reusable emulators. Other industries with similar
+levels of complexity, such as automotive and aviation, often have larger
+resources for a single project, which makes building and maintaining emulators
+more cost effective. \citet{Willbold_2024} conducted three case studies using
+different fuzzing methodologies against different flight software targets.
 
-\citet{Willbold_2024} Analysis of different fuzz testing techniques in satellites.
+The first case study used a technique called subsystem extraction, against a
+target software known as "Flying Laptop". The Flying Laptop FSW was an RTEMS
+system running on a LEON3 processor, which uses the SPARC instruction set. The
+telecommand (TC) processing subsystem in the flight software was manually
+identified and extracted into a Linux executable, that could be run inside an
+emulated SPARC Linux environment. Creating a Linux executable enabled the use
+of general purpose fuzzing tools like AFL++, rather than firmware specific
+fuzzing tools. This approach was limited to fuzzing the TC processing
+subsystem, which in some usecases may be beneficial as it avoided difficulties
+with the complex boot sequence, and removed dependencies on hardware. However,
+those parts of the FSW would not verified. Furthermore, porting the FSW
+components to be able to run on linux, which made use of RTEMS primitives and
+had many other low level incompatible dependencies, was lot of work and as such
+this case study was not completed \citep{Willbold_2024}.
 
+The second case study use the flight software from ESA's OPS-SAT CubeSat, and
+used a technique \citet{Willbold_2024} called full system emulation with
+persitent mode fuzzing. The OBS-SAT FSW ran on an AVR32 microcontroller, and
+\citet{Willbold_2024} had to create an AVR32 instruction set emulator in QEMU
+(AVR32 instruction set was not supported by unicorn \citep{Unicorn}). This,
+again, was a large amount of work. Though \citet{Willbold_2024} justified the
+investment as only needing to be done once, and they published their
+implementation for others to use. In this case study, hardware peripherals like
+sensors and actuators were modelled to provide constant values. The goal of
+this case study was to complete a minimal working emulator that would enable
+the firmware to receive and process TCs during fuzz testing. Therefore, as with
+the first case study, this method was only able to produce useful results for
+the TC handling software components, and fuzzing produced basic block coverage
+of 76\%, and successfully identified a buffer overflow bug in the software
+\citep{Willbold_2024}. In order to improve execution time, the emulator would
+only intermittently reboot the firmware between fuzzer inputs. While this
+improved the speed of the fuzzing by reducing the overhead of executing the
+boot process every iteration, this resulted in some crashes that were not
+reproducable due to accumulated state \citep{Willbold_2024}.
 
-% surveys?
+The final case study used flight software from the ESTCube-1 CubeSat, and used
+an approach \citet{Willbold_2024} called full firmware rehosting. They used
+Hoedur \citep{Hoedur_2023} to rehost and fuzz test the FSW. Only required
+a small amount of manual work to was required to modify a configuration file in
+order for the fuzzing to work correctly. Hoedur was shown to reach 78\% basic
+block coverage in the TC handler functions in the ESTCube-1 FSW, and identified
+several crashing inputs. The only feature of Hoedur that \citet{Willbold_2024}
+identified as lacking was an inability to detect non-crashing faults. However,
+they outlined that by marking an area of memory as "read only" in the Hoedur
+configuration file, the software would trigger a crash if it wrote to that
+location. Using Hoedur was shown to require much less effort than the other
+approaches, as well as manage the challenge of fuzzing complex boot processes
+in satellite software. \citet{Willbold_2024} conclude that rehosting tools
+like Hoedur represent the most promising approach to fuzz testing for satellite
+software security analysis.
 
-\citet{Yun_2022} conducts a survey of state of the art technologies for fuzz testing embedded systems, and suggests directions for further development.
-
-\citet{Eisele_et_al_2022} reviews challenges, tools and solutions to embedded fuzz testing
-
-% Another Survey/review of firmware rehosting challenges
-% C. Wright, W. A. Moeglein, S. Bagchi, M. Kulkarni, and A. A.
-% Clements, “Challenges in firmware re-hosting, emulation, and
-% analysis,” ACM Computer Surveys, vol. 54, no. 1, Jan. 2021. [Online].
-% Available: https://doi.org/10.1145/3423167
-
-\citet{Zhang_2024} survey of protocol fuzzing techniques
 
 
 % 19 papers, any more, we have other references for information:
@@ -552,37 +624,10 @@ Fuzzware \citep{Fuzzware_2022}, in terms of coverage over time.
 % - \citet{Hernandez_2022} FirmWire (dynamic analysis of cellular baseband firmware) less relevent maybe?
 
 
-% CUT? TODO reword to remove NRF52 and make generic about embedded fuzzing
-The design and implementation of embedded software and its verification is
-highly coupled to hardware. The nordic semiconductor NRF52 family of
-microcontrollers are a common choice for IOT devices. NRF52s are based on the
-ARM Cortex-M architecture, and include embedded radio peripherals, such as
-bluetooth low energy and wifi (amongst others). Another common IOT radio
-microcontroller is the ESP32, for which Borsig et al. previously developed a
-fuzzing framework \citep{Borsig_2020}. Furthermore, Yun suggested the need for
-further research into emulation of specific architectures and devices
-\citep{Yun_2022}. An NRF52 was used by Beckmann for on-target coverage guided
-fuzzing of a bare metal ARM Cortex-M system using instruction tracing over a
-single wire output (SWO) interface \citep{Beckmann_2023}. Additionally, Behrang
-outlines a method for using the unicorn cpu emulator to execute NRF52 based
-bare-metal radio firmware \citep{Behrang_2023}. The desktop fuzzer AFL++
-includes an implementation called "unicorn\_mode" which allows the unicorn
-engine to be built with AFL++ support \citep{UnicornMode}. Maier develops the
-Unicorefuzz framework and presents an example use of AFL++ Unicorn Mode for
-fuzzing kernel modules, which have similar challenges to embedded systems
-\citep{Maier_2019}.
-% ENDCUT?
-
-
-% CUT?
-% However, while much research outlines the
-% challenges with current embedded systems fuzzing techniques, it is unclear how
-% these challenges compare with the effort required to verify embedded software
-% using traditional techniques. In order to prove that embedded fuzz testing is a
-% viable alternative to existing verification methods, a comparison of the cost
-% effectiveness of conducting embedded fuzzing with other verification techniques
-% is required.
-% ENDCUT
+% We got Willbold using Hoedur
+% We got Scharnowski talking about interrupts and DMA being an issues for Fuzzware/Hoedur
+% Hoedur, protocol fuzzing, etc.
+%
 
 
 \end{document}
