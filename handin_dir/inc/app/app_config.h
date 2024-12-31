@@ -1,0 +1,7 @@
+#ifndef APP_CONFIG_H_
+#define APP_CONFIG_H_
+
+#define SPACEPACKET_CONFIG_MIN_APID (0)
+#define SPACEPACKET_CONFIG_MAX_APID (3)
+
+#endif /* APP_CONFIG_H_ */

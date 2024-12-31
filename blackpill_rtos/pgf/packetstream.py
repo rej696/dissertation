@@ -1,6 +1,6 @@
 from spacepackets.ccsds.spacepacket import SpacePacketHeader, PacketType, SequenceFlags
-from ccsds.kiss import kiss_pack
-from ccsds.utils import checksum, take
+from pgf.kiss import kiss_pack
+from pgf.utils import checksum, take
 
 # Length of data is max size of frame minus headers and trailers
 # DATA_LEN_MAX = 0x3FF - 2 - 6
