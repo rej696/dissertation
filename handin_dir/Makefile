@@ -8,20 +8,21 @@ PYTHON ?= python
 
 SYMBOL ?= main
 
-CMSIS_INCLUDE_PATH ?= CMSIS/Include
+CMSIS_INCLUDE_PATH ?= fsw/CMSIS/Include
+LINKER_SCRIPT ?= fsw/stm32f411xx.ld
 
 CFLAGS  ?=  -W -Wall -Wextra -Werror -Wundef -Wshadow -Wdouble-promotion \
             -Wformat-truncation -fno-common -Wconversion \
             -g3 -Os -ffunction-sections -fdata-sections \
 	    -I$(CMSIS_INCLUDE_PATH) \
             -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 $(EXTRA_CFLAGS)
-LDFLAGS ?= -Tstm32f411xx.ld -nostartfiles -nostdlib --specs nano.specs -lc -lgcc -Wl,--gc-sections -Wl,-Map=$@.map
+LDFLAGS ?= -T$(LINKER_SCRIPT) -nostartfiles -nostdlib --specs nano.specs -lc -lgcc -Wl,--gc-sections -Wl,-Map=$@.map
 
 USB ?= 0
 
 BUILD := build
-SRC := src
-INC := inc
+SRC := fsw/src
+INC := fsw/inc
 TARGET := $(BUILD)/firmware
 
 SOURCES := $(shell find $(SRC) -name '*.c')
@@ -87,7 +88,7 @@ emu-bb: $(TARGET).bin
 	$(PYTHON) -m emu -b -g $<
 
 gen-fuzz-inputs:
-	$(PYTHON) generate_inputs.py
+	$(PYTHON) tools/generate_inputs.py
 
 fuzz-raw: $(TARGET).bin
 	AFL_SKIP_CPUFREQ=1 AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_AUTORESUME=1 \

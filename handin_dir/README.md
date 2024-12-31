@@ -1,6 +1,6 @@
 # STM32 Flight Software Development, Emulation, and Fuzzing
 This project consists of:
-- A bare metal "Flight Software" application for the STM32F411CE "Blackpill" microcontroller board:
+- A bare metal "Flight Software" application for the STM32F411CE "Blackpill" microcontroller board `fsw`:
     - Remote Procedure Call implementation over Serial using Spacepackets and KISS framing
     - Design by Contract
     - Basic RTOS implementation inspired Miro Samek's MIROS
