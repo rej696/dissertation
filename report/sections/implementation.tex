@@ -2,7 +2,81 @@
 \graphicspath{{\subfix{../images}}}
 \begin{document}
 
+%% Software Design?
+
+% [ ] Outline software design needed to meet requirements
+% - list all software developed, why they are needed, what requirement they satisfy
+% - explain design decisions, such as STM32, DBC, minimal rtos, unicorn
+% [ ] Outline tasks needed to meet requirements
+
+% Software tools required:
+%  * ground software:
+%   ** send and receive spacepackets
+%   ** blackbox fuzzer
+%    *** grammar filter
+%    *** raw data
+%  * rehosting software (emulator)
+%   ** interrupt handling
+
 % Implementation (and Testing?)
+\section{Flight Software}
+
+\subsection{Implementation Decisions}
+
+The most logical and popular choice of programming language for embedded flight
+software is the C programming language. C is used in FSW frameworks like Gen1
+and cFS \citep{Bal_FSDK, Nasa_cFS}. Languages like C++ and Ada are also
+commonly used, C++ is used in the F Prime FSW framework \citep{Nasa_fprime}.
+Recently, modern languages like Micropython, Rust and Zig have started to
+become popular for embedded devices. Rust was used by the University of
+Stuttgart for their sat-rs flight software library, which flew as an experiment
+on the ESA OPS-SAT satellite \citep{satrs, opsat}. However, support for these
+modern languages is still in progress, and currently do not have the stability
+required for commercial projects. In preparing for developing the flight
+software, an initial bare metal program for the STM32 BlackPill was built using
+Zig, but it was decided that using Zig over C would add unneccesarry complexity
+and reduce the representativeness of the FSW.
+
+The FSW made use of design by contract as a methodology for ensuring the
+correctness of the implementation. % TODO
+
+Requirement \refreq{FSW-9} specifies the need for an RTOS in the FSW, to make
+the implementation representative. An alternative to using an RTOS is the
+"superloop" architecture, where all execution happens in a single while loop.
+This architecture is also commonly used in flight software, but mostly for
+Telemetry Nodes, which only need to execute a small number of functions. An OBC
+software typically needs to be able to execute multible threads concurrently,
+which cannot be done using a superloop architecture. There are alternative
+concurrent architectures, such as the active object based QP framework
+\citep{QP}. However, RTOS is the most commonly used design.
+
+Common RTOS implementations used in flight software include FreeRTOS, RTEMS and
+VxWorks \citep{Cratere_2024}. FreeRTOS is open source, and so the use of this
+was investigated for the project. However, rather than use an existing RTOS
+implementation, it was ultimately decided to develop a simple multitasking RTOS
+for the STM32 Blackpill, based on the educational RTOS MiROS \citep{miros}.
+While this was less representative, the decision increased the simplicity of
+the FSW, and developing the RTOS using educational resources would make the
+implementation of emulator features required to support the RTOS much easier.
+
+The hardware abstraction layer, STM32 HAL, CMSIS
+
+The application code
+
+% - Written in C? The only real choice
+% - Bare Metal
+%   - HAL
+%   - Startup Code
+%   - Design by Contract
+% - Actions, Parameters, Telemetries, RPC
+% - Spacepacket Interface
+% - Bare Metal RTOS inspired by MIROS (rather than FreeRTOS or RTEMS, easier to reason about and emulate for the demonstration of the project)
+% - CMSIS? Avoid using relying on CMSIS to reduce the amount of perhipherals and mmio that would need to be emulated.
+
+\subsection{Implementation Details}
+
+
+% Implemented in the C language
 
 % Discuss tooling, rationale for development decisions?
 
@@ -18,12 +92,32 @@
 % linker scripts, makefiles, writing the hal
 % utils
 
+\section{Emulator}
+
 % section about emulator development
 % - unicorn only an ISA emulator
 % - discuss implementation of interrupt handling, trampoline handlers
 
+
+% TODO this can go in results/testing/discussion section?
 % section about testing on hardware, and bugs discovered, addition of framing and
 
+
+\section{Fuzzer Integration and Protocol Grammer Filter}
+
+% modification to emulator to get it to work as a afl++ test harness?
+% using docker to run AFL
+
+% FIXME Discussion?
+As the PGF can only introduce known errors into the protocol, the design of the
+PGF is a compromise between comprehensive fuzzing and specific manually
+designed system testing.
+
+% design the input format
+% outline the output
+% outline the set of known errors based on spacepacket fields
+
+\section{FIXME REMOVE}
 % DEMO TEXT BELOW
 This is the chapter in which you review the implementation and testing decisions and issues, and critique these processes.
 

@@ -2,11 +2,13 @@
 \graphicspath{{\subfix{../images}}}
 \begin{document}
 
-In order to ensure the research questions outlined in \textbf{\autoref{sec:rq}}, a set of requirements needed to identified to drive the
-design of any software needed.
+\section{Requirements}
+In order to answer the research questions outlined in
+\textbf{\autoref{sec:rq}}, a set of requirements needed to identified to drive
+the design of the software that needed to be written.
 
 % Requirements and Design
-\section{User Requirements} \label{sec:user-req}
+\subsection{User Requirements} \label{sec:user-req}
 
 \textbf{\autoref{tab:rq1-reqs}} shows user requirements derived to satisfy
 \refrq{1}. This requirement set shows the developments fundamental to the
@@ -26,7 +28,7 @@ requirements, as potential extensions to the work.
         \\
         \hline
         \definereq{RQ1-2} &
-        An emulator must be developed that is able to execute the target software on an x86\_64 linux computer
+        An emulator must be developed that is able to execute the target software on an x86\_64 Linux computer
         \\
         \hline
         \definereq{RQ1-3} &
@@ -104,7 +106,7 @@ implementation of a coverage guided fuzzer (\refreq{RQ1-3}, \refreq{RQ2-2}).
 
 % TODO how will both these requirements sets satisfy the research questions?
 
-\section{Derived Requirements} \label{sec:derived-req}
+\subsection{Derived Requirements} \label{sec:derived-req}
 
 The user requirements outlined to satisfy the research questions in
 \autoref{sec:user-req} identified three main pieces of software that needed to
@@ -180,19 +182,22 @@ user requirements and are outlined and discussed below.
 \autoref{tab:fsw-reqs} shows the derived flight software requirements.
 \refrq{2} is focused on fuzz testing the communication interface with the
 flight software, and so several of these requirements clarify that interface.
-The use of spacepacket protocol (\refreq{FSW-2}), the implementation of RTOS
-functionality (\refreq{FSW-9}), and the need for remote procedure triggering
-(\refreq{FSW-4}), are all identified to ensure the FSW follows standard FSW
-design decisions (outlined in \autoref{chap:lit-rev}), as required by
-\refreq{RQ1-1}.
+The use of spacepacket protocol (\refreq{FSW-2}), the implementation of Real
+Time Operating System (RTOS) functionality (\refreq{FSW-9}), and the need for
+remote procedure triggering (\refreq{FSW-4}), are all identified to ensure the
+FSW follows standard FSW design decisions (outlined in \autoref{chap:lit-rev}),
+as required by \refreq{RQ1-1}.
 
 Other requirements, such as \refreq{FSW-8}, are included to ensure that the
 design of the FSW is easy to fuzz test, and thus satisfy both \refrq{1} and
 \refrq{2}.
 
 \refreq{FSW-1} specifies that the target software be designed to run on an ARM
-Cortex-M microcontroller. This microcontroller architechture is very common in
-space applications \citep{Cratere_2024}, so also helps to satisfy \refreq{RQ1-1}.
+Cortex-M microcontroller. This microcontroller architecture is very common in
+space applications \citep{Cratere_2024}, so also helps to satisfy
+\refreq{RQ1-1}. Additionally, this is the architecture supported by state of
+the art rehosting fuzzers like Hoedur and Fuzzware \citep{Hoedur_2023,
+Fuzzware_2022}.
 
 \autoref{tab:emu-reqs} outlines derived requirements for the emulator. Some of
 these requirements are directly derived from the User Requirements, such as
@@ -256,28 +261,29 @@ were not the case, the algorithms in the fuzzer for mutating the input data
 would not work correctly. Additionally, any test cases identified by the fuzzer
 would not be able to be replayed to investigate any bugs found.
 
-Coverage guided fuzzers typically provide input in the form of a stream of
-bytes, and so the protocol grammar filter also needs to be able to handle
-streams of bytes of differrent sizes (\refreq{PGF-3}).
+State of the art rehosting based fuzzers like Hoedur and Fuzzware provide input
+in the form of a stream of bytes \citep{Hoedur_2023, Fuzzware_2022}, and so the
+protocol grammar filter also needs to be able to handle streams of bytes of
+different sizes (\refreq{PGF-3}).
 
 \begin{table}[H]
     \centering
     \begin{tabular}[c]{|l|p{10cm}|}
         \hline
         \definereq{PGF-1} &
-        The protocol grammer filter must generate valid input data to the target software
+        The protocol grammar filter must generate valid input data to the target software
         \\
         \hline
         \definereq{PGF-2} &
-        The protocol grammer filter must generate known invalid input data to the target software
+        The protocol grammar filter must generate known invalid input data to the target software
         \\
         \hline
         \definereq{PGF-3} &
-        The protocol grammer filter must use a variable length stream of bytes as input data
+        The protocol grammar filter must use a variable length stream of bytes as input data
         \\
         \hline
         \definereq{PGF-4} &
-        The protocol grammer filter must generate input data in a deterministic manner
+        The protocol grammar filter must generate input data in a deterministic manner
         \\
         \hline
     \end{tabular}
@@ -285,26 +291,7 @@ streams of bytes of differrent sizes (\refreq{PGF-3}).
     \label{tab:pgf-reqs}
 \end{table}
 
-
-
-%% Software Design?
-
-% [ ] Outline software design needed to meet requirements
-% - list all software developed, why they are needed, what requirement they satisfy
-% - explain design decisions, such as STM32, DBC, minimal rtos, unicorn
-% [ ] Outline tasks needed to meet requirements
-
-% Software tools required:
-%  * ground software:
-%   ** send and receive spacepackets
-%   ** blackbox fuzzer
-%    *** grammar filter
-%    *** raw data
-%  * rehosting software (emulator)
-%   ** interrupt handling
-
 \section{Design}
-
 
 \subsection{Target Hardware}
 The first design decision that had to be made, building on \refreq{FSW-1}, was
@@ -313,14 +300,14 @@ especially critical, not just to ensure the flight software was representative,
 but as the hardware selected would have a large impact on the design of the
 emulator and fuzzer.
 
-\citet{Cratere_2024} outlines alot of useful information about the state of the
-art cubesat OBC technology, and this information was used as a reference when
+\citet{Cratere_2024} outlines useful information about the state of the
+art CubeSat OBC technology, and this information was used as a reference when
 designing the flight software component of the work. They identify Arm Cortex-M
 microcontrollers as the most popular option. They also compose a list of flight
 hardware analysed, identifying the operating system and processor on each.
-From this comprehensive list, many different cubesat OBC's can be seen to use
+From this comprehensive list, many different CubeSat OBCs can be seen to use
 STM32 devices, such as EnduroSat \citep{EnduroSat_OBC} and NanoAvionics
-\citep{Nano_OBC}. Many other OBC's, such as the AAC-ClydeSpace Kryten
+\citep{Nano_OBC}. Many other OBCs, such as the AAC-ClydeSpace Kryten
 \citep{Clydespace_Kryten}, use System On Chip (SoC) processors, where an FPGA
 and ARM microcontroller are integrated with memory into the same package. The
 Kryten uses a Microsemi SmartFusion 2 SoC, which includes an ARM Cortex-M3
@@ -329,9 +316,9 @@ microcontroller.
 Real flight hardware, such as those mentioned above, is expensive. The
 EnduroSat OBC is listed as 4,300 euros \citep{EnduroSat_OBC}. Therefore, for
 this work an STM32F411 device was chosen. The STM32F411 is a ARM Cortex-M4, and
-is available as a consumer development board called BlackPill, which was used
+is available as a consumer development board called blackpill, which was used
 as the target hardware throughout the work \citep{blackpill_info}. The
-Cortex-M4 architechture is similar to Cortex-M3, like as used in the Kryten
+Cortex-M4 architecture is similar to Cortex-M3, like as used in the Kryten
 \citep{Clydespace_Kryten}, except that Cortex-M4 may includes support for
 hardware floating point arithmetic and DSP instructions \citep{Cortex_M3}
 \citep{Cortex_M4}. The STM32 chip used in the EnduroSat OBC is a Cortex-M7
@@ -339,34 +326,69 @@ hardware floating point arithmetic and DSP instructions \citep{Cortex_M3}
 performance and power efficiency, and a larger 64-bit instruction and data bus
 \citep{Cortex_M7}.
 
-Additionally, STM32F411 microcontrollers have many peripherals and interfaces
-which are common in cubesat OBC boards, such as Inter-Integrated Circuit (I2C),
+Furthermore, STM32F411 microcontrollers have many peripherals and interfaces
+which are common in CubeSat OBC boards, such as Inter-Integrated Circuit (I2C),
 Serial Peripheral Interface (SPI), and Universal Synchronous and Asynchronous
-Receiver Transmitter (USART) \citep{Cratere_2024}. Therefore, the STM32F411
-blackpill development board is sufficiently representative of OBC hardware used
-in the New Space industry for the purposes of this work.
+Receiver Transmitter (USART) \citep{Cratere_2024}. Additionally STM32F4
+microcontrollers were used in the case study conducted by
+\citet{Scharnowski_2023}. Therefore, the STM32F411 blackpill development board
+is sufficiently representative of OBC hardware used in the New Space industry
+for the purposes of this work.
 
-Typically, a CubeSat OBC communicates with a ground station using a S-band
+Typically, a CubeSat OBC communicates with a ground station using an S-band
 radio (known as a TMTC Radio). The radio is usually connected to the OBC using
 a communication bus such as CAN, Serial or SpaceWire. An example TMTC radio is
 the Satlab SRS-3, which provides both CAN and RS-422 interfaces
 \citep{Satlab_SRS3}. Therefore, a serial communication interface (between the
 OBC and Radio) will be representative. The system boundary for emulating and
 fuzzing the flight software is at the OBC peripherals, and so for this work any
-processing carried out by the TMTC radio, such as foward error correction, does
+processing carried out by the TMTC radio, such as forward error correction, does
 not need to be considered in the design.
 
-\subsection{Flight Software}
+\subsection{Flight Software} \label{sec:fsw-design}
 
-% - Written in C? The only real choice
-% - Bare Metal
-%   - HAL
-%   - Startup Code
-%   - Design by Contract
-% - Actions, Parameters, Telemetries, RPC
-% - Spacepacket Interface
-% - Bare Metal RTOS inspired by MIROS (rather than FreeRTOS or RTEMS, easier to reason about and emulate for the demonstration of the project)
-% - CMSIS? Avoid using relying on CMSIS to reduce the amount of perhipherals and mmio that would need to be emulated.
+As outlined in the User Requirements (\autoref{sec:user-req}) the FSW component
+of the work needed to provide enough features to successfully answer the
+research questions. In the derived FSW requirements (\autoref{tab:fsw-reqs})
+the required features of the FSW are outlined, such as a spacepacket interface
+and use of an RTOS. However, there were many design choices not constrained
+by these requirements. It was anticipated that developing the emulator and
+running the fuzzer would be the most difficult tasks. Therefore, in order to
+make the emulation and fuzz testing as easy as possible, most of the FSW design
+and implementation decisions were made with transparency and simplicity in
+mind.
+
+Embedded software typically uses a layered architecture, with libraries
+providing the application software with hardware abstractions and real time
+operating system primitives \citep{Cratere_2024}. Therefore, the FSW design
+included layers for the Hardware Abstraction Layer (HAL), RTOS, and application
+code.
+
+The HAL would handle interaction with the USART peripheral in the STM32
+blackpill, providing functions to read and write data. The HAL would need to be
+able to handle interrupts from the USART peripheral. The USART peripheral would
+be the spacepacket interface, meaning spacepackets could be sent to the
+blackpill from a development machine using an FTDI cable, satisfying
+\refreq{FSW-8}.
+
+The application was designed to read spacepacket telecommands from the USART
+peripheral using the HAL. Then parse each spacepacket, rejecting any with
+invalid headers or checksums, and parse and execute the commands they
+contained. The application would include implementations for handling each
+different class of command required by the FSW User Requirements
+(\autoref{tab:fsw-reqs}). The application process identifier (APID) field of
+the spacepacket header \citep{Ccsds_spp} was used to select which type of
+command was included in the spacepacket data field.
+
+The application included multiple RTOS Threads. One thread would read
+data received over the spacepacket USART interface, another would handle
+parsing received spacepackets and executing the commands. A third thread would
+be used to provide a liveness check, periodically printing to a debug USART
+peripheral.
+
+The FSW also needed to include code for handling the boot process of the
+program. This included initialising the HAL and RTOS, and registering any
+command handlers for the application.
 
 \subsection{Emulator}
 
@@ -379,5 +401,92 @@ not need to be considered in the design.
 
 % Design Rationale:
 % - why unicorn / python for peripheral modelling
+
+The design of the emulator was driven by the need to integrate it with a
+coverage guided fuzzer (\refreq{EMU-6}). As investigated in the literature
+review (\autoref{sec:lit-rev:fuzz}), QEMU and Unicorn are commonly used to
+implement emulators. \citet{Yun_2022} found that QEMU was the most popular
+emulator, while Unicorn was lighter weight and more flexible. Furthermore,
+current state of the art rehosting fuzzers, like Fuzzware and Hoedur, make use
+of Unicorn \citep{Fuzzware_2022, Hoedur_2023}. In addition, the popular fuzzer
+AFL++ has a mode for fuzz testing Unicorn emulation harnesses
+\citep{UnicornMode}. Therefore, it was decided to build the emulator using
+Unicorn, and use AFL++ as the coverage guided fuzzer, satisfying
+\refreq{EMU-1} and \refreq{EMU-6}.
+
+Unicorn provides an API for loading binary firmware into a memory map and
+executing it. It also provides abstractions for attaching function hooks to
+memory accesses and instruction fetches \citep{Unicorn}. The emulator software
+developed would wrap the unicorn API and implement hooks for managing the
+correct execution of the FSW image.
+
+The emulator included models of hardware peripherals used by the FSW, such as
+the USART peripheral used as the spacepacket interface. These would use MMIO
+hooks to manage the state and behaviours of the peripherals, such as triggering
+interrupts and setting bits in MMIO registers as necessary. The USART
+peripheral model would need to be able to accept input data (from the fuzzer,
+or PGF) and "send" it to the FSW (\refreq{EMU-3}, \refreq{EMU-4}). The full set
+of peripheral models and features needed for the correct execution of the FSW
+was determined iteratively as the FSW was developed alongside the emulator.
+
+The emulator was designed to be able to operate both under the fuzzer, and
+separately with manually written input data, to allow for testing and
+debugging, by running it from the command line with different flags
+(\refreq{EMU-5}). This required the development of a command line wrapper
+application for the emulator.
+
+\subsection{Protocol Grammar Filter}
+
+To satisfy \refreq{PGF-1} the design of the FSW must be considered.
+\autoref{sec:fsw-design}, \refreq{FSW-2} and \refreq{FSW-3} indicate that the
+FSW will implement the spacepacket protocol with a checksum field. Therefore,
+the PGF was designed to create a lazy stream of semantically valid input data
+from an unknown input stream. The PGF was designed to be able to be used in a
+data processing pipeline, with the aim of being able to accept input and route
+output to and from different sources. For example, receiving input data from a
+blackbox fuzzer and routing output to the target hardware, or alternatively
+receiving input from a coverage guided fuzzer and routing it to an emulated
+peripheral.
+
+In order to provide a deterministic input interface for the coverage guided
+fuzzer, the PGF had to assign meaning to each of the bytes in the input,
+effectively determining its own input protocol. The PGF needed to be able to
+inject known errors \refreq{PGF-2}, and so needed to be able to determine which
+error condition should be injected from the input data.
+
+The rationale for designing and using the PGF, apart from to improve the
+effectiveness of a fuzzer when testing a communication interface, was to
+improve the impact of each bit of information generated by the fuzzer, and so
+reduce the input overhead \citep{Fuzzware_2022, Hoedur_2023,
+Fuzztruction_2023}. Therefore, the protocol structure for the input to the PGF
+needed to ensure that all bits used would alter the PGF output in a meaningful
+way. The spacepacket protocol defines several header fields that use multiple
+bits, but are either compile time configured or only have one correct value,
+such as the version field \citep{Ccsds_spp}. Therefore, the filter needed to
+use constant values for those fields in the spacepacket header, and only use a
+single bit to switch between correct and incorrect version fields.
+
+Some spacepacket fields, such as the application process identifier (APID) and
+packet data field, needed their values to be modified by the fuzzer. In the
+case of the APID, there were only four valid APID values for the FSW
+application. Therefore, three bits would be required to cover all valid values
+and the invalid APID case. Given the APID field is 11 bits long
+\citep{Ccsds_spp}, this optimisation to the input protocol would greatly reduce
+the input overhead.
+
+\subsection{Ground Software}
+
+In order to test and run the FSW on the target hardware, a ground software
+application would need to be developed to communicate with the flight software.
+This application would be run on the development machine to send valid
+spacepackets over the serial FTDI cable to the STM32 blackpill USART interface.
+
+The ground software was designed to be a command line tool, like the emulator,
+with command line arguments and options to send different types of packets and
+use different features. In order to satisfy \refreq{RQ1-8}, this command line
+tool was designed to be able to be integrated with a blackbox fuzzer.
+Therefore, the ground software would need to be able to monitor the liveness
+check from the FSW, and report any crashes. Additionally, the ground software
+could integrate the Protocol Grammar Filter.
 
 \end{document}
