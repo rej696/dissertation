@@ -482,11 +482,15 @@ This application would be run on the development machine to send valid
 spacepackets over the serial FTDI cable to the STM32 blackpill USART interface.
 
 The ground software was designed to be a command line tool, like the emulator,
-with command line arguments and options to send different types of packets and
-use different features. In order to satisfy \refreq{RQ1-8}, this command line
-tool was designed to be able to be integrated with a blackbox fuzzer.
-Therefore, the ground software would need to be able to monitor the liveness
-check from the FSW, and report any crashes. Additionally, the ground software
-could integrate the Protocol Grammar Filter.
+with command line arguments and options to send different spacepacket
+telecommands and use different features. The ground software needed to generate
+valid input data according to the implementation of the communication interface
+in the FSW. The ground software could achieve this by manually writing packet
+generation code, or integrating the Protocol Grammar Filter.
+
+In order to satisfy \refreq{RQ1-8}, this command line tool was designed to be
+able to be integrated with a blackbox fuzzer. Therefore, the ground software
+would need to be able to monitor the liveness check from the FSW, and report
+any crashes.
 
 \end{document}
