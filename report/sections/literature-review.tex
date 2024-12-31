@@ -162,28 +162,28 @@ of generating some input test data and monitoring the response of the
 software/system under test (SUT) to this input. If the fuzzer detects the
 program has crashed, it saves the generated test data for analysis by an
 engineer, and mutates the input data in some way to produce a different result.
-This brute force approach is known as black-box fuzzing, and given enough time
+This brute force approach is known as blackbox fuzzing, and given enough time
 to execute, will uncover many exploitable bugs with the system, such as memory
-leaks, buffer overflows, and off by one errors. Basic black-box fuzzing on an
+leaks, buffer overflows, and off by one errors. Basic blackbox fuzzing on an
 embedded system will require some fuzzing harness \citep{Eisele_et_al_2022} and
 some method of detecting a fault, such as performing a liveness check
 \citep{Yun_2022}.
 
-Compared to black-box fuzzing, white-box fuzzing involves targeted test case
+Compared to blackbox fuzzing, whitebox fuzzing involves targeted test case
 generation through static program analysis techniques, generating a test case
 to match every statically identified code path. Microsoft have had success
-using white-box fuzzing to identify difficult bugs that were missed by
-black-box fuzzing \citep{Godefroid_2012}. However, symbolic execution
-techniques used in white-box fuzzing can become unfeasably computationally
+using whitebox fuzzing to identify difficult bugs that were missed by
+blackbox fuzzing \citep{Godefroid_2012}. However, symbolic execution
+techniques used in whitebox fuzzing can become unfeasibly computationally
 expensive for larger projects \citep{Krishnamoorthy_2010}.
 
-Grey-box fuzzing is a middle ground between black-box and white-box fuzzing.
-Grey-box fuzzing relies on the fuzzer receiving feedback regarding code
+Greybox fuzzing is a middle ground between blackbox and whitebox fuzzing.
+Greybox fuzzing relies on the fuzzer receiving feedback regarding code
 coverage for each generated test-case to mutate and generate further test
-cases. This approach allows it to find code paths faster than black-box
+cases. This approach allows it to find code paths faster than blackbox
 testing, but without requiring any static code analysis \citep{Yun_2022}.
 
-Grey-box fuzzing of a program can be easily implemented for application (i.e
+Greybox fuzzing of a program can be easily implemented for application (i.e
 non-embedded) software using popular fuzzers like AFL. AFL provides a library
 that is linked into the program at compile time, along with several sanitisers,
 to instrument the program. This allows AFL to receive coverage information from
@@ -200,10 +200,10 @@ embedded systems correctly is a hard problem, and due to the diversity in
 operating systems, hardware, peripherals etc. often means that development
 effort spent on emulating one system cannot be easily transferred to another.
 
-Yun et al. note that most embedded systems fuzzers rely on emulation
-\citep{Yun_2022}. However, most bugs found through emulation still need to be
+\citet{Yun_2022} noted in their survey of embedded system fuzzers that most
+rely on emulation. However, most bugs found through emulation still need to be
 validated on hardware, and so being able to run the fuzz tests directly on the
-target hardware is preferable \citep{Eisele_et_al_2022}.
+target hardware is preferable, according to \citet{Eisele_et_al_2022}.
 
 During the development of an embedded system, engineers often require access to
 representative development hardware to effectively design and write software.
@@ -231,7 +231,7 @@ year by year \citep{Yun_2022}, there are few generic solutions
 \citep{Eisele_et_al_2022}. The two main challenges to embedded system fuzzing
 when compared to desktop or server systems remain the variety in CPU
 architectures in embedded systems, and the lack of an operating system such as
-linux for bare metal systems \citep{Eisele_et_al_2022}. Currently, the
+Linux for bare metal systems \citep{Eisele_et_al_2022}. Currently, the
 availability and ease of use of fuzzing tooling for embedded systems does not
 match that of desktop applications.
 
@@ -289,11 +289,11 @@ to whitebox fuzzing is the availability of the source code to compile in
 instrumentation, they concluded that whitebox on target fuzzing would be an
 excellent process for testing ESP32 applications as part of agile development.
 When trying to fuzz testing using the modified QEMU emulator,
-\citet{Borsig_2020} had difficulty emulating the wifi module integrated into
+\citet{Borsig_2020} had difficulty emulating the Wi-Fi module integrated into
 the ESP32 chip. For whitebox fuzzing, they were able to compile the application
-to use an ethernet driver provided by QEMU, rather than the hardware wifi
+to use an Ethernet driver provided by QEMU, rather than the hardware Wi-Fi
 module. However, for blackbox and greybox fuzzing, they manually located the
-code section that handled the wifi driver and manually instructed the fuzzer to
+code section that handled the Wi-Fi driver and manually instructed the fuzzer to
 insert input data at that location, fuzzing specific sections of the
 application. Overall, they concluded that greybox fuzzing using QEMU would be
 an effective tool for security analysts looking to fuzz test specific sections
@@ -303,7 +303,7 @@ of ESP32 firmware, such as communication stacks \citep{Borsig_2020}.
 proposed using the GNU Debugger (GDB) and hardware breakpoints as an
 architecture and source code agnostic method of collecting feedback for a
 coverage guided fuzzer. Given the limited number of hardware breakpoints
-avaiable on embedded systems, They propose several algorithms for selecting
+available on embedded systems, They propose several algorithms for selecting
 their location for generating feedback. They present initial results, which
 show that even with a small number of breakpoints, all their strategies gain
 greater coverage overall compared to blackbox fuzzing. They concede that
@@ -320,7 +320,7 @@ the Serial Wire Debug interface to periodically sample the value of the Program
 Counter (PC) on the target, which they used to generate instruction coverage.
 Using this technique alone gave worse fuzzing efficiency compared to a blackbox
 fuzzer. The fuzzer generated "false positive" inputs, where because not every
-instruction was sampled, some semanitically different inputs could be
+instruction was sampled, some semantically different inputs could be
 considered identical. To combat this, they proposed several improvements. One
 was to configure the tracing interface to notify upon entry and exit from an
 interrupt handler, during which instruction coverage feedback could be ignored.
@@ -349,7 +349,7 @@ run under American Fuzzy Lop (AFL), a popular coverage guided fuzzing tool
 \citet{Maier_2019} focuses on emulating and fuzzing parser code in the kernel,
 as parser code usually does not have hardware dependencies, and they
 acknowledge modelling hardware peripherals is not an easy task in unicorn.
-UnicoreFuzz uses gdb to dump register and memory data at a breakpoint, and then
+UnicoreFuzz uses GDB to dump register and memory data at a breakpoint, and then
 loads the dumped state into UnicornAFL, allowing the code beginning at the
 breakpoint to be fuzzed with the emulator. \citet{Maier_2019} found that while
 the performance of UnicoreFuzz was worse than other methods, it was able to
@@ -399,7 +399,7 @@ HALucinator.
 \citet{Chen_2022} investigated a novel approach to fuzzing Real Time Operating
 Systems (RTOS) which involves slicing a single program into its constituent
 tasks and construct a call graph of program based on critical functions such as
-external data entrypoints. Each tailored execution tree is was then fuzzed
+external data entry points. Each tailored execution tree is was then fuzzed
 separately using a UnicornAFL based emulator. The tool is able to detect and
 skip "input-irrelevant" function calls as well code that is "emulation-hard",
 such as HAL functions. The tool focuses on code paths that handle input data,
@@ -443,7 +443,7 @@ unlike HALucinator, firmware run on Hoedur or Fuzzware cannot be run
 interactively, it must be run under the fuzzer. While both are based on
 Unicorn, which supports multiple target architectures, Fuzzware and Hoedur are
 only currently available on ARM Cortex-M, chosen for its popularity, and use in
-other state of the art fuzzers to allow fair comparisons. Given Hoedur's
+other state of the art fuzzers to allow fair comparisons. Given Hoedur has
 independent input streams for each MMIO, \citet{Hoedur_2023} identified the
 integration of specialized grammar fuzzers into Hoedur as an area for future
 work. This would further reduce "input overhead" on communication interfaces,
@@ -453,7 +453,7 @@ demonstrated by IoTFuzzer \citep{IOTFuzzer_2018}.
 
 Additionally, \citet{Zhang_2024} conducted a comprehensive survey of existing
 protocol fuzzing techniques and found that domain specific protocols are
-underrepresented in protocol fuzzing research. They identified the development
+under-represented in protocol fuzzing research. They identified the development
 of protocol fuzzers for satellite communications as a research opportunity.
 
 Fuzztruction \citep{Fuzztruction_2023} moves away from AFL entirely to resolve
@@ -481,43 +481,43 @@ currently not integrated with any rehosting based tools, like unicorn, and so
 is unable to fuzz embedded software.
 
 \citet{Seidel_2023} investigated techniques for creating faster firmware
-fuzzers by running emulated arm instructions on native arm64 hardware. They
+fuzzers by running emulated arm instructions on native ARM64 hardware. They
 implemented SafireFuzz, which used high level emulation techniques from
-HALucintor \citep{HALucinator_2020}, and relied on the fact that the ARM
+HALucinator \citep{HALucinator_2020}, and relied on the fact that the ARM
 Thumb-v2 instruction set implemented in embedded microcontrollers (ARM
 Cortex-M) is available as an execution state in application level processors
 (ARM Cortex-A). They implemented a dynamic binary rewriting engine to translate
-basic blocks in firmware into compatible native arm64 instructions. This
+basic blocks in firmware into compatible native ARM64 instructions. This
 near-native execution greatly outperformed existing unicorn based rehosting
 fuzzers, like HALucinator \citep{HALucinator_2020} and Fuzzware
 \citep{Fuzzware_2022}, in terms of coverage over time.
 
 \section{Fuzz Testing in the Space Industry}
 
-\citet{Gutierrez_2021} conducted black-box fuzz testing aginst the Suchai
+\citet{Gutierrez_2021} conducted blackbox fuzz testing against the Suchai
 CubeSat flight software \citep{Suchai_FSW}. The Suchai FSW was designed to be
-able to run on Cubesat OBCs, such as the GomSpace Nanomind, microcontrollers
-such as ESP32's, or both embedded and desktop computers running Linux. Due to
+able to run on CubeSat OBCs, such as the GomSpace Nanomind, microcontrollers
+such as ESP32, or both embedded and desktop computers running Linux. Due to
 the flexibility in the target hardware, \citet{Gutierrez_2021} were able to
-run both the flight software and the fuzzer natively on a general purpose linux
+run both the flight software and the fuzzer natively on a general purpose Linux
 computer, without any emulation software like unicorn or QEMU. The Suchai FSW
 used a Cubesat Space Protocol (CSP) communication interface for receiving
-commands. \citet{Gutierrez_2021} implemented a black-box fuzzer that sends
+commands. \citet{Gutierrez_2021} implemented a blackbox fuzzer that sends
 random data to the CSP command handler using four different strategies, which
 constrain input data to different levels of correctness to target different
 aspects of the FSW. For example, the first strategy is to generate random
 commands, most of which should be safely rejected by the command handler, while
-the third strategy is to generate syntatcially valid sets of commands and
+the third strategy is to generate syntactically valid sets of commands and
 parameters, but with randomised parameter values. Their implementation doesn't
 seem to have a strategy that randomised the structure of a CSP packet, so it is
-assumed that the CSP implmentation isn't fuzz tested in their work. However, as
+assumed that the CSP implementation isn't fuzz tested in their work. However, as
 the Suchai FSW uses libCSP as an external library to implement the protocol,
-which may have infulenced their decision to not fuzz test the protocol stack.
-\citet{Gutierrez_2021} showed that using their black-box fuzz testing
+which may have influenced their decision to not fuzz test the protocol stack.
+\citet{Gutierrez_2021} showed that using their blackbox fuzz testing
 techniques against the Suchai FSW as part of an agile development process
 enabled them to find and resolve bugs in the software that had not been
 identified with other testing techniques, and so prove the utility of fuzz
-testing flight software. % FIXME despite the simple fuzzing strategy and testing the embedded software binary.
+testing flight software.
 
 \citet{Scharnowski_2023} presented a case study where they used Fuzzware
 \citep{Fuzzware_2022} to fuzz test three CubeSat FSW images that run on ARM
@@ -528,14 +528,14 @@ these configurations in a flight software context was to enable the fuzzer to
 correctly move through the complex boot process present in the satellite
 firmware, to be able to fuzz the application. These configurations included
 manually specifying MMIO accesses to move through the boot section,
-snapshotting the firmware state after booting to allow future runs to fuzz test
-from that state, or extending Fuzzware to implement AFL++ features not
-previously implemented in UnicornAFL \citep{Scharnowski_2023}. In addition to
-the complexity of satellite FSW boot processes, another challenge identified
-was that Fuzzware's MMIO based approach does not automatically analyse
+taking snapshots of the firmware state after booting to allow future runs to
+fuzz test from that state, or extending Fuzzware to implement AFL++ features
+not previously implemented in UnicornAFL \citep{Scharnowski_2023}. In addition
+to the complexity of satellite FSW boot processes, another challenge identified
+was that MMIO based approach used by Fuzzware does not automatically analyse
 interrupt timing requirements, which can make it difficult for the fuzzer to
 reach code that have dependencies on hardware features like DMA (direct memory
-access). Ultimately, they conclude that while their methodology was effecitive,
+access). Ultimately, they conclude that while their methodology was effective,
 the current need for a human expert to configure the fuzzer to be effective
 makes the use of Fuzzware less feasible as part of continuous integration of
 satellite firmware \citep{Scharnowski_2023}.
@@ -544,14 +544,14 @@ satellite firmware \citep{Scharnowski_2023}.
 current state of the art fuzz testing methodologies in the context of security
 analysis of satellite flight software. They identify the attack surfaces of
 satellites, such as telecommands from the ground, or components integrated in
-the satellite sufferring from supply chain attacks. They also outline
+the satellite suffering from supply chain attacks. They also outline
 challenges with fuzz testing specific to satellites, including the complexity
 of satellite computer boot processes (discussed previously by
 \citet{Scharnowski_2023}), and the difficulty of on target fuzzing. They
 identify that most fuzzers use crashes as the measure of failure, and state
 that for satellite software a crash/reboot may not be the most problematic
 outcome. Examples of a more severe outcomes include triggering end of life
-procedures such as deorbiting and battery passivation, modifying orbit
+procedures such as de-orbiting and battery passivation, modifying orbit
 parameters, disabling radios, etc. They also comment on the general complexity
 of software systems in satellites, with most being highly integrated bespoke
 distributed systems with unique combinations of peripherals and payloads. This
@@ -569,16 +569,16 @@ identified and extracted into a Linux executable, that could be run inside an
 emulated SPARC Linux environment. Creating a Linux executable enabled the use
 of general purpose fuzzing tools like AFL++, rather than firmware specific
 fuzzing tools. This approach was limited to fuzzing the TC processing
-subsystem, which in some usecases may be beneficial as it avoided difficulties
+subsystem, which in some use cases may be beneficial as it avoided difficulties
 with the complex boot sequence, and removed dependencies on hardware. However,
 those parts of the FSW would not verified. Furthermore, porting the FSW
-components to be able to run on linux, which made use of RTEMS primitives and
+components to be able to run on Linux, which made use of RTEMS primitives and
 had many other low level incompatible dependencies, was lot of work and as such
 this case study was not completed \citep{Willbold_2024}.
 
 The second case study use the flight software from ESA's OPS-SAT CubeSat, and
 used a technique \citet{Willbold_2024} called full system emulation with
-persitent mode fuzzing. The OBS-SAT FSW ran on an AVR32 microcontroller, and
+persistent mode fuzzing. The OPS-SAT FSW ran on an AVR32 microcontroller, and
 \citet{Willbold_2024} had to create an AVR32 instruction set emulator in QEMU
 (AVR32 instruction set was not supported by unicorn \citep{Unicorn}). This,
 again, was a large amount of work. Though \citet{Willbold_2024} justified the
@@ -594,7 +594,7 @@ of 76\%, and successfully identified a buffer overflow bug in the software
 only intermittently reboot the firmware between fuzzer inputs. While this
 improved the speed of the fuzzing by reducing the overhead of executing the
 boot process every iteration, this resulted in some crashes that were not
-reproducable due to accumulated state \citep{Willbold_2024}.
+reproducible due to accumulated state \citep{Willbold_2024}.
 
 The final case study used flight software from the ESTCube-1 CubeSat, and used
 an approach \citet{Willbold_2024} called full firmware rehosting. They used
