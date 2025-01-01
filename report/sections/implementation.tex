@@ -18,12 +18,25 @@
 %  * rehosting software (emulator)
 %   ** interrupt handling
 
-All the software implemented is included in a single repository
+All the software implemented is included in a single repository, using a
+makefile to build, program, and run the FSW on the target hardware and the
+emulator. Files for the flight software implementation are included in the
+\lstinline|fsw| directory. Files for the emulator implementation are included
+in the \lstinline|emu| directory, and files for the protocol grammar filter
+are included in the \lstinline|pgf| directory. The ground software python tool
+is located at the project root called \lstinline|gsw|. The \lstinline|pgf| is
+not a standalone application, like the \lstinline|emu| and \lstinline|gsw|
+tools, but a library containing code that allows the protocol grammar filter to
+be used in both the emulator and the ground software.
 
 % Implementation (and Testing?)
+% FIXME does implementation section include discussion of implementation decisions? Yes probably.
 \section{Flight Software}
 
-\subsection{Implementation Decisions}
+Key features of the FSW implementation are outlined and discussed in the
+following sections.
+
+\subsection{C Programming Language} %TODO is this necssary as a sub section?
 
 The most logical and popular choice of programming language for embedded flight
 software is the C programming language. C is used in FSW frameworks like Gen1
@@ -39,10 +52,29 @@ software, an initial bare metal program for the STM32 BlackPill was built using
 Zig, but it was decided that using Zig over C would add unneccesarry complexity
 and reduce the representativeness of the FSW.
 
-The FSW made use of design by contract as a methodology for ensuring the
-correctness of the implementation. % TODO
+\subsection{Design By Contract}
 
-Requirement \refreq{FSW-9} specifies the need for an RTOS in the FSW, to make
+The FSW made use of design by contract (DBC) as a methodology for ensuring the
+correctness of the implementation. The \lstinline|dbc_assert.h| header file
+from \citet{dbc_assert} was integrated into the FSW. This header file provided
+macros for DBC primitives like pre and post conditions and assertions, which
+were used throughout the software to check for common C errors, such as passing
+null pointers to functions and size parameters exceeding static limits. When a
+DBC assertion check fails (i.e. a pointer is null), the macro calls a
+\lstinline|DBC_fault_handler| function, which must be implemented. The
+implementation of this handler can be tailored according to the application. In
+the FSW implementation, the handler prints a DBC failure message and enters an
+infinite loop. However, a release version of the FSW might disable the
+execution of the fault handler entirely, or have the fault handler
+automatically trigger a reset of the system. It was reasoned that DBC would be
+a complementary approach to fuzz testing, as the execution of the
+\lstinline|DBC_fault_handler| function would imply a bug in the software, and
+should be easy to detect both on target and rehosted, by monitoring the debug
+log and program counter respectively.
+
+\subsection{Real Time Operating System}
+
+Requirement \refreq{FSW-9} specified the need for an RTOS in the FSW, to make
 the implementation representative. An alternative to using an RTOS is the
 "superloop" architecture, where all execution happens in a single while loop.
 This architecture is also commonly used in flight software, but mostly for
@@ -61,9 +93,80 @@ While this was less representative, the decision increased the simplicity of
 the FSW, and developing the RTOS using educational resources would make the
 implementation of emulator features required to support the RTOS much easier.
 
-The hardware abstraction layer, STM32 HAL, CMSIS
+This RTOS ... % TODO outline rtos
+
+\subsection{Hardware Abstraction Layer}
+
+ARM Cortex-M devices have two distinct layers of hardware implementation. The
+core hardware architecture, what makes a chip an ARM Cortex-M, is provided by
+ARM, and includes the basic designs needed for the device to function. This
+layer includes the processor and hardware peripherals like the nested vector
+interrupt controller (NVIC), which manages and dispatches interrupts, or the
+serial wire debug (SWD) interface, which provides developers with a universal
+interface for programming and debugging firmware on ARM Cortex-M
+microcontrollers \citep{armcm4_manual}. ARM provide a software library for
+interacting with this layer of the hardware, called the Common Microcontroller
+Software Interface Standard (CMSIS) \citep{CMSIS}. CMSIS provides a level of portability to
+embedded software by seperating the interface for interacting with hardware
+from the implementation, similar to a vendor HAL.
+
+An ARM Cortex-M chip will include another layer of hardware implemenation,
+designed by the vendor (STMicroelectronics for the STM32F411xC). This
+layer includes additional hardware peripherals, such as memory, IO devices like
+USART or I2C, clocks, GPIOs and so on. Vendors typically provide a HAL, which
+is a software implementations for interfacing with the vendor hardware. ST
+Microelectronics provide a HAL implementation for STM32 devices
+\citep{stm32hal}. These HALs can vary in size and complexity from vendor to
+vendor, and many are either built on top of CMSIS or compatible with CMSIS.
+Often these HAL implementations are part of a developer tooling ecosystem, and
+are intergrated into a proprietary IDE. While this can make getting started
+with development easier, it can result in vendor lock in, where skills and
+knowledge gained using one vendor are difficult to transfer to another vendor.
+Additionally, it can be difficult to introspect the binary produced through
+these IDEs, and therefore not easy to determine exactly what code and functions
+have been included. With the same reasoning as the RTOS implementation, it was
+determined that only elements of the hardware abstraction layer required for
+the FSW should be included. Therefore, a minimal HAL
+(\lstinline|fsw/{inc,src}/hal|) was developed by consulting the STM32F411xC/E
+Reference Manual and Datasheet \citep{stm32f4_manual, stm32f4_datasheet}, and
+the ARM Cortex-M4 User Manual \citep{armcm4_manual}. This decision also led to
+the manual implementation of several parts of the FSW project that are often
+provided by the vendor. Namely the startup code
+(\lstinline|fsw/src/hal/startup.c|), a linkerscript for the blackpill
+(\lstinline|fsw/stm32f411xx.ld|), and a \lstinline|make| build system for
+compiling the project with the \lstinline|arm-none-eabi-gcc| toolchain
+(\lstinline|Makefile|).
+
+% TODO outline hal files and functionality for peripherals, and why they were needed
+% - RCC
+% - SysTick
+% - uart.h
+% - startup.c vector table, default interrupt handlers and fault handlers
+% - linker script takes sections of the code from the compiled object files and
+%   puts them into the memory locations specified. in this file we define the
+%   stack end and other symbols used in the startup code.
+
+It was initially decided to exclude CMSIS from the project in addition to the
+vendor HAL. However, later in development the USART HAL implementation added
+non blocking (i.e. interrupt driven) reading of USART data, at which point
+further interfacing with the NVIC peripheral was required. It was determined
+that re-implementing the NVIC API in CMSIS woud make the project more complex
+than including the CMSIS library. Therefore a subset of files necessary for
+using an ARM Cortex-M4 were included from CMSIS-core \citep{CMSIS} in
+\lstinline|fsw/CMSIS|, and were configured for the stm32f411xe
+(\lstinline|fsw/inc/hal/stm32f4_blackpill.h|).
+
+% FIXME is this discussion?
+In retrospect, while implementing a reduced HAL did make it simpler to emulator
+in parallel to the flight software, CMSIS should have been included from the
+start of the project, as this would have avoided a lot of difficulty when
+developing the lower level parts of the FSW.
+
+\subsection{Application}
 
 The application code
+
+\subsection{Tooling}
 
 % - Written in C? The only real choice
 % - Bare Metal
@@ -74,9 +177,6 @@ The application code
 % - Spacepacket Interface
 % - Bare Metal RTOS inspired by MIROS (rather than FreeRTOS or RTEMS, easier to reason about and emulate for the demonstration of the project)
 % - CMSIS? Avoid using relying on CMSIS to reduce the amount of perhipherals and mmio that would need to be emulated.
-
-\subsection{Implementation Details}
-
 
 % Implemented in the C language
 
