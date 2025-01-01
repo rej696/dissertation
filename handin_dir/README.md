@@ -9,7 +9,7 @@ This project consists of:
     - Interrupt handling and context switching
     - A protocol grammar filter for converting a raw byte stream into valid input data (spacepackets with checksums in KISS frames)
     - black box fuzzing (with or without grammar filtering)
-- A "Ground Segment" python cli tool `spp`:
+- A "Ground Segment" python cli tool `gsw`:
     - reading/writing packets to a connected development board
     - on target black box fuzzing (with or without grammar filtering)
 
@@ -45,20 +45,20 @@ You also need to install the [st-link tools](https://github.com/stlink-org/stlin
 With the st-link connected to the board, you can flash the device with `make flash`
 
 With USART2 connected to your PC with the FTDI cable, you can monitor the debug
-output from the STM32 with `./spp --dev /dev/ttyUSB1 log`. Make sure the --dev
+output from the STM32 with `./gsw --dev /dev/ttyUSB1 log`. Make sure the --dev
 argument matches the port your FTDI cable is using.
 
 With USART1 connected to your PC with the FTDI cable, you can send/receive
-packets to/from the STM32 with the `spp` python tool.
+packets to/from the STM32 with the `gsw` python tool.
 
-You can use the tool to trigger specific functions, for example `./spp --dev
+You can use the tool to trigger specific functions, for example `./gsw --dev
 /dev/ttyUSB0 action 0` sends a packet to the device to run action with id 0.
 
-You can also use the "blackbox fuzzer" functionality of the tool with `./spp
+You can also use the "blackbox fuzzer" functionality of the tool with `./gsw
 --dev /dev/ttyUSB0 fuzz --timeout 5`. This will periodically send packets
 created from a random bytestream through the protocol grammar filter.
 
-run `./spp --help` for more information.
+run `./gsw --help` for more information.
 
 ### Emulator
 For interacting with the emulator, I recommend running any commands in the
