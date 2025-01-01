@@ -49,8 +49,160 @@ on the ESA OPS-SAT satellite \citep{satrs, opsat}. However, support for these
 modern languages is still in progress, and currently do not have the stability
 required for commercial projects. In preparing for developing the flight
 software, an initial bare metal program for the STM32 BlackPill was built using
-Zig, but it was decided that using Zig over C would add unneccesarry complexity
+Zig, but it was decided that using Zig over C would add unnecessary complexity
 and reduce the representativeness of the FSW.
+
+
+\subsection{Hardware Abstraction Layer}
+
+ARM Cortex-M devices have two distinct layers of hardware implementation. The
+core hardware architecture, what makes a chip an ARM Cortex-M, is provided by
+ARM, and includes the basic designs needed for the device to function. This
+layer includes the processor and hardware peripherals like the nested vector
+interrupt controller (NVIC), which manages and dispatches interrupts, or the
+serial wire debug (SWD) interface, which provides developers with a universal
+interface for programming and debugging firmware on ARM Cortex-M
+microcontrollers \citep{armcm4_manual}. ARM provide a software library for
+interacting with this layer of the hardware, called the Common Microcontroller
+Software Interface Standard (CMSIS) \citep{CMSIS}. CMSIS provides a level of portability to
+embedded software by separating the interface for interacting with hardware
+from the implementation, similar to a vendor HAL.
+
+An ARM Cortex-M chip will include another layer of hardware implementation,
+designed by the vendor (STMicroelectronics for the STM32F411xE). This
+layer includes additional hardware peripherals, such as memory, IO devices like
+USART or I2C, clocks, GPIOs and so on. Vendors typically provide a HAL, which
+is a software implementations for interfacing with the vendor hardware. ST
+Microelectronics provide a HAL implementation for STM32 devices
+\citep{stm32hal}. These HALs can vary in size and complexity from vendor to
+vendor, and many are either built on top of CMSIS or compatible with CMSIS.
+Often these HAL implementations are part of a developer tooling ecosystem, and
+are integrated into a proprietary IDE. While this can make getting started
+with development easier, it can result in vendor lock in, where skills and
+knowledge gained using one vendor are difficult to transfer to another vendor.
+Additionally, it can be difficult to introspect the binary produced through
+these IDEs, and therefore not easy to determine exactly what code and functions
+have been included. It was determined that only elements of the hardware
+abstraction layer required for the FSW should be included to reduce the
+complexity of the emulator development. Therefore, a minimal HAL
+(\lstinline|fsw/{inc,src}/hal|) was developed by consulting the STM32F411xC/E
+Reference Manual and Datasheet \citep{stm32f4_manual, stm32f4_datasheet}, and
+the ARM Cortex-M4 User Manual \citep{armcm4_manual}. This decision also led to
+the manual implementation of several parts of the FSW project that are often
+provided by the vendor. Namely the startup code
+(\lstinline|fsw/src/hal/startup.c|), a linkerscript for the blackpill
+(\lstinline|fsw/stm32f411xx.ld|), and a \lstinline|make| build system for
+compiling the project with the \lstinline|arm-none-eabi-gcc| toolchain
+(\lstinline|Makefile|). The first task in implementing the FSW was to implement
+these files.
+
+\subsubsection{Linker Script and Startup Code} \label{sec:linkerscript}
+
+The linkerscript maps the software defined linker sections into the memory
+locations for the STM32F411xE. Section 5 of the STM32F411xC/E datasheet
+outlines the address ranges for flash and sram memory
+\citep{stm32f4_datasheet}. There are several notable sections in the linker
+script. The \lstinline|.vectors| section holds the vector table for the
+firmware, which must be located at the beginning of the flash memory. The
+\lstinline|.vectors| section is implemented as an array of function pointers in
+the \lstinline|startup.c| file, as defined in section 2.3.4 in the Cortex-M4
+User Manual \citep{armcm4_manual}. The \lstinline|.text| section includes the
+machine code compiled from the source code, and the \lstinline|.rodata| section
+includes any data the compiler has determined as non writeable. These sections
+are written to the flash memory, which only has read/execute permissions.
+
+Traditionally, the stack is defined at the end of the working memory, which in
+the case of the blackpill is sram. However, as \citet{miro_stack} outlines,
+this decision can lead to a stack overflow overwriting data in other memory
+sections, and potentially going undetected until a catastrophic failure.
+Instead, the stack can be placed at the beginning of the sram. As the stack
+grows down towards the beginning of sram, any stack overflow will result in an
+invalid memory access and trigger a hardware exception, rather than corrupting
+other data in memory \citep{miro_stack}. This technique is especially
+beneficial when considering that a fuzzer will now be able to immediately
+detect a stack overflow if one is triggered.
+
+The \lstinline|.data| section includes initialised global data. The initial
+values for these variables must be stored in non-volatile memory (flash).
+However, as the data is mutable, it must be loaded into sram and data accesses
+must reference addresses in that section. The linker provides a mechanism to
+set the load address for a section. The \lstinline|.bss| section is for
+uninitialised global data, and so only needs to be included in sram. However,
+it is good practice to initialise the memory in the \lstinline|.bss| section on
+boot, to reduce the risk associated with using uninitialised variables.
+
+As mentioned, the startup code included a definition of the vector table, which
+includes functions for interrupt handlers and arm exception handlers.
+\lstinline|startup.c| uses symbols defined in the linkerscript to place the end
+of the stack at the beginning of the vector table, and defines a
+\lstinline|Reset_Handler| function, which loads the \lstinline|.data| section
+into sram, initialises the \lstinline|.bss| section to zero, and calls the
+\lstinline|main| function.
+
+The last step required to having a minimum runnable firmware was compiling the
+code for the target hardware. A \lstinline|Makefile| file was written which
+included commands for compiling object files and linking them into an elf using
+\lstinline|arm-none-eabi-gcc|, and extracting the binary code to be loaded into
+the flash memory from the elf using \lstinline|arm-none-eabi-objcopy|. Notable
+compiler flags included telling the compiler to optimise for size
+(\lstinline|-Os|) to ensure the binary would fit into the limited flash memory
+available, as well as enabling as many compiler warnings as possible to catch
+errors at compile time.
+
+After implementing all the above, a minimum firmware image could be compiled
+and loaded onto the target hardware.
+
+\subsubsection{Peripheral Drivers}
+
+The HAL needed additional functionality to allow the firmware to interact with
+hardware peripherals, in order to satisfy the requirement of communicating over
+a hardware interface \refreq{FSW-2}.
+
+The first peripheral implemented was for controlling the general purpose input
+output (GPIO) pins of the blackpill. Functions were implemented for setting the
+mode and alternate function of a GPIO pin, as well as writing a value to that
+pin. Toggling the state of a GPIO is a useful method for debugging embedded
+software, and setting alternate GPIO functions was required to be able to use the
+USART peripherals. The procedure for configuring a GPIO pin is outlined in the
+STM32F411xC/E Reference Manual \citep{stm32f4_manual}. The GPIO hardware in the
+stm32 can be enabled by setting the appropriate values in the
+\lstinline|RCC_AHB1ENR| register on the Reset and Clock Control (RCC)
+peripheral \citep{stm32f4_manual}. A structure for accessing the RCC peripheral
+registers was included in \lstinline|fsw/inc/rcc.h|.
+
+% - SysTick
+The SysTick peripheral is a standard component of ARM Cortex-M devices, which
+provides a mechanism to trigger an interrupt when the hardware system timer
+counts down to zero. This peripheral is commonly used to implement software
+timers, and as an operating system tick \citep{armcm4_manual}. The SysTick
+peripheral exposes several registers to configure the device, notably the
+\lstinline|LOAD| register that sets the number of clock ticks between interrupt
+triggers. Given the clock frequency of the blackpill was 16MHz, the SysTick
+peripheral was configured to fire a SysTick interrupt every millisecond. The
+implementation in \lstinline|fsw/{inc,src}/hal/systick.h| was crucial to the
+functioning of the RTOS and the provided a software delay, that allowed for
+periodic behaviour in the system, needed to implement a liveness check in the
+FSW.
+
+
+% - uart.h
+Finally, a driver was implemented for to interact with the USART peripheral.
+
+
+It was initially decided to exclude CMSIS from the project in addition to the
+vendor HAL. However, later in development the USART HAL implementation added
+non blocking (i.e. interrupt driven) reading of USART data, at which point
+further interfacing with the NVIC peripheral was required. It was determined
+that re-implementing the NVIC API in CMSIS would make the project more complex
+than including the CMSIS library. Therefore a subset of files necessary for
+using an ARM Cortex-M4 were included from CMSIS-core \citep{CMSIS} in
+\lstinline|fsw/CMSIS|, and were configured for the STM32F411xE
+(\lstinline|fsw/inc/hal/stm32f4_blackpill.h|).
+
+In retrospect, while implementing a reduced HAL did make it simpler to develop
+the emulator in parallel to the flight software, CMSIS should have been
+included from the start of the project. This would have avoided a lot of
+difficulty when developing the lower level parts of the FSW.
 
 \subsection{Design By Contract}
 
@@ -95,72 +247,7 @@ implementation of emulator features required to support the RTOS much easier.
 
 This RTOS ... % TODO outline rtos
 
-\subsection{Hardware Abstraction Layer}
-
-ARM Cortex-M devices have two distinct layers of hardware implementation. The
-core hardware architecture, what makes a chip an ARM Cortex-M, is provided by
-ARM, and includes the basic designs needed for the device to function. This
-layer includes the processor and hardware peripherals like the nested vector
-interrupt controller (NVIC), which manages and dispatches interrupts, or the
-serial wire debug (SWD) interface, which provides developers with a universal
-interface for programming and debugging firmware on ARM Cortex-M
-microcontrollers \citep{armcm4_manual}. ARM provide a software library for
-interacting with this layer of the hardware, called the Common Microcontroller
-Software Interface Standard (CMSIS) \citep{CMSIS}. CMSIS provides a level of portability to
-embedded software by seperating the interface for interacting with hardware
-from the implementation, similar to a vendor HAL.
-
-An ARM Cortex-M chip will include another layer of hardware implemenation,
-designed by the vendor (STMicroelectronics for the STM32F411xC). This
-layer includes additional hardware peripherals, such as memory, IO devices like
-USART or I2C, clocks, GPIOs and so on. Vendors typically provide a HAL, which
-is a software implementations for interfacing with the vendor hardware. ST
-Microelectronics provide a HAL implementation for STM32 devices
-\citep{stm32hal}. These HALs can vary in size and complexity from vendor to
-vendor, and many are either built on top of CMSIS or compatible with CMSIS.
-Often these HAL implementations are part of a developer tooling ecosystem, and
-are intergrated into a proprietary IDE. While this can make getting started
-with development easier, it can result in vendor lock in, where skills and
-knowledge gained using one vendor are difficult to transfer to another vendor.
-Additionally, it can be difficult to introspect the binary produced through
-these IDEs, and therefore not easy to determine exactly what code and functions
-have been included. With the same reasoning as the RTOS implementation, it was
-determined that only elements of the hardware abstraction layer required for
-the FSW should be included. Therefore, a minimal HAL
-(\lstinline|fsw/{inc,src}/hal|) was developed by consulting the STM32F411xC/E
-Reference Manual and Datasheet \citep{stm32f4_manual, stm32f4_datasheet}, and
-the ARM Cortex-M4 User Manual \citep{armcm4_manual}. This decision also led to
-the manual implementation of several parts of the FSW project that are often
-provided by the vendor. Namely the startup code
-(\lstinline|fsw/src/hal/startup.c|), a linkerscript for the blackpill
-(\lstinline|fsw/stm32f411xx.ld|), and a \lstinline|make| build system for
-compiling the project with the \lstinline|arm-none-eabi-gcc| toolchain
-(\lstinline|Makefile|).
-
-% TODO outline hal files and functionality for peripherals, and why they were needed
-% - RCC
-% - SysTick
-% - uart.h
-% - startup.c vector table, default interrupt handlers and fault handlers
-% - linker script takes sections of the code from the compiled object files and
-%   puts them into the memory locations specified. in this file we define the
-%   stack end and other symbols used in the startup code.
-
-It was initially decided to exclude CMSIS from the project in addition to the
-vendor HAL. However, later in development the USART HAL implementation added
-non blocking (i.e. interrupt driven) reading of USART data, at which point
-further interfacing with the NVIC peripheral was required. It was determined
-that re-implementing the NVIC API in CMSIS woud make the project more complex
-than including the CMSIS library. Therefore a subset of files necessary for
-using an ARM Cortex-M4 were included from CMSIS-core \citep{CMSIS} in
-\lstinline|fsw/CMSIS|, and were configured for the stm32f411xe
-(\lstinline|fsw/inc/hal/stm32f4_blackpill.h|).
-
-% FIXME is this discussion?
-In retrospect, while implementing a reduced HAL did make it simpler to emulator
-in parallel to the flight software, CMSIS should have been included from the
-start of the project, as this would have avoided a lot of difficulty when
-developing the lower level parts of the FSW.
+RTOS implementation used SysTick and PendSV interrupts to implement round robin scheduling, RTOS aware delays, and ...
 
 \subsection{Application}
 
@@ -200,12 +287,53 @@ The application code
 % - unicorn only an ISA emulator
 % - discuss implementation of interrupt handling, trampoline handlers
 
+The emulator implementation used the Unicorn framework to execute the
+instructions from the FSW. Most of the emulator implementation effort was spent
+modelling hardware devices, and implementing fundamental features. As Unicorn
+was only an CPU emulator \citep{Unicorn} the hardware features of ARM Cortex-M
+chips beyond executing instructions had to be implemented manually. These
+included context switching between interrupts, reading and writing data over
+the USART peripheral to the running firmware, and correctly triggering and
+handling the PendSV, SysTick and USART interrupts. Given the comprehensive
+understanding of the low level details of the developed FSW, it was easier to
+identify the reduced set of peripherals required to be modelled in the
+emulator, and implement them incrementally.
+
+The development of the emulator was conducted alongside the FSW, so as features
+were added to the FSW, mirrored implementation needed to be added to the
+emulator. Initially, the FSW had no RTOS or USART interface, and just
+periodically toggled a GPIO. At this point, the development of the emulator
+began. The emulator would create the Unicorn object; setup the memory map,
+which mirrored the linker script outlined in \autoref{sec:linkerscript}; and
+add a code hook that disassembled and printed the currently executed
+instruction. This functionality was implemented in an \lstinline|Emulator|
+class located in \lstinline|emu/emulator.py|.
+This iteration mapped memory regions used for peripherals such as
+the RCC and SysTick registers as generic read write memory, so when the
+firmware accessed these locations there was no functional impact. As a result,
+the periodic toggling of the GPIO pin was not correctly emulated: the emulator
+ran the software as if the SysTick peripheral never counted down.
+
+The next iteration implemented generic peripheral models for MMIO registers.
+This model allowed a region of memory to be written too, and the value written
+be read from at a later date, using Unicorn MMIO hooks. The MmioReg
+(\lstinline|emu/mmio/reg.py|) and Peripheral
+(\lstinline|emu/mmio/peripheral.py|) classes provided base implementations that
+could be inherited from and have functions overridden to define additional
+behaviours. For example, the SysTick Peripheral Model was implemented
+
+The core emulator implementation was not concerned with the details of the FSW
+application beyond the low level interfaces to the hardware in the HAL and
+RTOS. Once the RTOS based FSW was able to run on the emulator, the focus
+shifted to reading and writing data to the running firmware through the USART
+peripheral model.
+
+
+\section{Fuzzer Integration and Protocol Grammar Filter}
+
 
 % TODO this can go in results/testing/discussion section?
 % section about testing on hardware, and bugs discovered, addition of framing and
-
-
-\section{Fuzzer Integration and Protocol Grammer Filter}
 
 % modification to emulator to get it to work as a afl++ test harness?
 % using docker to run AFL
