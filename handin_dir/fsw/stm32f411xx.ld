@@ -19,11 +19,6 @@ MEMORY {
     sram(rwx) : ORIGIN = 0x20000000, LENGTH = 128k
 }
 
-/* Old Method:
- * Creates a symbol _estack at the end of the RAM memory region. This will be
- * the initial value of the stack (estack means end of the stack) */
-/* __stack_end__ = ORIGIN(sram) + LENGTH(sram); */    /* stack points to end of SRAM */
-
 /* Adjust stack size as needed */
 STACK_SIZE = 512;
 
@@ -50,7 +45,7 @@ SECTIONS {
     } > sram
 
     /* Data section (i.e. initialised, modifiable)
-     * sdata and edata symbols can be used to copy data section to ram in the reset function */
+     * __data_start__ and __data_end__ symbols can be used to copy data section to ram in the reset function */
     .data : {
         __data_start__ = .;   /* .data section start */
         *(.first_data)
@@ -79,24 +74,11 @@ SECTIONS {
     . = ALIGN(8);
     _exit = .;     /* for cmsis_gcc.h  */
 
-    /* .debug_abbrev 0 : { *(.debug_abbrev) } */
-    /* .debug_aranges 0 : { *(.debug_aranges) } */
-    /* .debug_frame 0 : { *(.debug_frame) } */
-    /* .debug_info 0 : { *(.debug_info) } */
-    /* .debug_line 0 : { *(.debug_line) } */
-    /* .debug_loc 0 : { *(.debug_loc) } */
-    /* .debug_macinfo 0 : { *(.debug_macinfo) } */
-    /* .debug_pubnames 0 : { *(.debug_pubnames) } */
-    /* .debug_pubtypes 0 : { *(.debug_pubtypes) } */
-    /* .debug_ranges 0 : { *(.debug_ranges) } */
-    /* .debug_str 0 : { *(.debug_str) } */
-    /* .debug_types 0 : { *(.debug_types) } */
-
     /* Init Array and Fini Array are Contructor Destructor sections
      * .jcr is some old style constructor section for arm-gcc v6.3
      * These were appearing in the zig build because of linking in the arm-gcc
      * start files, but actually we want -nostartfiles so these don't need to
-     * be discarded*/
+     * be discarded */
     /DISCARD/ : {
         *(.init_array)
         *(.fini_array)

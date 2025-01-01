@@ -26,10 +26,11 @@ class SysTick(Peripheral):
     def write_cb(self, uc, addr, size, value, user_data):
         self.print(f"SysTick MMIO {hex(addr)} written with value {value}")
         self.reg(addr).write_cb(uc, addr, size, value, user_data)
-        if self.reg(addr).get_bit(0):
-            self.enabled = True
-        else:
-            self.enabled = False
+        if self.reg("CTRL") is self.reg(addr):
+            if self.reg(addr).get_bit(0):
+                self.enabled = True
+            else:
+                self.enabled = False
 
     def tick(self):
         if self.enabled:
