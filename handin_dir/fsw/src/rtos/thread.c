@@ -186,18 +186,4 @@ void PendSV_Handler(void)
         "    pop   {r4-r11}\n\t"
         "    cpsie i\n\t"
         "    bx    lr\n\t");
-
-#if 0
-    void *sp = NULL;
-
-    __enable_irq();
-    if (rtos_thread_current != (rtos_thread_t *)0U) {
-        /* Push registers r4-r11 onto the stack */
-        rtos_thread_current->sp = sp;
-    }
-    sp = rtos_thread_next->sp;
-    rtos_thread_current = rtos_thread_next;
-    /* Pop registers r4-r11 from stack */
-    __disable_irq();
-#endif
 }
