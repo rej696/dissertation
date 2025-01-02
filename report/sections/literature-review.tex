@@ -491,24 +491,24 @@ fuzzers, like HALucinator \citep{HALucinator_2020} and Fuzzware
 \section{Fuzz Testing in the Space Industry}
 
 \citet{Gutierrez_2021} conducted blackbox fuzz testing against the Suchai
-CubeSat flight software \citep{Suchai_FSW}. The Suchai FSW was designed to be
-able to run on CubeSat OBCs, such as the GomSpace Nanomind, microcontrollers
-such as ESP32, or both embedded and desktop computers running Linux. Due to
-the flexibility in the target hardware, \citet{Gutierrez_2021} were able to
-run both the flight software and the fuzzer natively on a general purpose Linux
-computer, without any emulation software like unicorn or QEMU. The Suchai FSW
-used a Cubesat Space Protocol (CSP) communication interface for receiving
-commands. \citet{Gutierrez_2021} implemented a blackbox fuzzer that sends
-random data to the CSP command handler using four different strategies, which
-constrain input data to different levels of correctness to target different
-aspects of the FSW. For example, the first strategy is to generate random
-commands, most of which should be safely rejected by the command handler, while
-the third strategy is to generate syntactically valid sets of commands and
-parameters, but with randomised parameter values. Their implementation doesn't
-seem to have a strategy that randomised the structure of a CSP packet, so it is
-assumed that the CSP implementation isn't fuzz tested in their work. However, as
-the Suchai FSW uses libCSP as an external library to implement the protocol,
-which may have influenced their decision to not fuzz test the protocol stack.
+CubeSat flight software \citep{Suchai_FSW}. The Suchai flight sofware (FSW) was
+designed to be able to run on CubeSat OBCs, such as the GomSpace Nanomind;
+microcontrollers, such as ESP32; and both embedded and desktop computers running
+Linux. Due to the flexibility in the target hardware, \citet{Gutierrez_2021}
+were able to run both the flight software and the fuzzer natively on a general
+purpose Linux computer, without any emulation software like Unicorn or QEMU.
+The Suchai FSW used a Cubesat Space Protocol (CSP) communication interface for
+receiving commands. \citet{Gutierrez_2021} implemented a blackbox fuzzer that
+sends random data to the CSP command handler using four different strategies
+which constrain input data to different levels of correctness to target
+different aspects of the FSW. For example, the first strategy is to generate
+random commands, most of which should be safely rejected by the command
+handler; while the third strategy is to generate syntactically valid sets of
+commands and parameters, but with randomised parameter values. Their
+implementation doesn't seem to have a strategy that randomised the structure of
+a CSP packet, so it is assumed that the CSP implementation isn't fuzz tested in
+their work.
+% However, as the Suchai FSW uses libCSP as an external library to implement the protocol, which may have influenced their decision to not fuzz test the protocol stack.
 \citet{Gutierrez_2021} showed that using their blackbox fuzz testing
 techniques against the Suchai FSW as part of an agile development process
 enabled them to find and resolve bugs in the software that had not been
@@ -523,12 +523,12 @@ configuring Fuzzware to improve fuzzing effectiveness. The specific focus of
 these configurations in a flight software context was to enable the fuzzer to
 correctly move through the complex boot process present in the satellite
 firmware, to be able to fuzz the application. These configurations included
-manually specifying MMIO accesses to move through the boot section,
+manually specifying MMIO accesses and % to move through the boot section,
 taking snapshots of the firmware state after booting to allow future runs to
-fuzz test from that state, or extending Fuzzware to implement AFL++ features
+fuzz test from that state; or extending Fuzzware to implement AFL++ features
 not previously implemented in UnicornAFL \citep{Scharnowski_2023}. In addition
 to the complexity of satellite FSW boot processes, another challenge identified
-was that MMIO based approach used by Fuzzware does not automatically analyse
+was that the MMIO based approach used by Fuzzware does not automatically analyse
 interrupt timing requirements, which can make it difficult for the fuzzer to
 reach code that have dependencies on hardware features like DMA (direct memory
 access). Ultimately, they conclude that while their methodology was effective,
@@ -540,22 +540,23 @@ satellite firmware \citep{Scharnowski_2023}.
 current state of the art fuzz testing methodologies in the context of security
 analysis of satellite flight software. They identify the attack surfaces of
 satellites, such as telecommands from the ground, or components integrated in
-the satellite suffering from supply chain attacks. They also outline
-challenges with fuzz testing specific to satellites, including the complexity
-of satellite computer boot processes (discussed previously by
-\citet{Scharnowski_2023}), and the difficulty of on target fuzzing. They
-identify that most fuzzers use crashes as the measure of failure, and state
-that for satellite software a crash/reboot may not be the most problematic
-outcome. Examples of a more severe outcomes include triggering end of life
-procedures such as de-orbiting and battery passivation, modifying orbit
-parameters, disabling radios, etc. They also comment on the general complexity
-of software systems in satellites, with most being highly integrated bespoke
-distributed systems with unique combinations of peripherals and payloads. This
-makes it difficult to build reusable emulators. Other industries with similar
-levels of complexity, such as automotive and aviation, often have larger
-resources for a single project, which makes building and maintaining emulators
-more cost effective. \citet{Willbold_2024} conducted three case studies using
-different fuzzing methodologies against different flight software targets.
+the satellite suffering from supply chain attacks. They also outline challenges
+with fuzz testing specific to satellites, including the complexity of satellite
+computer boot processes (as discussed by \citet{Scharnowski_2023}), and the
+difficulty of on target fuzzing. They identify that most fuzzers use crashes as
+the measure of failure, and state that for satellite software a crash/reboot
+may not be the most problematic outcome. Examples of more severe outcomes
+include triggering end of life procedures such as de-orbiting and battery
+passivation, modifying orbit parameters, and disabling radios. They also
+comment on the general complexity of software systems in satellites, with most
+being highly integrated bespoke distributed systems with unique combinations of
+peripherals and payloads. This makes it difficult to build reusable emulators.
+Other industries with similar levels of complexity, such as automotive and
+aviation, often have larger resources for a single project, which makes
+building and maintaining emulators more cost effective.
+
+\citet{Willbold_2024} conducted three case studies using different fuzzing
+methodologies against different flight software targets.
 
 The first case study used a technique called subsystem extraction, against a
 target software known as "Flying Laptop". The Flying Laptop FSW was an RTEMS
@@ -569,44 +570,45 @@ subsystem, which in some use cases may be beneficial as it avoided difficulties
 with the complex boot sequence, and removed dependencies on hardware. However,
 those parts of the FSW would not verified. Furthermore, porting the FSW
 components to be able to run on Linux, which made use of RTEMS primitives and
-had many other low level incompatible dependencies, was lot of work and as such
-this case study was not completed \citep{Willbold_2024}.
+had many other low level incompatible dependencies, was lot of work. As a
+result, this case study was not completed \citep{Willbold_2024}.
 
-The second case study use the flight software from ESA's OPS-SAT CubeSat, and
+The second case study use the flight software from ESA's OPS-SAT CubeSat \citep{opsat}, and
 used a technique \citet{Willbold_2024} called full system emulation with
 persistent mode fuzzing. The OPS-SAT FSW ran on an AVR32 microcontroller, and
-\citet{Willbold_2024} had to create an AVR32 instruction set emulator in QEMU
-(AVR32 instruction set was not supported by unicorn \citep{Unicorn}). This,
+\citet{Willbold_2024} had to create an AVR32 instruction set emulator in QEMU:
+The AVR32 instruction set is not supported by Unicorn \citep{Unicorn}. This,
 again, was a large amount of work. Though \citet{Willbold_2024} justified the
 investment as only needing to be done once, and they published their
-implementation for others to use. In this case study, hardware peripherals like
-sensors and actuators were modelled to provide constant values. The goal of
-this case study was to complete a minimal working emulator that would enable
-the firmware to receive and process TCs during fuzz testing. Therefore, as with
-the first case study, this method was only able to produce useful results for
-the TC handling software components, and fuzzing produced basic block coverage
-of 76\%, and successfully identified a buffer overflow bug in the software
-\citep{Willbold_2024}. In order to improve execution time, the emulator would
-only intermittently reboot the firmware between fuzzer inputs. While this
-improved the speed of the fuzzing by reducing the overhead of executing the
-boot process every iteration, this resulted in some crashes that were not
-reproducible due to accumulated state \citep{Willbold_2024}.
+emulator implementation for others to use. In this case study, hardware
+peripherals like sensors and actuators were modelled to provide constant
+values. The goal of this case study was to complete a minimal working emulator
+that would enable the firmware to receive and process TCs during fuzz testing.
+Therefore, as with the first case study, this method was only able to produce
+useful results for the TC handling software components. Fuzzing produced
+basic block coverage of 76\% of this component, and successfully identified a
+buffer overflow bug in the software \citep{Willbold_2024}. In order to improve
+execution time, the emulator would only intermittently reboot the firmware
+between fuzzer inputs. While this improved the speed of the fuzzing by reducing
+the overhead of executing the boot process every iteration, this resulted in
+some crashes that were not reproducible due to accumulated state
+\citep{Willbold_2024}.
 
 The final case study used flight software from the ESTCube-1 CubeSat, and used
 an approach \citet{Willbold_2024} called full firmware rehosting. They used
-Hoedur \citep{Hoedur_2023} to rehost and fuzz test the FSW. Only required
-a small amount of manual work to was required to modify a configuration file in
-order for the fuzzing to work correctly. Hoedur was shown to reach 78\% basic
+Hoedur \citep{Hoedur_2023} to rehost and fuzz test the FSW, and found only
+a small amount of manual work was required for the fuzzing to work correctly in
+comparison to the previous case studies. Hoedur was shown to reach 78\% basic
 block coverage in the TC handler functions in the ESTCube-1 FSW, and identified
 several crashing inputs. The only feature of Hoedur that \citet{Willbold_2024}
 identified as lacking was an inability to detect non-crashing faults. However,
 they outlined that by marking an area of memory as "read only" in the Hoedur
 configuration file, the software would trigger a crash if it wrote to that
 location. Using Hoedur was shown to require much less effort than the other
-approaches, as well as manage the challenge of fuzzing complex boot processes
-in satellite software. \citet{Willbold_2024} conclude that rehosting tools
-like Hoedur represent the most promising approach to fuzz testing for satellite
-software security analysis.
+approaches, as well as effectively manage the challenge of fuzzing complex boot
+processes in satellite software. \citet{Willbold_2024} conclude that rehosting
+tools like Hoedur represent the most promising approach to fuzz testing for
+satellite software security analysis.
 
 
 
