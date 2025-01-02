@@ -28,50 +28,54 @@ a result of the digital transformation has led to a space industry "gold rush",
 with large venture capital investment and a "winner takes all" incentive
 driving high levels of competition \citep{Denis_2020}. The impact of this is
 that New Space companies must design and manufacture more satellites at a
-faster rate and for lower cost if they wish to be competitive.
-
-As a result of the business environment, many New Space start ups have
-introduced silicon valley concepts into their businesses, such as "DevOps
-culture" and launching Minimum Viable Product (MVP) CubeSats. Furthermore, as
-these companies transition from start-ups to mature businesses with an aim to be
-profitable, LEAN practices become prevalent, resulting in attempts to reduce
-any "wasteful" or expensive practices \citep{Denis_2020}. These market
+faster rate and for lower cost if they wish to be competitive. These market
 conditions have led New Space businesses to become more accepting of risk than
-their Big Space counterparts \citep{Cratere_2024}
+their Big Space counterparts \citep{Cratere_2024}. Therefore, many of the
+approaches used by Big Space companies to ensure software correctness, such as
+extensive system and integration testing and formal methods, are simply too time
+consuming and expensive to be applicable in the New Space environment.
 
-% FIXME should this be edited?
-Therefore, Flight Software needs to be developed in shorter time frames and with
-lower costs. Satellites in low earth orbit have a shorter lifetime due to
-atmospheric drag. CubeSats have a generally high failure rate due to a long
-list of possible failure modes which can cripple a platform, with no chance of
-repair. Some examples might be a solar panel not deploying, a launch vibration
-damaging a critical sensor, or an issue with the thermal management resulting
-in the payload having degraded operations. Often, the correctness of the
-software systems only becomes an issue when all these barriers have been
-passed, and so is a risk that is not considered worth spending time and money
-until later in a programme. Thus, new space companies have a vastly different
-approach to software systems compared with big space companies, and many of the
-approaches used by big space companies to ensure software correctness, such as
-extensive system and integration testing and formal methods, are simply to time
-consuming and expensive to be applicable in the new space environment.
+
+% TODO remove?
+% As a result of the business environment, many New Space start ups have
+% introduced silicon valley concepts into their businesses, such as "DevOps
+% culture" and launching Minimum Viable Product (MVP) CubeSats. Furthermore, as
+% these companies transition from start-ups to mature businesses with an aim to be
+% profitable, LEAN practices become prevalent, resulting in attempts to reduce
+% any "wasteful" or expensive practices \citep{Denis_2020}.
+
+
+% FIXME should this be cut?
+% Therefore, Flight Software needs to be developed in shorter time frames and with
+% lower costs. Satellites in low earth orbit have a shorter lifetime due to
+% atmospheric drag. CubeSats have a generally high failure rate due to a long
+% list of possible failure modes which can cripple a platform, with no chance of
+% repair. Some examples might be a solar panel not deploying, a launch vibration
+% damaging a critical sensor, or an issue with the thermal management resulting
+% in the payload having degraded operations. Often, the correctness of the
+% software systems only becomes an issue when all these barriers have been
+% passed, and so is a risk that is not considered worth spending time and money
+% until later in a programme. Thus, new space companies have a vastly different
+% approach to software systems compared with big space companies, and
 
 \section{Satellite Architecture}
 
 Software systems are an essential component of modern satellite designs.
 Satellites usually include a number of distributed embedded systems, each
 tasked with monitoring and controlling different critical subsystems such as
-power, attitude control, communication etc. Typically, a satellite will have a
-central on board computer (OBC), or command and data handling subsystem (CDH).
+power, attitude control, communication, typically all controlled by a
+central on board computer (OBC).
 
-There may be a dedicated guidance navigation and control (GNC) or attitude
-determination and control (ADCS) subsystem which runs complex algorithms using
-data retrieved from sensors like star trackers, rate sensors, magnetometers and
-sun sensors to drive actuators like reaction wheels and magnetorquers in order
-to point the satellite. Pointing is critical for many tasks. Payload operation
-tasks such as imaging require a high degree of accuracy and responsiveness.
-Propulsion manoeuvres, managing thermal loads, power generation (i.e. pointing
-the solar panels at the sun to improve the efficiency) all require an effective
-ADCS subsystem.
+% TODO include?
+% There may be a dedicated guidance navigation and control (GNC) or attitude
+% determination and control (ADCS) subsystem which runs complex algorithms using
+% data retrieved from sensors like star trackers, rate sensors, magnetometers and
+% sun sensors to drive actuators like reaction wheels and magnetorquers in order
+% to point the satellite. Pointing is critical for many tasks. Payload operation
+% tasks such as imaging require a high degree of accuracy and responsiveness.
+% Propulsion manoeuvres, managing thermal loads, power generation (i.e. pointing
+% the solar panels at the sun to improve the efficiency) all require an effective
+% ADCS subsystem.
 
 The OBC will be connected to many lower power telemetry (TM) nodes, which are
 tasked with monitoring temperatures, voltages and currents, and toggling switches
@@ -79,37 +83,39 @@ to enable/disable different subsystems. The OBC will log the telemetry reported
 by the TM nodes, and if telemetry exceeds limits, handle fault detection,
 isolation and recovery (FDIR).
 
-The OBC or CDH subsystem is responsible for handling communication with a
-ground station via a radio, and so provides the interface between a satellite
-and the operator. This interface is commonly referred to as Telemetry and
-Telecommand (TMTC). The operator uses the TMTC interface on the OBC to download data
-from orbit, schedule payload operations, and respond to issues.
+The OBC is also responsible for handling communication with a ground station
+via a radio, and so provides the interface between a satellite and the
+operator. This interface is commonly referred to as Telemetry and Telecommand
+(TMTC). The operator uses the TMTC interface on the OBC to download data from
+orbit, schedule payload operations, and respond to problems. On smaller
+satellites like CubeSats, the OBC is often also responsible for managing
+payload operations.
 
-Payload computers (PLC) are common on satellites with complex payloads and are
-responsible for managing and operating whatever instruments are on board for
-delivery of the mission, such as radios, imagers, scientific experiments etc.
-On smaller satellites, like CubeSats where payloads are less complex, the
-responsibilities of the PLC can be handled by the OBC.
+% TODO include?
+% Payload computers (PLC) are common on satellites with complex payloads and are
+% responsible for managing and operating whatever instruments are on board for
+% delivery of the mission, such as radios, imagers, scientific experiments etc.
+% On smaller satellites, like CubeSats where payloads are less complex, the
+% responsibilities of the PLC can be handled by the OBC.
 
 
 \section{Flight Software Development Challenges}
 
-CubeSats projects tend to make more use of COTS hardware. However, software that
-meets the system requirements often cannot be purchased off the shelf, and so
-development costs shift from hardware to software
-\citep{Cubesat_Handbook_OBSW}. However, there are several flight software
-frameworks, such as NASA's Core Flight System (cFS) \citep{Nasa_cFS}, or Bright
-Ascensions Generation One (Gen1) Flight Software Development Kit (FSDK)
-\citep{Bal_FSDK}. The main aim of these frameworks is to reduce the cost and
+CubeSats projects tend to make more use of commercial-off-the-shelf (COTS)
+hardware. However, CubeSat software is often bespoke, and so development costs
+shift from hardware to software \citep{Cubesat_Handbook_OBSW}. However, there
+are several flight software frameworks, such as NASA's Core Flight System (cFS)
+\citep{Nasa_cFS}, or Bright Ascensions Generation One (Gen1) Flight Software
+Development Kit (FSDK) \citep{Bal_FSDK}, that aim to reduce the cost and
 development time for Flight Software through code reuse and hardware
 abstraction.
 
-For example, a cFS application uses software abstractions of the operating
-system and hardware, called the Operating System Abstraction Layer (OSAL) and
-Platform Support Package (PSP). This allows correctly written application
-code to easily be ported between different hardware architectures such as Arm
-Cortex-M or SPARC-V8, and different operating systems like FreeRTOS, RTEMS or
-Linux \citep{Nasa_cFS}.
+A cFS application uses software abstractions of the operating system and
+hardware, called the Operating System Abstraction Layer (OSAL) and Platform
+Support Package (PSP). This allows correctly written application code to easily
+be ported between different hardware architectures such as Arm Cortex-M or
+SPARC-V8, and different operating systems like FreeRTOS, RTEMS or Linux
+\citep{Nasa_cFS}.
 
 The Gen1 FSDK provides libraries of pre-defined configurable software
 "Components", which satisfy common Flight Software requirements, such as
@@ -118,11 +124,11 @@ bespoke components into a "Deployment" which can be compiled for several
 different COTS hardware options, such as the AAC-ClydeSpace Kryten, or the
 GomSpace Nanomind \citep{Bal_Options}.
 
-\citet{Farges_2022} evaluates the use of Software Frameworks in the space
+\citet{Farges_2022} evaluated the use of Software Frameworks in the space
 industry. They find a number of quality related benefits, such as increasing
 reliance on standardised communication interfaces like CCSDS Space Packet
 Protocol; as well as cost related benefits attributable to code reuse between
-satellite missions. However, they also identify risks with relying on software
+satellite missions. However, they also identified risks with relying on software
 frameworks, such as potential issues with licenses, and the limited
 adaptability of software that is highly coupled to a framework, as implementing
 functions that aren't currently supported in the framework can be difficult.
@@ -143,8 +149,8 @@ incorrect information or a misinterpretation. The number of interdependent
 systems, the costs of these components, and smaller budgets of new space
 companies, results in dedicated engineering hardware required for effective
 development of embedded flight software being unavailable. Often engineers are
-only being able to test with flight hardware, and then have to fit their
-testing into a packed schedule to meet tight deadlines.
+only being able to test with flight hardware, and even then have to fit their
+testing into a tight schedule to meet deadlines.
 
 Software development standards, such as MISRA and NASA's the power of ten exist
 to provide guidelines for successfully creating correct software, and hopefully
@@ -178,39 +184,39 @@ techniques used in whitebox fuzzing can become unfeasibly computationally
 expensive for larger projects \citep{Krishnamoorthy_2010}.
 
 Greybox fuzzing is a middle ground between blackbox and whitebox fuzzing.
-Greybox fuzzing relies on the fuzzer receiving feedback regarding code
-coverage for each generated test-case to mutate and generate further test
-cases. This approach allows it to find code paths faster than blackbox
-testing, but without requiring any static code analysis \citep{Yun_2022}.
+Greybox fuzzing relies on the fuzzer receiving feedback regarding code coverage
+for each generated test-case to mutate and generate further test cases. This
+approach allows it to find code paths faster than blackbox testing, but without
+requiring any static code analysis \citep{Yun_2022}. Greybox fuzzing can be
+easily implemented for application (non-embedded) software using popular
+fuzzers like AFL. AFL provides a library that is linked into the program at
+compile time, along with several sanitisers, to instrument the program. This
+allows AFL to receive coverage information from the running program during
+fuzzing \citep{AFL_2019}. Embedded systems often run on constrained
+environments, where running the fuzzer on the target hardware would be
+unfeasible \citep{Yun_2022}.
 
-Greybox fuzzing of a program can be easily implemented for application (i.e
-non-embedded) software using popular fuzzers like AFL. AFL provides a library
-that is linked into the program at compile time, along with several sanitisers,
-to instrument the program. This allows AFL to receive coverage information from
-the running program during fuzzing \citep{AFL_2019}. Embedded systems often run on
-constrained environments, where running the fuzzer on the target hardware would
-be unfeasible \citep{Yun_2022}.
+Research into the fuzz testing of embedded systems has been increasing
+year by year \citep{Yun_2022}, but there are few generic solutions
+\citep{Eisele_et_al_2022}. The two main challenges to embedded system fuzzing
+when compared to desktop or server systems remain the variety in CPU
+architectures in embedded systems, and the lack of an operating system such as
+Linux for bare metal systems \citep{Eisele_et_al_2022}.
 
-Attempts to solve this problem focus either on using a fuzzer on a general
-purpose computer, testing a program running on target hardware, or in an
+Attempts to solve these problem focus on using a fuzzer on a general purpose
+computer, and testing against a program running on target hardware or in an
 emulated environment \citep{Eisele_et_al_2022}. Running in an emulated
 environment allows easy inspection of the SUT by the fuzzer, and potentially
-faster running and parallel tests \citep{Eisele_et_al_2022}. However, emulating
-embedded systems correctly is a hard problem, and due to the diversity in
-operating systems, hardware, peripherals etc. often means that development
-effort spent on emulating one system cannot be easily transferred to another.
-
-\citet{Yun_2022} noted in their survey of embedded system fuzzers that most
-rely on emulation. However, most bugs found through emulation still need to be
-validated on hardware, and so being able to run the fuzz tests directly on the
-target hardware is preferable, according to \citet{Eisele_et_al_2022}.
-
-During the development of an embedded system, engineers often require access to
-representative development hardware to effectively design and write software.
-Often, waiting for prototype hardware to start software development does not
-align with business deadlines. The use of emulators improves enables engineers
-to write embedded software without access to development hardware, improving
-productivity and reducing development time.
+faster running and parallel tests \citep{Eisele_et_al_2022}. \citet{Yun_2022}
+noted in their survey of embedded system fuzzers that most rely on emulation.
+However, emulating embedded systems correctly is a hard problem. The
+diversity in operating systems, hardware and peripherals often means that
+development effort spent on emulating one system cannot be easily transferred
+to another. However, according to \citet{Eisele_et_al_2022}, being able to run
+the fuzz tests directly on the target hardware is preferable because most bugs
+found through emulation still need to be validated on hardware. The use of
+emulators can enable engineers to write embedded software without access to
+development hardware, improving productivity and reducing development time.
 
 Existing research into embedded systems fuzzing often focuses on its
 cybersecurity applications and benefits. However, fuzz testing can also be an
@@ -226,17 +232,8 @@ is reliant on Ada's extended runtime constraint checking when compared to C
 more complex issues resulting from interactions with hardware peripherals and
 state.
 
-While research into the fuzz testing of embedded systems has been increasing
-year by year \citep{Yun_2022}, there are few generic solutions
-\citep{Eisele_et_al_2022}. The two main challenges to embedded system fuzzing
-when compared to desktop or server systems remain the variety in CPU
-architectures in embedded systems, and the lack of an operating system such as
-Linux for bare metal systems \citep{Eisele_et_al_2022}. Currently, the
-availability and ease of use of fuzzing tooling for embedded systems does not
-match that of desktop applications.
-
 \citet{IOTFuzzer_2018} implemented IoTFuzzer, an automated black box fuzzing
-framework that conduct protocol guided fuzzing on the communication interfaces
+framework that conducts protocol guided fuzzing on the communication interfaces
 of Internet of Things (IoT) devices. IoTFuzzer performs dynamic analysis on the companion
 application to the IoT device to identify the methods for creating valid
 communication messages to the device, without needing to reverse engineer the
@@ -281,32 +278,32 @@ fuzzing with the HONGGFUZZ coverage guided fuzzer \citep{Honggfuzz}, both on
 hardware and using an adapted QEMU emulator. For coverage guided fuzzing on
 hardware, the same liveness check was used as blackbox fuzzing. Coverage
 information of basic block execution was collected by compiling the binary with
-additional instrumentation that could run on hardware and fed to HONGGFUZZ over
-a JTAG interface. \citet{Borsig_2020} found that using the coverage guided
-fuzzer improved the efficiency of the fuzzing to find bugs, but slowed down the
-fuzzing execution when compared to blackbox fuzzing. Given the major drawback
-to whitebox fuzzing is the availability of the source code to compile in
-instrumentation, they concluded that whitebox on target fuzzing would be an
-excellent process for testing ESP32 applications as part of agile development.
-When trying to fuzz testing using the modified QEMU emulator,
-\citet{Borsig_2020} had difficulty emulating the Wi-Fi module integrated into
-the ESP32 chip. For whitebox fuzzing, they were able to compile the application
-to use an Ethernet driver provided by QEMU, rather than the hardware Wi-Fi
-module. However, for blackbox and greybox fuzzing, they manually located the
-code section that handled the Wi-Fi driver and manually instructed the fuzzer to
-insert input data at that location, fuzzing specific sections of the
-application. Overall, they concluded that greybox fuzzing using QEMU would be
-an effective tool for security analysts looking to fuzz test specific sections
-of ESP32 firmware, such as communication stacks \citep{Borsig_2020}.
+additional instrumentation. The binary could then be run on the hardware and
+feed coverage data to HONGGFUZZ over a JTAG interface. \citet{Borsig_2020}
+found that using the coverage guided fuzzer improved the efficiency of finding
+bugs with the fuzzer, but reduced the speed of fuzzer execution when compared
+to blackbox fuzzing. Given the major drawback to whitebox fuzzing is the
+availability of the source code to compile in instrumentation, they concluded
+that whitebox on target fuzzing would be an excellent process for testing ESP32
+applications as part of agile development. When fuzzing using the modified QEMU
+emulator, \citet{Borsig_2020} had difficulty emulating the Wi-Fi module
+integrated into the ESP32 chip. For whitebox fuzzing, they were able to compile
+the application to use an Ethernet driver provided by QEMU, rather than the
+hardware Wi-Fi module. However, for blackbox and greybox fuzzing, they manually
+located the code section that handled the Wi-Fi driver and manually instructed
+the fuzzer to insert input data at that location, fuzzing specific sections of
+the application. Overall, they concluded that greybox fuzzing using QEMU would
+be an effective tool for security analysts looking to fuzz test specific
+sections of ESP32 firmware, such as communication stacks \citep{Borsig_2020}.
 
-\citet{Eisele_2022} aims to investigate on target coverage guided fuzzing. They
-proposed using the GNU Debugger (GDB) and hardware breakpoints as an
+\citet{Eisele_2022} aimed to investigate on target coverage guided fuzzing.
+They proposed using the GNU Debugger (GDB) and hardware breakpoints as an
 architecture and source code agnostic method of collecting feedback for a
 coverage guided fuzzer. Given the limited number of hardware breakpoints
-available on embedded systems, They propose several algorithms for selecting
-their location for generating feedback. They present initial results, which
-show that even with a small number of breakpoints, all their strategies gain
-greater coverage overall compared to blackbox fuzzing. They concede that
+available on embedded systems, they proposed several algorithms for selecting
+their location for generating feedback. They presented initial results, which
+showed that even with a small number of breakpoints, all their strategies gain
+greater coverage overall compared to blackbox fuzzing. They conceded that
 emulation based fuzzing is likely to produce better results than their method.
 However, they state the aim of debugger driven fuzzing is to make coverage
 guided fuzz testing easier to conduct for embedded devices, with an assumption
@@ -346,14 +343,14 @@ on top of the instruction set emulation capabilities of QEMU \citep{Unicorn}.
 UnicornAFL is a patched version of Unicorn which allows rehosted binaries to be
 run under American Fuzzy Lop (AFL), a popular coverage guided fuzzing tool
 \citep{UnicornMode, AFL_2019}.
-\citet{Maier_2019} focuses on emulating and fuzzing parser code in the kernel,
+\citet{Maier_2019} focused on emulating and fuzzing parser code in the kernel,
 as parser code usually does not have hardware dependencies, and they
-acknowledge modelling hardware peripherals is not an easy task in unicorn.
+acknowledge modelling hardware peripherals is not an easy task in Unicorn.
 UnicoreFuzz uses GDB to dump register and memory data at a breakpoint, and then
 loads the dumped state into UnicornAFL, allowing the code beginning at the
 breakpoint to be fuzzed with the emulator. \citet{Maier_2019} found that while
 the performance of UnicoreFuzz was worse than other methods, it was able to
-fuzz test any code on any hardware architecture supported by unicorn. Due to
+fuzz test any code on any hardware architecture supported by Unicorn. Due to
 the similarity in constraints between kernel and embedded software, They
 posited that porting UnicoreFuzz to embedded operating systems would be viable,
 so long as the embedded processor had a debug interface that could export pages
@@ -362,48 +359,48 @@ of memory and register values.
 UnicoreFuzz was able to fuzz sections of software with no hardware interaction.
 However, this ignores the fact that all embedded software programs will have
 dependencies on hardware peripherals. However a series of developments have
-been made to enable generic rehosting of firmware using the unicorn emulator.
+been made to enable generic rehosting of firmware.
 
 \citet{HALucinator_2020} developed HALucinator, a tool for firmware rehosting
-through emulating the hardware abstraction layer. Embedded software typically
-relies on a hardware abstraction layer (HAL) to interact with hardware
-peripherals. For example, to set the value of a GPIO pin on an STM32 chip, you
-would call the \lstinline{HAL_GPIO_WritePin} HAL function \citep{stm32hal}.
-This function then handles writing the value to the correct memory location
-(MMIO) for that chip to set the GPIO, abstracting the hardware specific
-implementation from the functionality. HALucinator parses HAL libraries to
-provide a high level emulation (HLE) environment on top of QEMU by assigning
-abstract peripheral models to HAL functions in the binary
-\citep{HALucinator_2020}. This allows firmware to be run on the emulator
-interactively, as well as under a fuzzer like AFL. HALucinator has a number of
-prerequisites. The firmware needs to make use of a HAL library for all hardware
-interaction. The HAL library either needs to already be supported, or the
-handler functions for the library need to be implemented. This is a manual
-process, but when completed can be reused for any device using that HAL
-library. There also needs to be valid peripheral models implemented for all the
-HAL functions used. \citet{HALucinator_2020} demonstrated the use of
-HALucinator for fuzzing and dynamic analysis using CPUs and HALs from three
-different vendors, using it to detect security bugs in firmware samples.
+through emulating the hardware abstraction layer (HAL). Embedded software
+typically relies on a HAL to interact with hardware peripherals. For example,
+to set the value of a GPIO pin on an STM32 chip, you would call the
+\lstinline{HAL_GPIO_WritePin} HAL function \citep{stm32hal}. This function then
+handles writing the value to the correct memory location (MMIO) for that chip
+to set the GPIO, abstracting the hardware specific implementation from the
+functionality. HALucinator parses HAL libraries to provide a high level
+emulation (HLE) environment on top of QEMU by assigning abstract peripheral
+models to HAL functions in the binary \citep{HALucinator_2020}. This allows
+firmware to be run on the emulator interactively, as well as under a fuzzer
+like AFL. HALucinator has a number of prerequisites. The firmware must use a
+supported HAL library for all hardware interaction, or handler functions for
+the HAL need to be implemented. This is a manual process, but when completed
+can be reused for any device using that HAL library. There also needs to be
+valid peripheral models implemented for all the HAL functions used.
+\citet{HALucinator_2020} demonstrated the use of HALucinator for fuzzing and
+dynamic analysis using CPUs and HALs from three different vendors, using it to
+detect security bugs in firmware samples.
 
 \citet{Clements_2021} extended HALucinator to work with systems that use the
 VxWorks real time operating system (RTOS) as a case study. VxWorks is a
 commercial RTOS that is used in many safety critical and space applications.
 RTOSes often have their own hardware abstractions, and make use of Board
 Support Packages (BSP) to adapt the core RTOS code to different hardware.
-While \citet{Clements_2021} successfully run three different VxWorks firmwares
+While \citet{Clements_2021} successfully ran three different VxWorks firmwares
 on the emulator, the process for doing so was involved, and required extensions
 and modifications to the original HALucinator tool. However, they do review
 their original process and outline an approach for rehosting other RTOSes with
 HALucinator.
 
 \citet{Chen_2022} investigated a novel approach to fuzzing Real Time Operating
-Systems (RTOS) which involves slicing a single program into its constituent
-tasks and construct a call graph of program based on critical functions such as
-external data entry points. Each tailored execution tree is was then fuzzed
-separately using a UnicornAFL based emulator. The tool is able to detect and
-skip "input-irrelevant" function calls as well code that is "emulation-hard",
-such as HAL functions. The tool focuses on code paths that handle input data,
-so there are minimal side effects from ignoring these functions.
+Systems (RTOS), called SFuzz. SFuzz slices a single program into its
+constituent tasks and constructs a call graph of program based on critical
+functions such as external data entry points. Each tailored execution tree is
+was then fuzzed separately using a UnicornAFL based emulator. SFuzz is able to
+detect and skip "input-irrelevant" function calls as well code that is
+"emulation-hard", such as HAL functions. SFuzz focuses on code paths that
+handle input data, so there are minimal side effects from ignoring these
+functions.
 
 While SFuzz is focused fuzzing a single input interface of a given firmware,
 Fuzzware is a tool that takes a different approach by considering all memory
@@ -416,14 +413,14 @@ generate meaningful values for memory accesses. For example, in the case where
 an MMIO location is only read and compared to a magic number, the symbolic
 execution engine will tell Fuzzware to use a "constant" access model for that
 MMIO, with the magic number as the constant value. Alternatively, if an MMIO
-register is accessed, and only certain bits of the register are used (a common
-occurrence when working with embedded software), Fuzzware will use the
-"bitfield" access model, and so the fuzzer will only generate input data for
-the bits used by the firmware. This massively reduces the "input overhead" of
-the fuzzer, i.e. input data that isn't actively used by the firmware during the
-fuzz test. \citet{Fuzzware_2022} show that this approach makes the fuzzer much
-more effective at discovering coverage than other rehosting-based fuzzing
-tools.
+register is accessed, and only certain bits of the register are used (which is
+a common occurrence when working with embedded software), Fuzzware will use the
+"bitfield" access model. This means the fuzzer will only generate input data
+for the bits used by the firmware. This massively reduces the "input overhead"
+of the fuzzer: meaning input data that isn't actively used by the firmware
+during the fuzz test. \citet{Fuzzware_2022} show that this approach makes the
+fuzzer much more effective at discovering coverage than other rehosting-based
+fuzzing tools.
 
 AFL traditionally expects the program being fuzzed to require a flat binary input.
 While Fuzzware removes a lot of "input overhead", it reinterprets the flat
@@ -439,37 +436,36 @@ Hoedur perform automated firmware rehosting, as the only manual work needed to
 fuzz a firmware is knowledge and configuration of the firmwares memory map and
 architecture. Generating data for MMIO locations means that modelling
 peripherals, like HALucinator, is not necessary. However, this means that
-unlike HALucinator, firmware run on Hoedur or Fuzzware cannot be run
+unlike HALucinator, firmware being run with Hoedur or Fuzzware cannot be run
 interactively, it must be run under the fuzzer. While both are based on
 Unicorn, which supports multiple target architectures, Fuzzware and Hoedur are
-only currently available on ARM Cortex-M, chosen for its popularity, and use in
-other state of the art fuzzers to allow fair comparisons. Given Hoedur has
-independent input streams for each MMIO, \citet{Hoedur_2023} identified the
-integration of specialized grammar fuzzers into Hoedur as an area for future
-work. This would further reduce "input overhead" on communication interfaces,
-as grammar fuzzers are better able to correctly handle encryption or packet
-validation. These are common features of embedded communication protocols, as
-demonstrated by IoTFuzzer \citep{IOTFuzzer_2018}.
-
-Additionally, \citet{Zhang_2024} conducted a comprehensive survey of existing
+only currently available on ARM Cortex-M, which was chosen due its popularity
+and use in other state of the art fuzzers to allow for fair comparisons. Given
+Hoedur has independent input streams for each MMIO, \citet{Hoedur_2023}
+identified the integration of specialized grammar fuzzers into Hoedur as an
+area for future work. This would further reduce "input overhead" on
+communication interfaces, as grammar fuzzers are better able to correctly
+handle encryption or packet validation. These are common features of embedded
+communication protocols, as demonstrated by IoTFuzzer \citep{IOTFuzzer_2018}.
+Furthermore, \citet{Zhang_2024} conducted a comprehensive survey of existing
 protocol fuzzing techniques and found that domain specific protocols are
 under-represented in protocol fuzzing research. They identified the development
 of protocol fuzzers for satellite communications as a research opportunity.
 
-Fuzztruction \citep{Fuzztruction_2023} moves away from AFL entirely to resolve
-these issues surrounding encryption/checksums by creating a new type of fuzzer
-that mutates not just the input data, but the code that generates the input
-data. This enables the tool to make use of the domain knowledge encoded in some
-generator software, without needing complex program analysis or a human domain
-expert. Fuzztruction is proposed in part as an alternative to grammar based
-techniques for generating well structured inputs in order to reach deeper into
-the state space of a program \citep{Fuzztruction_2023}. Grammar fuzzing
-requires pre-existing knowledge of the program being tested, where as
-Fuzztruction does not. This makes Fuzztruction more useful in situations where
-only blackbox and greybox testing can be carried out, such as for cybersecurity
-applications \citep{Fuzztruction_2023}. Several processes, such as identifying
-instructions that read/write to/from memory, are carried out on the generator
-program to ensure only impactful mutations are applied to the program.
+Fuzztruction \citep{Fuzztruction_2023} aims to resolve these issues surrounding
+encryption/checksums by creating a new type of fuzzer that mutates not just the
+input data, but the code that generates the input data. This enables the tool
+to make use of the domain knowledge encoded in some generator software, without
+needing complex program analysis or a human domain expert. Fuzztruction is
+proposed in part as an alternative to grammar based techniques for generating
+well structured inputs in order to reach deeper into the state space of a
+program \citep{Fuzztruction_2023}. Grammar fuzzing requires pre-existing
+knowledge of the program being tested, where as Fuzztruction does not. This
+makes Fuzztruction more useful in situations where only blackbox and greybox
+testing can be carried out, such as for cybersecurity applications
+\citep{Fuzztruction_2023}. Several processes, such as identifying instructions
+that read/write to/from memory, are carried out on the generator program to
+ensure only impactful mutations are applied to the program.
 \citet{Fuzztruction_2023} also proposed using Fuzztruction in combination with
 a traditional coverage guided fuzzer, such as AFL++. In this configuration,
 Fuzztruction and AFL++ are both used to generate input data, with a scheduling

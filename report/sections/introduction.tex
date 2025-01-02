@@ -20,14 +20,14 @@ flight software development. The work will investigate the state of the art in
 embedded software fuzz testing, and apply these techniques during the
 development of a representative flight software program, in order to determine
 if the use of fuzz testing and emulation can improve code quality, reduce costs
-and increase productivity for software developed in the new space industry. Any
-dificulties or concerns arising as a result of completing the work will be
+and increase productivity for software developed in the New Space industry. Any
+difficulties or concerns arising as a result of completing the work will be
 raised and discussed.
 
 Furthermore, the use of a protocol grammar filter for rehosted coverage guided
-fuzzing of embeded software will be evaluated. A simple filter will be
+fuzzing of embedded software will be evaluated. A simple filter will be
 developed and used to fuzz test the developed flight software. The results will
-be compared against a the same fuzzer, without the protocol grammar filter, and
+be compared against the same fuzzer, without the protocol grammar filter, and
 any findings and observations will be discussed.
 
 Therefore, the work will aim to answer the following two research questions:
@@ -55,11 +55,11 @@ Therefore, the work will aim to answer the following two research questions:
 Historically, designing, manufacturing and operating space missions has been a
 costly undertaking, with a large number risks and specific challenges. Software
 systems in spacecraft have been carefully designed over long time periods to
-ensure that there was the possiblity of failure was minimal, due to the high
+ensure that there was the possibility of failure was minimal, due to the high
 cost and difficulty with trying to resolve issues after launch.
 
 However, the cost of launches to low earth orbit has been reducing, driven by
-the comercialisation of the space sector and prolific companies like SpaceX
+the commercialisation of the space sector and prolific companies like SpaceX
 \citep{Denis_2020}. This, and the development and proliferation of the CubeSat
 standard \citep{CubesatDesignSpec}, has enabled lower cost space missions with
 shorter development times.
@@ -67,7 +67,7 @@ shorter development times.
 The software written for CubeSats typically runs on embedded microcontrollers,
 and has a high level of interaction with hardware interfaces
 \citep{Cratere_2024}. The development of software for these systems therefore
-often has a crtical dependency on hardware. However, hardware designs are
+often has a critical dependency on hardware. However, hardware designs are
 subject to the same cost and time constraints as software designs. This can
 lead to prototype hardware being unavailable (or only available for a short
 time) for development and testing of software.
@@ -92,7 +92,7 @@ software makes a general purpose solution difficult to achieve. However, there
 have been several developments trying to improve the process of fuzz testing
 rehosted embedded software. One of the most recent developments is called
 Hoedur, which improves the interface between the emulation software and fuzzer,
-such that each virtual memory location uses a seperate input data stream
+such that each virtual memory location uses a separate input data stream
 \citep{Hoedur_2023}. \citet{Hoedur_2023} posit that further improvements to the
 fuzzer could be made if specialised grammar fuzzers were used for input streams
 corresponding to embedded system communication interfaces.
