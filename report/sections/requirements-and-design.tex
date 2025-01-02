@@ -380,6 +380,13 @@ different class of command required by the FSW User Requirements
 the spacepacket header \citep{Ccsds_spp} was used to select which type of
 command was included in the spacepacket data field.
 
+The different classes of command designed to be implemented by the application
+layer protocol included Actions, which were functions to be executed without
+any data input or returned (\refreq{FSW-4}; Telemetries, which were functions
+that returned data, with no input (\refreq{FSW-5}); and parameters, which
+represented variables that could have their value written to or read from
+(\refreq{FSW-6}, \refreq{FSW-7}).
+
 The application included multiple RTOS Threads. One thread would read
 data received over the spacepacket USART interface, another would handle
 parsing received spacepackets and executing the commands. A third thread would

@@ -10,10 +10,24 @@ Conclusions and Future Work
 % - Implement Spacepacket Grammar Filter for Hoedur
 % - Investigate running flight sotfware under Hoedur
 % - Investigate speed improvements with fuzzing, native implementations of peripheral models
-% - develop configurable peripheral modelling library for cortex-m micros to reduce emulator development burden?
+% - develop configurable peripheral modelling library for cortex-m micros to
+%   reduce emulator development burden?
 % - Investigate running more complex flight software under unicorn emulator?
 % - Have spacepacket responses be parsed and validated by the fuzzer
 % - Implement space data link layer for grammar fuzzer, (and/or other protocols?)
-% - Integrate grammar filter with normal random afl input, so that both techniques can generate input data? (filter and normal data are not the same structure though?)
+% - Integrate grammar filter with normal random afl input, so that both
+%   techniques can generate input data? (filter and normal data are not the
+%   same structure though?)
+
+% - FIXME run without interrupts until rtos_run re-enables interrupts?
+%   after this boot process is complete, then we can "tick" using emu start
+%   timeouts and handle interrupts inbetween without needing a code callback?
+% - could also do WFI in rtos_on_idle, and then detect the call to WFI and skip
+%   to the next systick/pendsv interrupt in the emulator to speed up?
+% - rtos_schedule triggers pendsv, which is typically executed in the
+%   systick interrupt. need to have pendsv trigger after systick has returned
+%   (systick higher priority than pendsv) this should happen by default if we run
+%   "application" emulator code (non-interrupts) in increments of the systick
+%   frequency
 
 \end{document}

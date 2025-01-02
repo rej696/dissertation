@@ -25,7 +25,7 @@ emulator. Files for the flight software implementation are included in the
 in the \lstinline|emu| directory, and files for the protocol grammar filter
 are included in the \lstinline|pgf| directory. The ground software python tool
 is located at the project root called \lstinline|gsw|. The \lstinline|pgf| is
-not a standalone application, like the \lstinline|emu| and \lstinline|gsw|
+not a stand-alone application, like the \lstinline|emu| and \lstinline|gsw|
 tools, but a library containing code that allows the protocol grammar filter to
 be used in both the emulator and the ground software.
 
@@ -48,12 +48,12 @@ Stuttgart for their sat-rs flight software library, which flew as an experiment
 on the ESA OPS-SAT satellite \citep{satrs, opsat}. However, support for these
 modern languages is still in progress, and currently do not have the stability
 required for commercial projects. In preparing for developing the flight
-software, an initial bare metal program for the STM32 BlackPill was built using
+software, an initial bare metal program for the STM32 blackpill was built using
 Zig, but it was decided that using Zig over C would add unnecessary complexity
 and reduce the representativeness of the FSW.
 
 
-\subsection{Hardware Abstraction Layer}
+\subsection{Hardware Abstraction Layer} \label{sec:fsw-hal}
 
 ARM Cortex-M devices have two distinct layers of hardware implementation. The
 core hardware architecture, what makes a chip an ARM Cortex-M, is provided by
@@ -89,14 +89,14 @@ complexity of the emulator development. Therefore, a minimal HAL
 Reference Manual and Datasheet \citep{stm32f4_manual, stm32f4_datasheet}, and
 the ARM Cortex-M4 User Manual \citep{armcm4_manual}. This decision also led to
 the manual implementation of several parts of the FSW project that are often
-provided by the vendor. Namely the startup code
+provided by the vendor. Namely the start-up code
 (\lstinline|fsw/src/hal/startup.c|), a linkerscript for the blackpill
 (\lstinline|fsw/stm32f411xx.ld|), and a \lstinline|make| build system for
 compiling the project with the \lstinline|arm-none-eabi-gcc| toolchain
 (\lstinline|Makefile|). The first task in implementing the FSW was to implement
 these files.
 
-\subsubsection{Linker Script and Startup Code} \label{sec:linkerscript}
+\subsubsection{Linker Script and Start-up Code} \label{sec:linkerscript}
 
 The linkerscript maps the software defined linker sections into the memory
 locations for the STM32F411xE. Section 5 of the STM32F411xC/E datasheet
@@ -131,7 +131,7 @@ uninitialised global data, and so only needs to be included in sram. However,
 it is good practice to initialise the memory in the \lstinline|.bss| section on
 boot, to reduce the risk associated with using uninitialised variables.
 
-As mentioned, the startup code included a definition of the vector table, which
+As mentioned, the start-up code included a definition of the vector table, which
 includes functions for interrupt handlers and arm exception handlers.
 \lstinline|startup.c| uses symbols defined in the linkerscript to place the end
 of the stack at the beginning of the vector table, and defines a
@@ -179,25 +179,41 @@ peripheral exposes several registers to configure the device, notably the
 \lstinline|LOAD| register that sets the number of clock ticks between interrupt
 triggers. Given the clock frequency of the blackpill was 16MHz, the SysTick
 peripheral was configured to fire a SysTick interrupt every millisecond. The
-implementation in \lstinline|fsw/{inc,src}/hal/systick.h| was crucial to the
+implementation in \lstinline|fsw/{inc,src}/hal/systick.{h,c}| was crucial to the
 functioning of the RTOS and the provided a software delay, that allowed for
 periodic behaviour in the system, needed to implement a liveness check in the
 FSW.
 
-
-% - uart.h
-Finally, a driver was implemented for to interact with the USART peripheral.
-
+% - Uart
+Finally, a driver was implemented for interacting with the USART peripheral
+(\lstinline|fsw/{inc,src}/hal/uart.{h,c}|). The first iteration of the USART
+driver implemented synchronous blocking reading and writing from the
+peripheral. The driver used previously implemented HAL functions, such as
+\lstinline|gpio_set_mode|, to enable the USART peripheral and setup the
+associated GPIO pins correctly. Later in the project, after implementing parts
+of the application layer and RTOS, the ability of the FSW to receive
+spacepacket data over the USART was tested on target. At this point, using the
+synchronous uart implementation caused packet data to be dropped if the data was
+received while a different thread was executing. Therefore, asynchronous
+reading of data from the USART was implemented using interrupts. Interrupt
+Service Routines (ISR) for each USART peripheral were implemented, which
+overrode the weakly defined aliases in the vector table. A circular buffer
+data structure was created at \lstinline|fsw/{inc,src}/utils/cbuf.{h,c}|, which
+allowed data to be continuously added for consumption at a later point. Each
+USART peripheral was mapped to a distinct \lstinline|cbuf| object. The ISR read
+a byte from the data register and appended it to it's circular buffer. The
+USART driver then provided an interface for reading the data stored in the
+circular buffer. This implementation resulted in no data being dropped by
+reading the USART.
 
 It was initially decided to exclude CMSIS from the project in addition to the
-vendor HAL. However, later in development the USART HAL implementation added
-non blocking (i.e. interrupt driven) reading of USART data, at which point
-further interfacing with the NVIC peripheral was required. It was determined
-that re-implementing the NVIC API in CMSIS would make the project more complex
-than including the CMSIS library. Therefore a subset of files necessary for
-using an ARM Cortex-M4 were included from CMSIS-core \citep{CMSIS} in
-\lstinline|fsw/CMSIS|, and were configured for the STM32F411xE
-(\lstinline|fsw/inc/hal/stm32f4_blackpill.h|).
+vendor HAL. However, when the USART HAL implementation added non blocking (
+interrupt driven) reading of USART data, further interfacing with the NVIC
+peripheral was required. It was determined that re-implementing the NVIC API in
+CMSIS would make the project more complex than including the CMSIS library.
+Therefore a subset of files necessary for using an ARM Cortex-M4 were included
+from CMSIS-core \citep{CMSIS} in \lstinline|fsw/CMSIS|, and were configured for
+the STM32F411xE (\lstinline|fsw/inc/hal/stm32f4_blackpill.h|).
 
 In retrospect, while implementing a reduced HAL did make it simpler to develop
 the emulator in parallel to the flight software, CMSIS should have been
@@ -224,14 +240,14 @@ a complementary approach to fuzz testing, as the execution of the
 should be easy to detect both on target and rehosted, by monitoring the debug
 log and program counter respectively.
 
-\subsection{Real Time Operating System}
+\subsection{Real Time Operating System} \label{sec:fsw-rtos}
 
 Requirement \refreq{FSW-9} specified the need for an RTOS in the FSW, to make
 the implementation representative. An alternative to using an RTOS is the
 "superloop" architecture, where all execution happens in a single while loop.
 This architecture is also commonly used in flight software, but mostly for
 Telemetry Nodes, which only need to execute a small number of functions. An OBC
-software typically needs to be able to execute multible threads concurrently,
+software typically needs to be able to execute multiple threads concurrently,
 which cannot be done using a superloop architecture. There are alternative
 concurrent architectures, such as the active object based QP framework
 \citep{QP}. However, RTOS is the most commonly used design.
@@ -245,41 +261,147 @@ While this was less representative, the decision increased the simplicity of
 the FSW, and developing the RTOS using educational resources would make the
 implementation of emulator features required to support the RTOS much easier.
 
-This RTOS ... % TODO outline rtos
+The implemented RTOS (\lstinline|fsw/{inc,src}/rtos/thread.{h,c}|) provided an
+\lstinline|rtos_thread_create| function, which setup an
+\lstinline|rtos_thread_t| object. This function takes a
+\lstinline|rtos_thread_handler_t|, which is a function pointer for the thread
+to be created. This function initialises a separate stack for the
+thread according to the Procedure Call Standard for Arm Architecture (AAPCS)
+\citep{AAPCS}, which outlines the rules ARM processors and C functions need to
+follow when using the stack to call and return from functions. The
+\lstinline|rtos_thread_create| function also fills the empty part of the stack
+with an easily detectable sequence of 32-bit words, known as stack paint. This
+is a feature to aid debugging and optimisation, as the stack paint can act as a
+"high water mark", showing the maximum stack usage. Furthermore, reading from
+unassigned variables or memory in the stack is more likely to cause a crash
+when using stack paint, rather than setting the stack to zero, making these
+types of errors more detectable during development. Finally, the
+\lstinline|rtos_thread_create| registers the new thread with the RTOS, so it is
+ready to be run.
 
-RTOS implementation used SysTick and PendSV interrupts to implement round robin scheduling, RTOS aware delays, and ...
+The mechanism for context switching between rtos threads uses the PendSV system
+interrupt, and the \lstinline|rtos_schedule| function. The PendSV interrupt is
+set to the lowest interrupt priority in the \lstinline|rtos_init| function, and
+contains inline assembly code to push the current register state of the
+currently executing rtos thread onto its stack, which is called saving it's
+context. The context of the next thread to be executed is then restored from
+the new thread's stack, and execution resumes in the new thread. The
+\lstinline|rtos_schedule| function determines which thread to run next, and if
+any context switch is required, and triggers the PendSV interrupt to carry out
+the context switch. The \lstinline|rtos_schedule| function is first called by
+the \lstinline|rtos_run| function to begin execution of the RTOS, which itself
+should be called in the main function after setting up all the threads.
+The SysTick ISR was modified to call the \lstinline|rtos_schedule| function
+periodically, potentially triggering a context switch every millisecond. The
+\lstinline|rtos_schedule| function implemented round-robin scheduling, where
+all threads are treated equally without priorities, are executed in cyclic
+order.
+
+The RTOS implementation also provided functionality for RTOS aware delays,
+where if a delay function was called the RTOS would block the thread for the
+desired number of ticks, allowing other threads to execute for that period.
+This required the implementation of an idle thread that would execute if all
+other threads were blocked.
 
 \subsection{Application}
 
-The application code
+The application code was focused on reading spacepacket data from the USART
+peripheral and executing the appropriate application layer handler functions.
+As outlined in \autoref{sec:fsw-design}, the FSW used a thread for reading data
+from the HAL USART driver, which would be asynchronously read by the packet
+handling thread for processing, validation, and command dispatch.
 
-\subsection{Tooling}
+The uart thread and packet thread communicated by reading and writing to
+circular buffer, which had a basic mutex implementation, protecting it from
+race conditions. This implementation was encapsulated in a C module called
+\lstinline|fsw/{inc,src}/app/frame_buffer.{h,c}|, providing thread safe data
+transfer.
 
-% - Written in C? The only real choice
-% - Bare Metal
-%   - HAL
-%   - Startup Code
-%   - Design by Contract
-% - Actions, Parameters, Telemetries, RPC
-% - Spacepacket Interface
-% - Bare Metal RTOS inspired by MIROS (rather than FreeRTOS or RTEMS, easier to reason about and emulate for the demonstration of the project)
-% - CMSIS? Avoid using relying on CMSIS to reduce the amount of perhipherals and mmio that would need to be emulated.
+Initially, the FSW handled raw spacepackets. However, after testing on the
+hardware and emulator, it quickly became apparent that without any framing,
+spacepackets were being dropped or mangled with other data. Therefore, the
+spacepackets were encapsulated in KISS frames \citep{kiss}. KISS (Keep It
+Simple Stupid) is a common framing layer used on serial interfaces in CubeSats.
+For example, libCSP provides an implementation for sending CubeSat Protocol
+(CSP) packets encapsulated in KISS frames over a serial interface
+\citep{libCSP_kiss}. KISS frames used a special byte value, called FEND, to
+indicate the end of a frame. FESC, TFEND and TFESC were other byte values used
+to escape a valid data byte that matched the value of FEND or FESC
+respectively. Functions for framing and de-framing kiss frames were implemented
+in \lstinline|fsw/{inc,src}/app/kiss_frame.{h,c}|. These functions allowed the
+packet thread to discretize a continuous stream of input bytes (read from the
+\lstinline|frame_buffer|) into distinct spacepackets for processing.
 
-% Implemented in the C language
+Once the packet thread had collected a distinct spacepacket into a
+buffer, it was passed to the \lstinline|spacepacket_process| function in
+\lstinline|fsw/{inc,src}/app/spacepacket/.{h,c}|. This function parsed and
+verified the spacepacket header, and validated the checksum byte at the end of
+the packet. If the validation was successful, the APID extracted from the
+packet header was used to index a map of application layer handlers, and the
+appropriate handler would be called with the spacepacket data payload.
+
+After the application layer handler returned, a telemetry (TM) spacepacket was
+built, wrapping the exit code and any returned data from the application
+handler. The TM packet was then returned to the packet thread, which
+encapsulated it in a KISS frame, and sent it synchronously to the USART device.
+
+As discussed in \autoref{sec:fsw-design}, the application layer consisted of
+Action, Parameter and Telemetry handlers which were each mapped to a different
+APIDs. A module for each type of handler was implemented that included a
+function to register handlers for each type of command, and a function to
+dispatch the correct handler according to the input buffer. Each application
+used the first byte of the spacepacket data payload as an index into the
+maintained map of handlers.
+
+To demonstrate the correct dispatch and execution of these application handlers
+over the spacepacket link, a \lstinline|test_component| module was implemented
+that exposed several actions, parameters and telemetries. The
+\lstinline|test_component| included \lstinline|uint32_t| and
+\lstinline|uint8_t| static variables that were exposed as parameters, action
+handlers that would print the values of these parameters to the debug log, and
+a telemetry that would return the sum of the two parameters over the
+spacepacket link.
+
+In addition, telemetry values were included to monitor runtime error
+information in different parts of the application, such as in the
+\lstinline|frame_buffer| and \lstinline|spacepacket| modules.
+
+To allow easy extensibility of the FSW, action, parameter and telemetry
+handlers were registered on start-up after creating the RTOS threads but before
+the RTOS had been executed.
+
+\subsection{Ground Software}
+
+The Ground Software (\lstinline|gsw|) application was simple in comparison to
+the flight software. This was a command line application written in python
+using the click \citep{click}, pyserial \citep{pyserial} and spacepackets
+\citep{spacepackets} libraries. Sub-commands were implemented as click
+functions that built sending correctly formed spacepackets containing Actions,
+Parameters and Telemetries using the spacepackets library and sent them to the
+target hardware over an FTDI cable using pySerial. Additionally a monitor
+command was written that used pySerial to connect to the debug USART of the
+target and print any text it output. The tool used code from  the
+\lstinline|pgf| library for correctly generating and appending checksums to
+packets, as well as for performing kiss framing of spacepackets. The
+\lstinline|gsw| tool was the main interface used for debugging and testing the
+FSW on the target hardware.
+
+\subsection{Tools} \label{sec:fsw-tools}
+
+Additional tools and commands were included in the \lstinline|Makefile| to aid
+with debugging and testing. These included tools for generating a disassembly
+of the compiled FSW; disassembling specific memory addresses or function
+symbols; running the FSW on the target under a debugger; and extracting memory
+address locations from the compiled binary.
 
 % Discuss tooling, rationale for development decisions?
 
 % Talk through all the tools that you had to develop, explain problems that
 % were encountered, and their resolutions, explain bugs found and methodologies
-% they were resolved.
+% they were resolved
 
-% overview of tooling developed? identify dependencies, modified design choices, not implementing space data link layer.
+% overview of tooling developed? Identify dependencies, modified design choices
 
-% brief overview of iterative development process, with features implemented between tooling alongside each other
-
-% section about flight software
-% linker scripts, makefiles, writing the hal
-% utils
 
 \section{Emulator}
 
@@ -287,7 +409,7 @@ The application code
 % - unicorn only an ISA emulator
 % - discuss implementation of interrupt handling, trampoline handlers
 
-The emulator implementation used the Unicorn framework to execute the
+The emulator implementation used the Unicorn framework \citep{Unicorn} to execute the
 instructions from the FSW. Most of the emulator implementation effort was spent
 modelling hardware devices, and implementing fundamental features. As Unicorn
 was only an CPU emulator \citep{Unicorn} the hardware features of ARM Cortex-M
@@ -298,6 +420,15 @@ handling the PendSV, SysTick and USART interrupts. Given the comprehensive
 understanding of the low level details of the developed FSW, it was easier to
 identify the reduced set of peripherals required to be modelled in the
 emulator, and implement them incrementally.
+
+Unicorn provided APIs for interacting with the instruction set emulator in
+multiple languages, but for this project python was chosen as the
+implementation language. It was determined that python and C were the most
+commonly used languages for interacting with Unicorn, and state of the art
+tools like Fuzzware made use of both \citep{Fuzzware_2022}. Python was chosen
+over C due to being more able to quickly prototype and test implementations,
+despite potential performance improvements from using a natively compiled
+language like C.
 
 The development of the emulator was conducted alongside the FSW, so as features
 were added to the FSW, mirrored implementation needed to be added to the
@@ -314,56 +445,263 @@ firmware accessed these locations there was no functional impact. As a result,
 the periodic toggling of the GPIO pin was not correctly emulated: the emulator
 ran the software as if the SysTick peripheral never counted down.
 
+\subsection{Core Peripheral Models}
+
 The next iteration implemented generic peripheral models for MMIO registers.
 This model allowed a region of memory to be written too, and the value written
 be read from at a later date, using Unicorn MMIO hooks. The MmioReg
 (\lstinline|emu/mmio/reg.py|) and Peripheral
 (\lstinline|emu/mmio/peripheral.py|) classes provided base implementations that
 could be inherited from and have functions overridden to define additional
-behaviours. For example, the SysTick Peripheral Model was implemented
+behaviours. For example, the SysTick Peripheral Model was implemented by
+inheriting from the \lstinline|Peripheral| class. The class configured a MMIO
+objects for each SysTick register, with the correct memory address offsets for
+each register. The \lstinline|write_cb| method was overridden to set an enabled
+flag on the object if the zeroth bit on the SysTick Control and Status Register
+was set \citep{armcm4_manual}. This feature emulated the behaviour of the
+hardware peripheral, loading the value in the LOAD register into the VAL
+register, and enabling the tick method of SysTick peripheral model. The tick
+method decremented the value in the VAL register, and upon reaching zero would
+reload the value in the LOAD register, and set a \lstinline|systick_pending|
+flag on the peripheral model, to indicate to the emulator that a SysTick
+interrupt should be triggered.
+
+Other Cortex-M peripheral models were implemented in \lstinline|emu/cortex_m|
+according to the Cortex-M4 User Guide \citep{armcm4_manual}. In addition to the
+SysTick model, these included the System Control Block (SCB), which included
+registers used to raise the PendSV interrupt and set the priority of the
+SysTick and PendSV interrupts; and the Nested Vector Interrupt Controller
+(NVIC), which was used for enabling and setting the priority of the USART
+peripheral interrupts.
+
+These peripheral models were composed into the \lstinline|CorePeripherals|
+class in \lstinline|emu/cortex_m/core|. This class setup the Unicorn mmio
+memory map and callbacks for the full address range of all the Cortex-M core
+peripherals, and dispatched the callback to the correct peripheral model for
+the memory address. Any memory address that did not have a peripheral model
+implemented would raise a \lstinline|PeripheralNotImplementedExeception|. This
+was useful when integrating CMSIS into the FSW, as some core peripherals used
+in the CMSIS NVIC API had not been implemented. When the FSW was run on the
+emulator, this threw a clear exception that indicated which peripheral models
+and register implementations were missing.
+
+\subsection{Interrupt Handling}
+
+The code callback (\lstinline|uc_code_cb|) in the \lstinline|Emulator| class
+was used to introspect the modelled peripherals and execute "hardware"
+functions, such as triggering interrupts. The callback called the tick method
+on the SysTick peripheral model, and checked the |CorePeripherals| object for
+any pending SysTick or PendSV interrupts. Initial prototype attempts to make
+the emulator switch execution to an interrupt handler were to just hard-code the
+program counter (PC) in unicorn to the address of the ISR, taken from the
+disassembled vector table. However, this approach was unsuccessful.
+
+Similarly to the RTOS context switching implemented in \autoref{sec:fsw-rtos}, ARM
+processors followed a defined exception handling sequence \citep{ARM_Exception}
+which involved pushing the context of registers onto the stack. However, a
+major difference between this process and the AAPCS \citep{AAPCS} is the
+contents of the link register (LR). The LR is used in the AAPCS to indicate the
+memory location to return to after a function call. For an interrupt, this is
+set to the special \lstinline|EXC_RETURN| value, which indicates to the
+processor to carry out the return from interrupt sequence.
+
+Initial attempts at returning from interrupts had the code callback checking
+for a LR value matching \lstinline|EXC_RETURN|, and restoring the context.
+However, interrupts are able to be executed during the execution of lower
+priority interrupts, which invalidated this approach.
+
+To solve these issues a design pattern for handling interrupts called
+trampolines was used \citep{trampoline}. To implement this pattern in the
+emulator, a stack data structure of callbacks was initialised with a
+\lstinline|Emulator.reset_handler()| trampoline handler method. A trampoline
+handler was defined as a callback function that would start the execution of
+the emulator. Therefore, the \lstinline|Emulator.reset_handler()| would start
+the Unicorn emulator execution from the \lstinline|Reset_Handler| in the vector
+table. When the \lstinline|Emulator.start()| method was called to begin
+emulator execution, it would run an infinite while loop, popping trampoline
+handlers from the trampoline stack and executing them. The execution of the
+trampoline handlers would continue until an exception was raised or a
+trampoline handler returned with no more left on the trampoline stack to
+execute.
+
+While the \lstinline|uc_code_cb| was running, if a peripheral model had flagged an
+interrupt as pending, such as PendSV, the
+\lstinline|Emulator.handle_interrupt()| method would be called. This method
+pushed \lstinline|return_from_interrupt| and \lstinline|isr_handler| trampoline
+handlers onto the trampoline stack, and stopped the execution of the emulator.
+This would trigger the next trampoline handler to be executed, which would be
+the \lstinline|isr_handler| function.
+
+The \lstinline|isr_handler| trampoline handler saved the current execution
+context on the stack according to the ARM Exception Handling Sequence
+\citep{ARM_Exception}, set the PC to the address specified in the vector table
+for the relevent interrupt, and loaded the \lstinline|EXC_RETURN| value into
+the LR. The \lstinline|isr_handler| then restarted the emulator execution from
+the updated program counter, with an exit address specified as the
+\lstinline|EXC_RETURN| value. Therefore, when the ISR function in the FSW
+returned, Unicorn would jump execution to the \lstinline|EXC_RETURN| address,
+which would trigger the emulator to stop execution. This in turn would trigger
+the execution of the next trampoline handler on the stack, which would be the
+\lstinline|return_from_interrupt| function. The
+\lstinline|return_from_interrupt| function restored the context stored on the
+stack by the \lstinline|isr_handler| function, and restarted the emulator from
+the recently restored value of the program counter. In the event that a higher
+priority interrupt was triggered, such as the SysTick, while in the context of
+a lower priority interrupt, additional trampoline handlers would be added to
+the trampoline stack. This ensured that each ISR was correctly executed and the
+context of lower priority interrupts restored. The implementation was also
+compatible with the FSW RTOS with no additional implementation in the emulator,
+which as mentioned in \autoref{sec:fsw-rtos} used the PendSV ISR to save the
+context of thread execution on the stack, and swapped the stack pointer and
+program counter for the new thread to run.
+
+% difficulties with building emulator and verifying against hardware Discussion?
+However, there was a lot of complexity associated with integrating the emulator
+with the interrupt execution, context switching, trampoline handlers and
+peripheral models. The implementation required a lot of refinement as simple
+errors, such as the order of checking the pending interrupts, had dramatic
+impacts on the execution of the flight software. Debugging these errors was
+difficult, and the execution of the FSW on the emulator was heavily compared to
+execution on the target hardware to understand and resolve issues. This process
+of using the target hardware to verify the behaviour of the emulator somewhat
+invalidated the rationale behind \refrq{1} for being able to incrementally
+verify the FSW using emulation in the absence of target hardware.
 
 The core emulator implementation was not concerned with the details of the FSW
 application beyond the low level interfaces to the hardware in the HAL and
-RTOS. Once the RTOS based FSW was able to run on the emulator, the focus
-shifted to reading and writing data to the running firmware through the USART
-peripheral model.
+RTOS. Therefore, once the RTOS based FSW was able to run on the emulator, the
+focus shifted to reading and writing data to the running firmware through the
+USART peripheral model.
 
+\subsection{USART Peripheral Model}
 
-\section{Fuzzer Integration and Protocol Grammar Filter}
+The USART peripheral was the only STM32 hardware peripheral used by the FSW,
+and therefore the only one that needed to be implemented in the emulator. The
+implementation of the USART peripheral model is located in
+\lstinline{emu/uart.py} as a \lstinline|Uart| class inheriting from the
+\lstinline|Peripheral| class. Similar to the SysTick peripheral model, the
+\lstinline|Uart| class defined a set of \lstinline|MmioReg| objects for each
+USART register as defined in the Reference Manual \citep{stm32f4_manual}.
 
+However, the \lstinline|DATA| register of the USART peripheral required a
+specific implementation to model the behaviour of sending and receiving data.
+When a value is written to the \lstinline|DATA| register, that value is pushed
+to a hardware FIFO to be sent, and when a value is read, it is pulled from a
+different hardware FIFO into the register. The \lstinline|UartDataReg| class
+inherits from the \lstinline|MmioReg| to overwrite the read and write callbacks
+to implement this functionality, with read and write FIFOs implemented in
+python. Therefore, to "send" data to the emulated FSW, data can be appended to
+the modelled FIFOs and the correct bits set in control registers to tell the
+software there is data available to be read. The same approach is taken to
+"read" data output from the emulated FSW. The \lstinline|Uart| class provides
+methods for reading and writing bytes, or arrays of data, to the peripheral.
+After the FSW was updated to implement interrupts for asynchronous reading of
+data from the USART \autoref{sec:fsw-hal}, the \lstinline|Uart| object needed
+to trigger interrupts when data had been written to the peripheral. The process
+for doing so was similar to setting a flag for the SysTick or PendSV to
+pending, doing so whenever data was written to the modelled FIFO. However, the
+method used for writing data to the \lstinline|Uart| object was to write an
+entire buffer into the modelled FIFO. As each byte of data needed a separate
+interrupt raised to read it, the interrupt pending flag needed to remain set
+until the modelled FIFO was empty.
+
+\subsection{Command Line Interface}
+
+Now the emulator had enough functionality to boot and execute the complete FSW.
+To easily run the FSW on the emulator and enable different features for
+debugging and testing, a simple command line interface was created. This allowed
+running the FSW under the emulator, with raw spacepacket data preloaded into
+the emulator before execution, and the responses and debug messages from the
+FSW printed to the console. Each raw spacepacket would be loaded and "sent" to
+the emulated software sequentially, and the raw spacepacket data included a
+"trigger" byte at the beginning of the bytearray, which instructed the emulator
+when to load them into the USART peripheral. This setup allowed for simple
+manual testing of the FSW on the Emulator, similar to what had been possible
+with the target hardware and \lstinline|gsw| program.
+
+\subsection{Debugging Features}
+
+Several features were included in the emulator implementation to aid debugging
+crashes or other problems (\refreq{EMU-5}). The Capstone python library was
+included in the emulator implementation, which could be used to print
+disassemblies of instructions \citep{Capstone}. This functionality was used to
+introspect and debug the running of the FSW and the Emulator at various stages
+of development. For example, before implementing kiss framing of spacepacket
+data, sending spacepackets to FSW running on the emulator resulted in packets
+being dropped and other framing issues. However, this was not the case on the
+target hardware. To debug this, the memory address ranges for specific
+functions in the flight software, such as reading from the uart and processing
+the spacepacket, were extracted from compiled FSW binary using tools outlined
+in \autoref{sec:fsw-tools}. Statements were added to the
+\lstinline|uc_code_cb| function in the emulator to disassemble and print any
+instructions executed in those memory addresses. Additionally, logic could be
+added to dump specific memory regions and registers during execution of
+specific instructions by the emulator. This helped identify where the
+spacepackets were being dropped by the FSW running on the emulator. Ultimately,
+it was discovered that without framing implemented, spacepackets could be sent
+and received successfully if only a single complete spacepacket was received by
+the FSW in-between the RTOS context switching threads. The Emulator was sending
+spacepackets to the running FSW quicker, relative to the number instructions
+executed, compared to sending multiple spacepackets to the target hardware. As
+such, running the FSW on the emulator was able to identify the need for framing
+of input data, which would have been very difficult with only the target
+hardware. Several debug statements in both the FSW and Emulator are present in
+the final artefacts, wrapped behind compile time defines and command line
+options. However, most debug statements were removed after issues were resolved
+and the software reworked.
+
+\section{Protocol Grammar Filter}
+
+The emulator could be run with manually written valid binary strings
+representing kiss encapsulated space packets. However, to generate valid input
+data from a random binary stream (\refreq{RQ2-3}), the \lstinline|pgf| python
+library was implemented.
 
 % TODO this can go in results/testing/discussion section?
 % section about testing on hardware, and bugs discovered, addition of framing and
 
-% modification to emulator to get it to work as a afl++ test harness?
-% using docker to run AFL
 
 % FIXME Discussion?
 As the PGF can only introduce known errors into the protocol, the design of the
 PGF is a compromise between comprehensive fuzzing and specific manually
 designed system testing.
 
+\section{Fuzzer Integration}
+% modification to emulator to get it to work as a afl++ test harness?
+% using docker to run AFL
+
+\subsection{Error Handling}
+
+raise python exceptions and force a crash on specific exceptions, where others
+represent correct termination of the program. after a period since the program
+has sent all spacepackets to the emulator, outofpackets exception exits
+gracefully, as we can assume any crashes would have executed at this point, and
+it should stop the fuzzer from only getting timeouts.
+
 % design the input format
 % outline the output
 % outline the set of known errors based on spacepacket fields
 
-\section{FIXME REMOVE}
-% DEMO TEXT BELOW
-This is the chapter in which you review the implementation and testing decisions and issues, and critique these processes.
 
-Code can be output inline using \verb@\lstinline|some code|@.  For example, this code is inline: \lstinline|public static int example = 0;| (we have used the character \verb@|@ as a delimiter, but any non-reserved character not in the code text can be used.)
 
-Code snippets can be output using the \verb|\begin{lstlisting} ... \end{lstlisting}|
-environment with the code given in the environment. For example, consider listing \ref{Example-Code}, below.
 
-\begin{lstlisting}[breaklines,breakatwhitespace,caption={Example code},label=Example-Code]
-public static void main() {
-
-  System.out.println("Hello World");
-
-}
-\end{lstlisting}
-
-Code listings are produced using the package `listings'.  This has many useful options, so have a look at the package documentation for further ideas.
+% \section{FIXME REMOVE}
+% % DEMO TEXT BELOW
+% This is the chapter in which you review the implementation and testing decisions and issues, and critique these processes.
+%
+% Code can be output inline using \verb@\lstinline|some code|@.  For example, this code is inline: \lstinline|public static int example = 0;| (we have used the character \verb@|@ as a delimiter, but any non-reserved character not in the code text can be used.)
+%
+% Code snippets can be output using the \verb|\begin{lstlisting} ... \end{lstlisting}|
+% environment with the code given in the environment. For example, consider listing \ref{Example-Code}, below.
+%
+% \begin{lstlisting}[breaklines,breakatwhitespace,caption={Example code},label=Example-Code]
+% public static void main() {
+%
+%   System.out.println("Hello World");
+%
+% }
+% \end{lstlisting}
+%
+% Code listings are produced using the package `listings'.  This has many useful options, so have a look at the package documentation for further ideas.
 
 \end{document}
