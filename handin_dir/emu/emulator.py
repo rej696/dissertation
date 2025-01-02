@@ -529,7 +529,7 @@ class Emulator:
 
     def print(self, string):
         if self.cov is None:
-            print(">>>" + string)
+            print(">>> " + string)
 
 
 def fuzz_start(uc, self):
