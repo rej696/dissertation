@@ -15,7 +15,8 @@ class SysTick(Peripheral):
     def __init__(self, uc, base_addr, debug=False):
         super().__init__(uc, base_addr, debug)
         self.reg_init()
-        self.enabled = False
+        self.enable = False
+        self.tickint = False
         self._systick_pending = False
 
     def read_cb(self, uc, addr, size, user_data):
@@ -27,21 +28,27 @@ class SysTick(Peripheral):
         self.print(f"SysTick MMIO {hex(addr)} written with value {value}")
         self.reg(addr).write_cb(uc, addr, size, value, user_data)
         if self.reg("CTRL") is self.reg(addr):
-            if self.reg(addr).get_bit(0):
-                self.enabled = True
+            # TICKINT flag
+            if self.reg(addr).get_bit(1):
+                self.tickint = True
             else:
-                self.enabled = False
+                self.tickint = False
+
+            # ENABLE flag
+            if self.reg(addr).get_bit(0):
+                self.enable = True
+                self.reg("VAL").value = self.reg("LOAD").value
+            else:
+                self.enable = False
 
     def tick(self):
-        if self.enabled:
-            self.reg("VAL").value += 1
-            if (
-                self.reg("VAL").value >= self.reg("LOAD").value
-                and self.reg("LOAD") != 0
-            ):
-                # Trigger SysTick Interrupt
-                self._systick_pending = True
-                self.reg("VAL").value = 0
+        if self.enable:
+            self.reg("VAL").value -= 1
+            if self.reg("VAL").value <= 0:
+                self.reg("VAL").value = self.reg("LOAD").value
+                if self.tickint:
+                    # Trigger SysTick Interrupt
+                    self._systick_pending = True
 
     @property
     def systick_pending(self) -> bool:

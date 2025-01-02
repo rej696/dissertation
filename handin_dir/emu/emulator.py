@@ -73,6 +73,7 @@ from unicorn.arm_const import (
 
 from emu.uart import Uart
 from emu.cortex_m.core import CorePeripherals
+from emu.mmio.peripheral import PeripheralNotEmulatedException
 from emu.spacepacket_handler import SpacepacketHandler, OutOfPacketsException
 
 ARM_CONTEXT_REGISTERS = [
@@ -355,8 +356,6 @@ class Emulator:
             control = self.uc.reg_read(UC_ARM_REG_CONTROL)
             spsel = bool(control & 0b10)
             fcpa = bool(control & 0b100)
-            pc = self.uc.reg_read(UC_ARM_REG_PC)
-            sp = self.uc.reg_read(UC_ARM_REG_SP)
             self.restore_context(self.uc, spsel, fcpa)
             pc = self.uc.reg_read(UC_ARM_REG_PC)
             sp = self.uc.reg_read(UC_ARM_REG_SP)
@@ -550,7 +549,7 @@ def fuzz_start(uc, self):
         self.dump_reg()
         return e.errno
     # handle execeptions for afl correctly (i.e. which are crashes and which just the end of execution)
-    except EmulatorException as e:
+    except (EmulatorException, PeripheralNotEmulatedException) as e:
         self.print(f"Emulator Exception {e}:")
         self.dump_reg()
         return UC_ERR_EXCEPTION

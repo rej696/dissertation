@@ -1,4 +1,4 @@
-from emu.mmio.peripheral import Peripheral
+from emu.mmio.peripheral import Peripheral, PeripheralNotImplementedException
 from emu.cortex_m.systick import SysTick
 from emu.cortex_m.scb import Scb
 from emu.cortex_m.nvic import Nvic
@@ -38,8 +38,7 @@ class CorePeripherals:
             if addr in range(*k):
                 return self.periphs[k], addr - k[0]
 
-        print("ERROR")
-        return None, None
+        raise PeripheralNotImplementedException(addr)
 
     def read_cb(self, uc, addr, size, user_data):
         p, offset = self.periph(addr)

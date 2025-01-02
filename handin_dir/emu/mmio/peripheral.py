@@ -1,5 +1,7 @@
 from emu.mmio.reg import MmioReg
 
+class PeripheralNotEmulatedException(Exception):
+    errno = None
 
 class Peripheral:
     REG = {"UNKNOWN": (0, MmioReg)}
