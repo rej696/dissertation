@@ -31,3 +31,7 @@ DONE implement more interesting logic in application for fuzzer (2024-12-03 18:4
 DONE fuzz blackpill application with fuzzware/hoedur? (2024-12-03 18:41)
 DONE improve grammar with more error condition possiblities (2024-12-03 18:42)
 DONE add rtos lock timeouts (2024-12-03 18:42)
+DONE write README (2024-12-09 14:07)
+DONE run fuzzer on server (2025-01-03 20:35)
+DONE resume fuzzing and review fuzz results (2025-01-03 20:35)
+DONE fix interrupt preemption based on priority (2025-01-03 20:36)
