@@ -3,20 +3,19 @@
 \begin{document}
 
 \section{Requirements}
-In order to answer the research questions outlined in
-\textbf{\autoref{sec:rq}}, a set of requirements needed to identified to drive
-the design of the software that needed to be written.
+
+In order to answer the research questions outlined in \autoref{sec:rq}, a set
+of requirements needed to identified to drive the software development.
 
 % Requirements and Design
 \subsection{User Requirements} \label{sec:user-req}
 
-\textbf{\autoref{tab:rq1-reqs}} shows user requirements derived to satisfy
-\refrq{1}. This requirement set shows the developments fundamental to the
-project, namely the development of flight software (\refreq{RQ1-1}), emulator
-(\refreq{RQ1-2}) and coverage guided fuzzer (\refreq{RQ1-3}), as "Must"
-requirements. The development of a blackbox fuzzer was deemed to be a "Should"
-requirement (\refreq{RQ1-6}, \refreq{RQ1-7}). Running fuzz tests on the
-hardware (\refreq{RQ1-5} and \refreq{RQ1-8}) were identified as "Could"
+\autoref{tab:rq1-reqs} shows user requirements that satisfy \refrq{1}. This
+requirement set outlines the development of flight software (\refreq{RQ1-1}),
+emulator (\refreq{RQ1-2}) and coverage guided fuzzer (\refreq{RQ1-3}), as
+"Must" requirements. The development of a blackbox fuzzer was deemed to be a
+"Should" requirement (\refreq{RQ1-6}, \refreq{RQ1-7}). Running fuzz tests on
+the hardware (\refreq{RQ1-5} and \refreq{RQ1-8}) were identified as "Could"
 requirements, as potential extensions to the work.
 
 \begin{table}[H]
@@ -24,7 +23,7 @@ requirements, as potential extensions to the work.
     \begin{tabular}[c]{|l|p{10cm}|}
         \hline
         \definereq{RQ1-1} &
-        A target software program must be developed that is representative of space flight command and data handling software
+        A target software program must be developed that is representative of CubeSat OBC software
         \\
         \hline
         \definereq{RQ1-2} &
@@ -84,7 +83,7 @@ implementation of a coverage guided fuzzer (\refreq{RQ1-3}, \refreq{RQ2-2}).
         \\
         \hline
         \definereq{RQ2-2} &
-        The communication interface of the target software must be representative of a space flight command and data handling system
+        The communication interface of the target software must be representative of CubeSat OBC software
         \\
         \hline
         \definereq{RQ2-3} &
@@ -110,15 +109,13 @@ implementation of a coverage guided fuzzer (\refreq{RQ1-3}, \refreq{RQ2-2}).
 
 The user requirements outlined to satisfy the research questions in
 \autoref{sec:user-req} identified three main pieces of software that needed to
-be developed. A representative flight software (\refreq{RQ1-1},
-\refreq{RQ2-2}), some emulation software capable of being used as a test
+be developed. A representative flight software (FSW) (\refreq{RQ1-1},
+\refreq{RQ2-2}), some emulation (EMU) software capable of being used as a test
 harness for a coverage guided fuzzer (\refreq{RQ1-2}, \refreq{RQ2-3}), and some
 software for generating some valid communication according to a protocol
-grammar (\refreq{RQ2-4}).
-
-Additional requirements for each of these programs, namely the Flight Software
-(FSW), Emulation (EMU) and Protocol Grammar Filter (PGF), were derived from the
-user requirements and are outlined and discussed below.
+grammar (PGF) (\refreq{RQ2-4}). Additional requirements for each of these
+programs were derived from the user requirements and are outlined and discussed
+below.
 
 %% TODO how to show what was derived from where? a seperate table after defining the requirements?
 
@@ -253,7 +250,8 @@ may give additional insight when answering \refrq{1}.
 % the protocol grammar filter shall use a variable length binary stream as input data
 % the protocol grammar filter input data generation shall be deterministic
 
-The grammar filter derived requirements are mostly focused towards satisfying \refrq{2}.
+The protocol grammar filter derived requirements (\autoref{tab:pgf-reqs}) are
+derived to satisfy \refrq{2}.
 % TODO need more here about the pgf filter.
 For the filter to be valid for use with a fuzzer, the output of the filter must
 be ensured to always be the same given the same input (\refreq{PGF-4}). If this
@@ -311,7 +309,7 @@ STM32 devices, such as EnduroSat \citep{EnduroSat_OBC} and NanoAvionics
 \citep{Clydespace_Kryten}, use System On Chip (SoC) processors, where an FPGA
 and ARM microcontroller are integrated with memory into the same package. The
 Kryten uses a Microsemi SmartFusion 2 SoC, which includes an ARM Cortex-M3
-microcontroller.
+microcontroller \citep{Clydespace_Kryten}.
 
 Real flight hardware, such as those mentioned above, is expensive. The
 EnduroSat OBC is listed as 4,300 euros \citep{EnduroSat_OBC}. Therefore, for
@@ -319,7 +317,7 @@ this work an STM32F411xE device was chosen. The STM32F411xE is a ARM Cortex-M4, 
 is available as a consumer development board called blackpill, which was used
 as the target hardware throughout the work \citep{blackpill_info}. The
 Cortex-M4 architecture is similar to Cortex-M3, like as used in the Kryten
-\citep{Clydespace_Kryten}, except that Cortex-M4 may includes support for
+\citep{Clydespace_Kryten}, except that Cortex-M4 may include support for
 hardware floating point arithmetic and DSP instructions \citep{Cortex_M3}
 \citep{Cortex_M4}. The STM32 chip used in the EnduroSat OBC is a Cortex-M7
 \citep{EnduroSat_OBC}, which is very similar to a Cortex-M4, but with better
@@ -382,16 +380,34 @@ command was included in the spacepacket data field.
 
 The different classes of command designed to be implemented by the application
 layer protocol included Actions, which were functions to be executed without
-any data input or returned (\refreq{FSW-4}; Telemetries, which were functions
-that returned data, with no input (\refreq{FSW-5}); and parameters, which
+any data input or returned (\refreq{FSW-4}); Telemetries, which were functions
+that returned data, with no input (\refreq{FSW-5}); and Parameters, which
 represented variables that could have their value written to or read from
 (\refreq{FSW-6}, \refreq{FSW-7}).
 
-The application included multiple RTOS Threads. One thread would read
-data received over the spacepacket USART interface, another would handle
-parsing received spacepackets and executing the commands. A third thread would
-be used to provide a liveness check, periodically printing to a debug USART
-peripheral.
+Requirement \refreq{FSW-9} specified the need for an RTOS in the FSW, to make
+the implementation representative. An alternative to using an RTOS is the
+"superloop" architecture, where all execution happens in a single while loop.
+This architecture is also commonly used in flight software, but mostly for
+Telemetry Nodes, which only need to execute a small number of functions. An OBC
+software typically needs to be able to execute multiple threads concurrently,
+which cannot be done using a superloop architecture. There are alternative
+concurrent architectures, such as the active object based QP framework
+\citep{QP}. However, RTOS is the most commonly used design.
+
+Common RTOS implementations used in flight software include FreeRTOS, RTEMS and
+VxWorks \citep{Cratere_2024}. FreeRTOS is open source, and so the use of this
+was investigated for the project. However, rather than use an existing RTOS
+implementation, it was ultimately decided to develop a simple multitasking RTOS
+for the STM32 blackpill, based on the educational RTOS MiROS \citep{miros}.
+While this was less representative, the decision was made to increase the
+simplicity of the FSW, and make the implementation of emulator features
+required to support the RTOS much easier.
+
+The application would include multiple RTOS Threads. One thread would read data
+received over the spacepacket USART interface, another would handle parsing
+received spacepackets and executing the commands. A third thread would be used
+to provide a liveness check, periodically printing to a debug USART peripheral.
 
 The FSW also needed to include code for handling the boot process of the
 program. This included initialising the HAL and RTOS, and registering any
@@ -445,21 +461,22 @@ application for the emulator.
 \subsection{Protocol Grammar Filter}
 
 To satisfy \refreq{PGF-1} the design of the FSW must be considered.
-\autoref{sec:fsw-design}, \refreq{FSW-2} and \refreq{FSW-3} indicate that the
+As outlined by \autoref{sec:fsw-design}, \refreq{FSW-2} and \refreq{FSW-3} The
 FSW will implement the spacepacket protocol with a checksum field. Therefore,
-the PGF was designed to create a lazy stream of semantically valid input data
-from an unknown input stream. The PGF was designed to be able to be used in a
-data processing pipeline, with the aim of being able to accept input and route
-output to and from different sources. For example, receiving input data from a
-blackbox fuzzer and routing output to the target hardware, or alternatively
-receiving input from a coverage guided fuzzer and routing it to an emulated
-peripheral.
+the PGF also needs to implement generation of spacepacket data with valid
+checksums. Addtionally, the PGF was designed to create a lazy stream of
+semantically valid input data from an unknown input stream (\refreq{PGF-3}).
+The PGF was designed to be able to be used in a data processing pipeline, with
+the aim of being able to accept input and route output to and from different
+sources. For example, receiving input data from a blackbox fuzzer and routing
+output to the target hardware, or alternatively receiving input from a coverage
+guided fuzzer and routing it to an emulated peripheral.
 
 In order to provide a deterministic input interface for the coverage guided
 fuzzer, the PGF had to assign meaning to each of the bytes in the input,
 effectively determining its own input protocol. The PGF needed to be able to
-inject known errors \refreq{PGF-2}, and so needed to be able to determine which
-error condition should be injected from the input data.
+inject known errors (\refreq{PGF-2}), and so needed to be able to determine
+which error condition should be injected from the input data.
 
 The rationale for designing and using the PGF, apart from to improve the
 effectiveness of a fuzzer when testing a communication interface, was to
@@ -469,7 +486,7 @@ Fuzztruction_2023}. Therefore, the protocol structure for the input to the PGF
 needed to ensure that all bits used would alter the PGF output in a meaningful
 way. The spacepacket protocol defines several header fields that use multiple
 bits, but are either compile time configured or only have one correct value,
-such as the version field \citep{Ccsds_spp}. Therefore, the filter needed to
+such as the version field \citep{Ccsds_spp}. Therefore, the filter was able to
 use constant values for those fields in the spacepacket header, and only use a
 single bit to switch between correct and incorrect version fields.
 
