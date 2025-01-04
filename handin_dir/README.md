@@ -28,6 +28,14 @@ You can build the docker image with `docker build -t rej696/afl:latest .`, or `m
 You can then run the container and drop into a shell using
 `docker run --rm -it --name fuzz -v $(pwd):/src rej696/afl bash` or `make docker-bash`
 
+### Local Installation
+To use the python tools locally, such as to run the `gsw` tool, ensure you have
+installed the python dependencies, by creating a python virtual environment.
+you can do this by running `make emu_install`.
+
+Before running any commands, activate the virtual environment in your terminal
+by running `source venv/bin/activate`
+
 ### STM32 "Flight Software" Application
 To compile the STM32 flight software, you can use the docker container, or install:
 - make

@@ -21,7 +21,7 @@ static uint32_t u32_param = 0;
 
 status_t test_component_print_hello(void)
 {
-    debug_str("Good news, Everyone!");
+    debug_str("Hello University of Bath!");
     return STATUS_OK;
 }
 
