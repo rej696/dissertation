@@ -267,7 +267,8 @@ def main():
         )
         fuzz_thread.start()
         fuzz_thread.join()
-    if args.manual_input:
+
+    elif args.manual_input:
         signal.signal(signal.SIGINT, sigint_handler)
         manual_thread = threading.Thread(
             target=partial(
