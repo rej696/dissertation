@@ -2,6 +2,35 @@
 \graphicspath{{\subfix{../images}}}
 \begin{document}
 
-Abstract
+In recent years, the number of small satellites launched into low earth orbit
+has been increasing, propelled by reduced launch costs and the expansion of the
+private New Space industry. Flight software development for these satellites
+must be completed in shorter time frames at lower costs for businesses to
+remain competitive. Novel verification techniques are required to ensure
+software can successfully be delivered on time and under budget, despite
+constraints common in the industry such as reduced hardware availability.
+
+Fuzz testing is a verification technique that has had success in identifying
+critical vulnerabilities in general purpose software, such as server
+applications. However, fuzz testing embedded software presents various
+challenges, as these devices have more varied hardware architectures and
+operating systems and reduced resources. The creation of tools and techniques
+for embedded software fuzzing, such as rehosting based coverage guided fuzzing,
+has been an active area of research.
+
+In this work, several fuzz testing techniques are applied during the
+development of an example minimal representative CubeSat flight software. The
+work also implements a protocol grammar filter for the flight software
+spacepacket communication interface, which is shown to improve the
+effectiveness of rehosting based coverage guided fuzzing.
+
+The process of developing flight software alongside a Unicorn based emulator
+using blackbox and coverage guided fuzzing tools is demonstrated. The use of
+emulation and fuzzing methodologies to discover and resolve issues is shown to
+be effective. However, the implementation of the tooling necessary for these
+techniques was found to be time consuming, and is likely not scalable to more
+complex flight software development projects. Avenues for future research to
+improve the applicability of these techniques, and reduce the development
+effort required, are outlined.
 
 \end{document}

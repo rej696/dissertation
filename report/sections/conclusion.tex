@@ -2,24 +2,62 @@
 \graphicspath{{\subfix{../images}}}
 \begin{document}
 
-Conclusions and Future Work
 
-% compare findings back to the research questions identified in the introduction
+\section{Future Work}
 
-% Future Work:
-% - Implement Spacepacket Grammar Filter for Hoedur
-% - Investigate running flight sotfware under Hoedur
-% - Investigate speed improvements with fuzzing, native implementations of peripheral models
-% - develop configurable peripheral modelling library for cortex-m micros to
-%   reduce emulator development burden?
-% - Investigate running more complex flight software under unicorn emulator?
-% - Have spacepacket responses be parsed and validated by the fuzzer
-% - Implement space data link layer for grammar fuzzer, (and/or other protocols?)
-% - Integrate grammar filter with normal random afl input, so that both
-%   techniques can generate input data? (filter and normal data are not the
-%   same structure though?)
+Several areas for future work have been identified. The time and development
+effort required to implement and debug the Unicorn emulator would seem to be a
+major barrier to the adoption of the techniques demonstrated in this work.
+However, most of that effort was for implementing peripheral models and
+features common across ARM Cortex-M microcontrollers, such as modelling the
+SysTick and handling interrupts. Therefore, a future project could aim to
+develop a library of peripheral models that could be used with Unicorn to
+quickly compose a representative emulator for any ARM Cortex-M device. If such
+a library were available, the development burden for implementing a working
+emulator would be significantly reduced, and techniques demonstrated in this
+work may be more feasible for complex firmware developments.
 
-% - FIXME run without interrupts until rtos_run re-enables interrupts?
+This work did not include a comparison between the fuzz testing approaches
+taken and state of the art fuzz testing tools, like Hoedur \citep{Hoedur_2023}.
+Therefore, a useful extension to this work would be to run the developed FSW
+under Hoedur, and compare the complexity and utility of the process with the
+techniques outlined. Furthermore, the PGF developed in this work could be
+integrated into the Hoedur tool to explore the potential of multi-stream
+grammar based fuzzing \citep{Hoedur_2023}.
+
+The techniques explored in this work could also be compared with more targeted
+fuzz testing approaches, such as those implemented by GNATFuzz \citep{gnatfuzz},
+or traditional manual unit testing. It is anticipated that targeted fuzz
+testing may provide a valuable compromise between development effort and
+verification effectiveness.
+
+The implementation of the PGF could also be improved. In this work, the PGF did
+not validate the responses from the hardware. This feature would need to be
+implemented if more complex FSW protocol implementations needed to be tested.
+The PGF could also be extended to include other common space protocols, such as
+CSP, ECSS PUS, and the CCSDS Space Data Link layer.
+
+Additionally, the implementation of the FSW could be extended to include more
+features, such as logging data from hardware peripherals. The FSW developed in
+this work was only able to include a minimal application due to time
+constraints and the complexity of developing the Unicorn emulator and low level
+FSW code. Furthermore, future iterations of the work could include a more
+representative and complex RTOS implementation, such as integrating FreeRTOS
+into the FSW.
+
+Most of the issues identified with the coverage guided fuzzing implementation
+were regarding the execution speed of the fuzzer. There are several
+modifications that may improve this. For example, the peripheral models and
+emulator could be implemented natively, using the C programming language,
+rather than Python. Other improvements include running multiple fuzzers in
+parallel; extending the emulator to snapshot the execution of the FSW after the
+boot process is complete, as the fuzzer can only affect the execution after
+receiving input data; or configuring the emulator to artificially fast forward
+the execution of the RTOS idle thread, skipping periods of execution where the
+FSW is idle or blocked.
+
+% More speed up things?
+% - run without interrupts until rtos_run re-enables interrupts?
 %   after this boot process is complete, then we can "tick" using emu start
 %   timeouts and handle interrupts inbetween without needing a code callback?
 % - could also do WFI in rtos_on_idle, and then detect the call to WFI and skip
@@ -29,5 +67,37 @@ Conclusions and Future Work
 %   (systick higher priority than pendsv) this should happen by default if we run
 %   "application" emulator code (non-interrupts) in increments of the systick
 %   frequency
+
+
+
+
+
+\section{Conclusion}
+% compare findings back to the research questions identified in the introduction
+This work investigated the use of rehosting fuzz testing techniques as an
+iterative development methodology for CubeSat flight software development. A
+representative flight software was designed and implemented, alongside a
+Unicorn based emulator that could host the flight software. Tooling for manual
+testing and blackbox fuzzing on both the hardware and the emulator was
+developed, and these techniques were compared with rehosting based coverage
+guided fuzzing using UnicornAFL. The FSW used the spacepacket protocol as
+communication interface, which was used as the target for fuzz testing.
+
+Furthermore, a protocol grammar filter was implemented, that used a stream of
+raw input data to generate valid spacepackets with checksums, encapsulated in
+KISS frames. The protocol grammar filter included a mechanism for injecting
+predetermined errors into the generated protocol data, that could be controlled
+deterministically by a fuzzer.
+
+The protocol grammar filter was integrated with the rehosted coverage guided
+fuzzer, and used to fuzz test the implemented flight software. Using the
+protocol grammar filter was found to improve the ability of the fuzzer to
+discover coverage.
+
+The emulation and fuzz testing tooling developed with the flight software was
+shown to provide utility to detect and resolve bugs in the flight software
+implementation. However, the additional effort required for developing this
+tooling indicates that these techniques may not be feasible for more complex
+flight software development projects.
 
 \end{document}
