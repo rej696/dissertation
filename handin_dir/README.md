@@ -1,17 +1,20 @@
 # STM32 Flight Software Development, Emulation, and Fuzzing
 This project consists of:
-- A bare metal "Flight Software" application for the STM32F411CE "Blackpill" microcontroller board `fsw`:
+- A bare metal "Flight Software" application for the STM32F411xE "Blackpill" microcontroller board `fsw`:
     - Remote Procedure Call implementation over Serial using Spacepackets and KISS framing
     - Design by Contract
     - Basic RTOS implementation inspired Miro Samek's MIROS
 - A python emulator/fuzzing test harness using unicorn `emu`:
     - Arm Cortex-M and STM32 Peripheral models
     - Interrupt handling and context switching
-    - A protocol grammar filter for converting a raw byte stream into valid input data (spacepackets with checksums in KISS frames)
     - black box fuzzing (with or without grammar filtering)
+    - integration with UnicornAFL and AFL++ for coverage guided fuzzing (with or without grammar filtering)
+- A python library implementing a protocol grammar filter `pgf`:
+    - A protocol grammar filter for converting a raw byte stream into valid input data (spacepackets with checksums in KISS frames)
 - A "Ground Segment" python cli tool `gsw`:
     - reading/writing packets to a connected development board
     - on target black box fuzzing (with or without grammar filtering)
+    - monitoring for crashes using a liveness check
 
 ## Instructions
 ### Docker
@@ -54,11 +57,27 @@ packets to/from the STM32 with the `gsw` python tool.
 You can use the tool to trigger specific functions, for example `./gsw --dev
 /dev/ttyUSB0 action 0` sends a packet to the device to run action with id 0.
 
+Action, Parameter and Telemetry IDs can be found by inspecting the hander
+tables in `fsw/src/main.c`. The ID for a command is the index of the function
+pointer in the table.
+
+##### On Target Black Box Fuzzing
 You can also use the "blackbox fuzzer" functionality of the tool with `./gsw
 --dev /dev/ttyUSB0 fuzz --timeout 5`. This will periodically send packets
 created from a random bytestream through the protocol grammar filter.
 
-run `./gsw --help` for more information.
+You can run the blackbox fuzzer without the protocol grammar filter using `./gsw
+--dev /dev/ttyUSB0 fuzz-raw --timeout 5`
+
+If you are using the `log` subcommand (i.e. `./gsw --dev /dev/ttyUSB1 log`) to
+see the responses from the STM32, this will automatically detect a crash during
+blackbox fuzzing by monitoring the liveness check, and report the crash with a
+timestamp, and restart the board using the `st-link` tool.
+
+Crashes can be correlated with inputs by comparing the timestamps in the output
+from the `fuzz` and the `log` subcommands
+
+Run `./gsw --help` for more information.
 
 ### Emulator
 For interacting with the emulator, I recommend running any commands in the
@@ -73,7 +92,7 @@ binary, and a set of hardcoded inputs which will be written to the `USART1`
 model at intervals determined by the input data.
 
 `make emu` uses the protocol grammar filter to deterministically generate the
-spacepacket data from the input data
+spacepacket data from the input data.
 
 `make emu-raw` uses hardcoded raw spacepacket data that have been written by
 hand.
@@ -126,16 +145,11 @@ these.
       valid percentage coverage of the flight software
 
 I have also included a python script which will run each input files generated
-by the afl fuzzer in order and calculate the flight software statement coverage
-and running total. This is run with `make cov{,-raw}`. The output from this
-tool can be collated and plotted to show coverage against time/number of execs
-for the fuzzing run.
+by the AFL++ fuzzer in order and calculate the flight software instruction
+coverage and running total. This is run with `make cov{,-raw}`. The output from
+this tool can be collated and plotted to show coverage against time/number of
+execs for the fuzzing run.
 
 See the
 [AFLplusplus documentation](https://github.com/AFLplusplus/AFLplusplus/blob/stable/docs/fuzzing_in_depth.md)
 for more information about running AFLplusplus
-
-
-## Links
-- [Unicorn Engine Notes](https://github.com/alexander-hanel/unicorn-engine-notes)
-- [Unicorn AFL Python Example](https://github.com/AFLplusplus/AFLplusplus/tree/stable/unicorn_mode/samples/python_simple)
