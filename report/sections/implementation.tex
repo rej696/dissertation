@@ -24,7 +24,7 @@ emulator. Files for the flight software implementation are included in the
 \lstinline|fsw| directory. Files for the emulator implementation are included
 in the \lstinline|emu| directory, and files for the protocol grammar filter
 are included in the \lstinline|pgf| directory. The ground software python tool
-is located at the project root called \lstinline|gsw|. The \lstinline|pgf| is
+is located at the project root and called \lstinline|gsw|. The \lstinline|pgf| is
 not a stand-alone application, like the \lstinline|emu| and \lstinline|gsw|
 tools, but a library containing code that allows the protocol grammar filter to
 be used in both the emulator and the ground software.
@@ -41,7 +41,7 @@ following sections.
 The most logical and popular choice of programming language for embedded flight
 software is the C programming language. C is used in FSW frameworks like Gen1
 and cFS \citep{Bal_FSDK, Nasa_cFS}. Languages like C++ and Ada are also
-commonly used, C++ is used in the F Prime FSW framework \citep{Nasa_fprime}.
+commonly used: C++ is used in the F Prime FSW framework \citep{Nasa_fprime}.
 Recently, modern languages like Micropython, Rust and Zig have started to
 become popular for embedded devices. Rust was used by the University of
 Stuttgart for their sat-rs flight software library, which flew as an experiment
@@ -70,12 +70,12 @@ from the implementation, similar to a vendor HAL.
 
 An ARM Cortex-M chip will include another layer of hardware implementation,
 designed by the vendor (STMicroelectronics for the STM32F411xE). This
-layer includes additional hardware peripherals, such as memory, IO devices like
-USART or I2C, clocks, GPIOs and so on. Vendors, like STMicroelectronics,
-typically provide a HAL, which is a software library for interfacing with the
-vendor hardware \citep{stm32hal}. These HALs can vary in size and complexity
-from vendor to vendor, and many are either built on top of CMSIS or compatible
-with CMSIS.
+layer includes software interfaces for additional hardware peripherals, such as
+memory, IO devices like USART or I2C, clocks, GPIOs and so on. Vendors, like
+STMicroelectronics, typically provide a HAL, which is a software library for
+interfacing with the vendor hardware \citep{stm32hal}. These HALs can vary in
+size and complexity from vendor to vendor, and many are either built on top of
+CMSIS or compatible with CMSIS.
 % TODO CUT?
 Often these HAL implementations are part of a developer tooling
 ecosystem, and are integrated into a proprietary IDE. While this can make
@@ -262,10 +262,10 @@ with an easily detectable sequence of 32-bit words, known as stack paint. This
 is a feature to aid debugging and optimisation, as the stack paint can act as a
 "high water mark", showing the maximum stack usage. Furthermore, reading from
 unassigned variables or memory in the stack is more likely to cause a crash
-when using stack paint, rather than setting the stack to zero, making these
+when using stack paint instead of initialising the stack memory to zero, making these
 types of errors more detectable during development. Finally, the
-\lstinline|rtos_thread_create| registers the new thread with the RTOS, so it is
-ready to be run.
+\lstinline|rtos_thread_create| function registers the new thread with the RTOS,
+indicating it is ready to be run.
 
 The mechanism for context switching between rtos threads uses the PendSV system
 interrupt and the \lstinline|rtos_schedule| function. The PendSV interrupt is
@@ -595,9 +595,9 @@ until the modelled FIFO was empty.
 In order to prevent errors when managing data in the modelled FIFOs, trampoline
 handlers were implemented that would stop execution of the Unicorn emulator in
 order to print the data they contained. Each \lstinline|Uart| model was
-configured with a terminator byte that would trigger the data to flagged as
-ready to print. For the debug USART, this was a newline character, while for
-the spacepacket USART, this was a KISS FEND byte.
+configured with a terminator byte that would trigger the data in the modelled
+FIFO to be flagged as ready to print. For the debug USART, this was a newline
+character, while for the spacepacket USART, this was a KISS FEND byte.
 
 \subsection{Command Line Interface}
 
@@ -633,7 +633,7 @@ added to dump specific memory regions and registers during execution of
 specific instructions by the emulator. This helped identify where the
 spacepackets were being dropped by the FSW running on the emulator. Ultimately,
 it was discovered that without framing implemented, spacepackets could be sent
-and received successfully if only a single complete spacepacket was received by
+and received successfully only if a single complete spacepacket was received by
 the FSW in-between the RTOS context switching threads. The Emulator was sending
 spacepackets to the running FSW quicker, relative to the number instructions
 executed, compared to sending multiple spacepackets to the target hardware. As
@@ -754,9 +754,10 @@ of the FSW, and so would trigger a UnicornAFL error.
 
 \subsection{Example Data Generation}
 
-To run AFL++ effectively, it required a directory of files which were known
-good inputs to the SUT. A python script was written to generate valid input
-data for both the PGF and raw fuzzing runs
+AFL++ required a directory of files which were known
+good inputs to the application being fuzzed as a starting point for generating
+input data. A python script was written to generate valid input data for both
+the PGF and raw fuzzing runs
 (\lstinline|tools/generate_inputs.py|).
 
 \end{document}

@@ -38,7 +38,7 @@ The PGF could also be extended to include other common space protocols, such as
 CSP, ECSS PUS, and the CCSDS Space Data Link layer.
 
 Additionally, the implementation of the FSW could be extended to include more
-features, such as logging data from hardware peripherals. The FSW developed in
+features, such as logging data from external hardware sensors. The FSW developed in
 this work was only able to include a minimal application due to time
 constraints and the complexity of developing the Unicorn emulator and low level
 FSW code. Furthermore, future iterations of the work could include a more
@@ -92,10 +92,10 @@ deterministically by a fuzzer.
 The protocol grammar filter was integrated with the rehosted coverage guided
 fuzzer, and used to fuzz test the implemented flight software. Using the
 protocol grammar filter was found to improve the ability of the fuzzer to
-discover coverage.
+discover new code execution paths.
 
 The emulation and fuzz testing tooling developed with the flight software was
-shown to provide utility to detect and resolve bugs in the flight software
+shown to be useful for detecting and resolving bugs in the flight software
 implementation. However, the additional effort required for developing this
 tooling indicates that these techniques may not be feasible for more complex
 flight software development projects.

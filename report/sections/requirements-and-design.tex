@@ -5,7 +5,7 @@
 \section{Requirements}
 
 In order to answer the research questions outlined in \autoref{sec:rq}, a set
-of requirements needed to identified to drive the software development.
+of requirements needed to be identified to drive the software development.
 
 % Requirements and Design
 \subsection{User Requirements} \label{sec:user-req}
@@ -68,9 +68,9 @@ requirements, as potential extensions to the work.
     \label{tab:rq1-reqs}
 \end{table}
 
-\textbf{\autoref{tab:rq2-reqs}} shows user requirements derived to satisfy \refrq{2}.
+\autoref{tab:rq2-reqs} shows user requirements derived to satisfy \refrq{2}.
 This requirement set has some overlap with those identified to satisfy
-\refrq{1} in \textbf{\autoref{tab:rq1-reqs}}. Both require some target software
+\refrq{1} in \autoref{tab:rq1-reqs}. Both require some target software
 to be developed (\refreq{RQ1-1}, \refreq{RQ2-1}) and both require the
 implementation of a coverage guided fuzzer (\refreq{RQ1-3}, \refreq{RQ2-2}).
 
@@ -140,7 +140,7 @@ below.
         \\
         \hline
         \definereq{FSW-2} &
-        The target software must be implement the spacepacket protocol over a hardware communication interface
+        The target software must implement the spacepacket protocol over a hardware communication interface
         \\
         \hline
         \definereq{FSW-3} &
@@ -156,11 +156,11 @@ below.
         \\
         \hline
         \definereq{FSW-6} &
-        The target software could allow the setting of configuration data
+        The target software should allow the setting of configuration data
         \\
         \hline
         \definereq{FSW-7} &
-        The target software could allow the retrieval of configuration data
+        The target software should allow the retrieval of configuration data
         \\
         \hline
         \definereq{FSW-8} &
@@ -179,15 +179,15 @@ below.
 \autoref{tab:fsw-reqs} shows the derived flight software requirements.
 \refrq{2} is focused on fuzz testing the communication interface with the
 flight software, and so several of these requirements clarify that interface.
-The use of spacepacket protocol (\refreq{FSW-2}), the implementation of Real
+The use of the spacepacket protocol (\refreq{FSW-2}), the implementation of Real
 Time Operating System (RTOS) functionality (\refreq{FSW-9}), and the need for
 remote procedure triggering (\refreq{FSW-4}), are all identified to ensure the
 FSW follows standard FSW design decisions (outlined in \autoref{chap:lit-rev}),
 as required by \refreq{RQ1-1}.
 
 Other requirements, such as \refreq{FSW-8}, are included to ensure that the
-design of the FSW is easy to fuzz test, and thus satisfy both \refrq{1} and
-\refrq{2}.
+design of the FSW is easy to fuzz test, and can therefore be used to satisfy
+both \refrq{1} and \refrq{2}.
 
 \refreq{FSW-1} specifies that the target software be designed to run on an ARM
 Cortex-M microcontroller. This microcontroller architecture is very common in
@@ -197,13 +197,13 @@ the art rehosting fuzzers like Hoedur and Fuzzware \citep{Hoedur_2023,
 Fuzzware_2022}.
 
 \autoref{tab:emu-reqs} outlines derived requirements for the emulator. Some of
-these requirements are directly derived from the User Requirements, such as
+these requirements are directly derived from the user requirements, such as
 \refreq{EMU-1} and \refreq{RQ1-2}. Others are fundamental for the emulator to
 be able to be used to answer \refrq{2}, such as \refreq{EMU-6}.
 
 \refreq{EMU-5} aims to enable the emulator to be used to debug the target
 software. This "Should" requirement may make the emulator a more useful tool
-beyond just acting as a fuzz testing harness, and allow the emulator to be used
+beyond just acting as a fuzz testing harness, and enables the emulator to be used
 to investigate bugs identified by fuzz testing. Using the emulator in this way
 may give additional insight when answering \refrq{1}.
 
@@ -232,11 +232,11 @@ may give additional insight when answering \refrq{1}.
         \\
         \hline
         \definereq{EMU-6} &
-        The emulation software must allow the target software to be able to be used as a test harness for a coverage guided fuzzer
+        The emulation software must be able to be used as a rehosting harness for running the target software under a coverage guided fuzzer
         \\
         \hline
         \definereq{EMU-7} &
-        The emulation software should allow the target software to be able to be used as a test harness for a black box fuzzer
+        The emulation software should be able to be used as a rehosting harness for running the target software under a black box fuzzer
         \\
         \hline
     \end{tabular}
@@ -316,7 +316,7 @@ EnduroSat OBC is listed as 4,300 euros \citep{EnduroSat_OBC}. Therefore, for
 this work an STM32F411xE device was chosen. The STM32F411xE is a ARM Cortex-M4, and
 is available as a consumer development board called blackpill, which was used
 as the target hardware throughout the work \citep{blackpill_info}. The
-Cortex-M4 architecture is similar to Cortex-M3, like as used in the Kryten
+Cortex-M4 architecture is similar to Cortex-M3, which is used in the Kryten
 \citep{Clydespace_Kryten}, except that Cortex-M4 may include support for
 hardware floating point arithmetic and DSP instructions \citep{Cortex_M3}
 \citep{Cortex_M4}. The STM32 chip used in the EnduroSat OBC is a Cortex-M7
@@ -345,7 +345,7 @@ not need to be considered in the design.
 
 \subsection{Flight Software} \label{sec:fsw-design}
 
-As outlined in the User Requirements (\autoref{sec:user-req}) the FSW component
+As outlined in the user requirements (\autoref{sec:user-req}) the FSW component
 of the work needed to provide enough features to successfully answer the
 research questions. In the derived FSW requirements (\autoref{tab:fsw-reqs})
 the required features of the FSW are outlined, such as a spacepacket interface
@@ -365,7 +365,7 @@ code.
 The HAL would handle interaction with the USART peripheral in the STM32
 blackpill, providing functions to read and write data. The HAL would need to be
 able to handle interrupts from the USART peripheral. The USART peripheral would
-be the spacepacket interface, meaning spacepackets could be sent to the
+be the communication interface, meaning spacepackets could be sent to the
 blackpill from a development machine using an FTDI cable, satisfying
 \refreq{FSW-8}.
 
@@ -399,7 +399,7 @@ Common RTOS implementations used in flight software include FreeRTOS, RTEMS and
 VxWorks \citep{Cratere_2024}. FreeRTOS is open source, and so the use of this
 was investigated for the project. However, rather than use an existing RTOS
 implementation, it was ultimately decided to develop a simple multitasking RTOS
-for the STM32 blackpill, based on the educational RTOS MiROS \citep{miros}.
+for the STM32 blackpill based on the educational RTOS MiROS \citep{miros}.
 While this was less representative, the decision was made to increase the
 simplicity of the FSW, and make the implementation of emulator features
 required to support the RTOS much easier.
@@ -461,10 +461,10 @@ application for the emulator.
 \subsection{Protocol Grammar Filter}
 
 To satisfy \refreq{PGF-1} the design of the FSW must be considered.
-As outlined by \autoref{sec:fsw-design}, \refreq{FSW-2} and \refreq{FSW-3} The
-FSW will implement the spacepacket protocol with a checksum field. Therefore,
-the PGF also needs to implement generation of spacepacket data with valid
-checksums. Addtionally, the PGF was designed to create a lazy stream of
+As outlined by \autoref{sec:fsw-design}, \refreq{FSW-2}, and \refreq{FSW-3},
+the FSW will implement the spacepacket protocol with a checksum field.
+Therefore, the PGF also needs to implement generation of spacepacket data with
+valid checksums. Additionally, the PGF was designed to create a lazy stream of
 semantically valid input data from an unknown input stream (\refreq{PGF-3}).
 The PGF was designed to be able to be used in a data processing pipeline, with
 the aim of being able to accept input and route output to and from different

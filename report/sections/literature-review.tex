@@ -107,7 +107,7 @@ shift from hardware to software \citep{Cubesat_Handbook_OBSW}. However, there
 are several flight software frameworks, such as NASA's Core Flight System (cFS)
 \citep{Nasa_cFS}, or Bright Ascensions Generation One (Gen1) Flight Software
 Development Kit (FSDK) \citep{Bal_FSDK}, that aim to reduce the cost and
-development time for Flight Software through code reuse and hardware
+development time for flight software through code reuse and hardware
 abstraction.
 
 A cFS application uses software abstractions of the operating system and
@@ -118,7 +118,7 @@ SPARC-V8, and different operating systems like FreeRTOS, RTEMS or Linux
 \citep{Nasa_cFS}.
 
 The Gen1 FSDK provides libraries of pre-defined configurable software
-"Components", which satisfy common Flight Software requirements, such as
+"Components", which satisfy common flight software requirements, such as
 logging telemetry. These pre-defined components can be composed together with
 bespoke components into a "Deployment" which can be compiled for several
 different COTS hardware options, such as the AAC-ClydeSpace Kryten, or the
@@ -149,7 +149,7 @@ incorrect information or a misinterpretation. The number of interdependent
 systems, the costs of these components, and smaller budgets of new space
 companies, results in dedicated engineering hardware required for effective
 development of embedded flight software being unavailable. Often engineers are
-only being able to test with flight hardware, and even then have to fit their
+only able to test with flight hardware, and even then have to fit their
 testing into a tight schedule to meet deadlines.
 
 Software development standards, such as MISRA and NASA's the power of ten exist
@@ -189,12 +189,12 @@ for each generated test-case to mutate and generate further test cases. This
 approach allows it to find code paths faster than blackbox testing, but without
 requiring any static code analysis \citep{Yun_2022}. Greybox fuzzing can be
 easily implemented for application (non-embedded) software using popular
-fuzzers like AFL. AFL provides a library that is linked into the program at
-compile time, along with several sanitisers, to instrument the program. This
-allows AFL to receive coverage information from the running program during
-fuzzing \citep{AFL_2019}. Embedded systems often run on constrained
-environments, where running the fuzzer on the target hardware would be
-unfeasible \citep{Yun_2022}.
+fuzzers like American Fuzzy Lop (AFL). AFL provides a library that is linked
+into the program at compile time, along with several sanitisers, to instrument
+the program. This allows AFL to receive coverage information from the running
+program during fuzzing \citep{AFL_2019}. Embedded systems often run on
+constrained environments, where running the fuzzer on the target hardware would
+be unfeasible \citep{Yun_2022}.
 
 Research into the fuzz testing of embedded systems has been increasing
 year by year \citep{Yun_2022}, but there are few generic solutions
@@ -341,8 +341,8 @@ fuzzer. UnicoreFuzz was built on top of a tool called UnicornAFL
 \citep{Maier_2019}. Unicorn is a framework for building emulators, which builds
 on top of the instruction set emulation capabilities of QEMU \citep{Unicorn}.
 UnicornAFL is a patched version of Unicorn which allows rehosted binaries to be
-run under American Fuzzy Lop (AFL), a popular coverage guided fuzzing tool
-\citep{UnicornMode, AFL_2019}.
+run under AFL++, a popular coverage guided fuzzing tool that is an extended fork of AFL
+\citep{UnicornMode, AFL_2019, AFLplusplus}.
 \citet{Maier_2019} focused on emulating and fuzzing parser code in the kernel,
 as parser code usually does not have hardware dependencies, and they
 acknowledge modelling hardware peripherals is not an easy task in Unicorn.
@@ -358,8 +358,8 @@ of memory and register values.
 
 UnicoreFuzz was able to fuzz sections of software with no hardware interaction.
 However, this ignores the fact that all embedded software programs will have
-dependencies on hardware peripherals. However a series of developments have
-been made to enable generic rehosting of firmware.
+dependencies on hardware peripherals. Recently, a series of developments have
+been made to enable generic rehosting based fuzz testing of firmware.
 
 \citet{HALucinator_2020} developed HALucinator, a tool for firmware rehosting
 through emulating the hardware abstraction layer (HAL). Embedded software
@@ -372,14 +372,14 @@ functionality. HALucinator parses HAL libraries to provide a high level
 emulation (HLE) environment on top of QEMU by assigning abstract peripheral
 models to HAL functions in the binary \citep{HALucinator_2020}. This allows
 firmware to be run on the emulator interactively, as well as under a fuzzer
-like AFL. HALucinator has a number of prerequisites. The firmware must use a
+like AFL++. HALucinator has a number of prerequisites. The firmware must use a
 supported HAL library for all hardware interaction, or handler functions for
 the HAL need to be implemented. This is a manual process, but when completed
 can be reused for any device using that HAL library. There also needs to be
 valid peripheral models implemented for all the HAL functions used.
 \citet{HALucinator_2020} demonstrated the use of HALucinator for fuzzing and
-dynamic analysis using CPUs and HALs from three different vendors, using it to
-detect security bugs in firmware samples.
+dynamic analysis using microcontrollers and HALs from three different vendors,
+using it to detect security bugs in firmware samples.
 
 \citet{Clements_2021} extended HALucinator to work with systems that use the
 VxWorks real time operating system (RTOS) as a case study. VxWorks is a
@@ -392,13 +392,13 @@ and modifications to the original HALucinator tool. However, they do review
 their original process and outline an approach for rehosting other RTOSes with
 HALucinator.
 
-\citet{Chen_2022} investigated a novel approach to fuzzing Real Time Operating
-Systems (RTOS), called SFuzz. SFuzz slices a single program into its
-constituent tasks and constructs a call graph of program based on critical
+\citet{Chen_2022} investigated a novel approach to fuzzing systems that use
+real time operating systems, called SFuzz. SFuzz slices a single program into
+its constituent tasks and constructs a call graph of the program based on critical
 functions such as external data entry points. Each tailored execution tree is
-was then fuzzed separately using a UnicornAFL based emulator. SFuzz is able to
+then fuzzed separately using a UnicornAFL based emulator. SFuzz is able to
 detect and skip "input-irrelevant" function calls as well code that is
-"emulation-hard", such as HAL functions. SFuzz focuses on code paths that
+"emulation-hard", such as HAL functions. SFuzz focused on code paths that
 handle input data, so there are minimal side effects from ignoring these
 functions.
 
@@ -406,30 +406,30 @@ While SFuzz is focused fuzzing a single input interface of a given firmware,
 Fuzzware is a tool that takes a different approach by considering all memory
 available to the firmware as input \citep{Fuzzware_2022}. Fuzzware expands upon
 HALucinator, but rather than using the HAL as the boundary for the fuzzer and
-the SUT, it models the MMIO, such that each MMIO access uses fuzzer input.
-Fuzzware is also based on UnicornAFL, and uses symbolic execution to apply
-"access models" to MMIO locations. These access models guide the fuzzer to only
-generate meaningful values for memory accesses. For example, in the case where
-an MMIO location is only read and compared to a magic number, the symbolic
-execution engine will tell Fuzzware to use a "constant" access model for that
-MMIO, with the magic number as the constant value. Alternatively, if an MMIO
-register is accessed, and only certain bits of the register are used (which is
-a common occurrence when working with embedded software), Fuzzware will use the
-"bitfield" access model. This means the fuzzer will only generate input data
-for the bits used by the firmware. This massively reduces the "input overhead"
-of the fuzzer: meaning input data that isn't actively used by the firmware
-during the fuzz test. \citet{Fuzzware_2022} show that this approach makes the
-fuzzer much more effective at discovering coverage than other rehosting-based
-fuzzing tools.
+the SUT, it models the memory mapped input output (MMIO) registers, such that
+each MMIO access uses fuzzer input. Fuzzware is also based on UnicornAFL, and
+uses symbolic execution to apply "access models" to MMIO locations. These
+access models guide the fuzzer to only generate meaningful values for memory
+accesses. For example, in the case where an MMIO location is only read and
+compared to a magic number, the symbolic execution engine will tell Fuzzware to
+use a "constant" access model for that MMIO, with the magic number as the
+constant value. Alternatively, if an MMIO register is accessed, and only
+certain bits of the register are used (which is a common occurrence when
+working with embedded software), Fuzzware will use the "bitfield" access model.
+This means the fuzzer will only generate input data for the bits used by the
+firmware. This massively reduces the "input overhead" of the fuzzer: meaning
+input data that isn't actively used by the firmware during the fuzz test.
+\citet{Fuzzware_2022} show that this approach makes the fuzzer much more
+effective at discovering coverage than other rehosting-based fuzzing tools.
 
-AFL traditionally expects the program being fuzzed to require a flat binary input.
+AFL++ traditionally expects the program being fuzzed to require a flat binary input.
 While Fuzzware removes a lot of "input overhead", it reinterprets the flat
-input from AFL as a series of MMIO accesses, but AFL still only has one input
+input from AFL++ as a series of MMIO accesses, but AFL++ still only has one input
 stream. This can result in the input being hard to mutate effectively, as
 changing a bit could result in a different execution path in the program, and
 so changing the semantics of later bits in the stream.
 Hoedur \citep{Hoedur_2023} is an extension of Fuzzware, which includes a novel
-multi-stream fuzzer, rather than AFL, such that each MMIO access consumes input
+multi-stream fuzzer, rather than AFL++, such that each MMIO access consumes input
 data from its own input stream. This greatly improves the ability of the fuzzer
 to mutate MMIO input data. Unlike HALucinator before them, both Fuzzware and
 Hoedur perform automated firmware rehosting, as the only manual work needed to
@@ -439,7 +439,7 @@ peripherals, like HALucinator, is not necessary. However, this means that
 unlike HALucinator, firmware being run with Hoedur or Fuzzware cannot be run
 interactively, it must be run under the fuzzer. While both are based on
 Unicorn, which supports multiple target architectures, Fuzzware and Hoedur are
-only currently available on ARM Cortex-M, which was chosen due its popularity
+only currently implemented for ARM Cortex-M, which was chosen due its popularity
 and use in other state of the art fuzzers to allow for fair comparisons. Given
 Hoedur has independent input streams for each MMIO, \citet{Hoedur_2023}
 identified the integration of specialized grammar fuzzers into Hoedur as an
@@ -455,7 +455,7 @@ of protocol fuzzers for satellite communications as a research opportunity.
 Fuzztruction \citep{Fuzztruction_2023} aims to resolve these issues surrounding
 encryption/checksums by creating a new type of fuzzer that mutates not just the
 input data, but the code that generates the input data. This enables the tool
-to make use of the domain knowledge encoded in some generator software, without
+to make use of the domain knowledge encoded in protocol generator software, without
 needing complex program analysis or a human domain expert. Fuzztruction is
 proposed in part as an alternative to grammar based techniques for generating
 well structured inputs in order to reach deeper into the state space of a
@@ -471,10 +471,10 @@ a traditional coverage guided fuzzer, such as AFL++. In this configuration,
 Fuzztruction and AFL++ are both used to generate input data, with a scheduling
 component that enables AFL++ to mutate inputs found by Fuzztruction.
 Fuzztruction was compared against existing state of the art general purpose
-fuzzers: AFL++, SymCC and Weizz; and was shown to outperform all of them in
-terms of coverage over time. While the result is very promising, the fuzzer is
-currently not integrated with any rehosting based tools, like unicorn, and so
-is unable to fuzz embedded software.
+fuzzers and was shown to outperform all of them in terms of coverage over time.
+While the result is very promising, the fuzzer is currently not integrated with
+any rehosting based tools, like Unicorn, and so is unable to be used to fuzz
+test embedded software.
 
 \citet{Seidel_2023} investigated techniques for creating faster firmware
 fuzzers by running emulated arm instructions on native ARM64 hardware. They
@@ -484,7 +484,7 @@ Thumb-v2 instruction set implemented in embedded microcontrollers (ARM
 Cortex-M) is available as an execution state in application level processors
 (ARM Cortex-A). They implemented a dynamic binary rewriting engine to translate
 basic blocks in firmware into compatible native ARM64 instructions. This
-near-native execution greatly outperformed existing unicorn based rehosting
+near-native execution greatly outperformed existing Unicorn based rehosting
 fuzzers, like HALucinator \citep{HALucinator_2020} and Fuzzware
 \citep{Fuzzware_2022}, in terms of coverage over time.
 
@@ -500,8 +500,8 @@ purpose Linux computer, without any emulation software like Unicorn or QEMU.
 The Suchai FSW used a Cubesat Space Protocol (CSP) communication interface for
 receiving commands. \citet{Gutierrez_2021} implemented a blackbox fuzzer that
 sends random data to the CSP command handler using four different strategies
-which constrain input data to different levels of correctness to target
-different aspects of the FSW. For example, the first strategy is to generate
+which constrain input data with different levels of correctness in order to target
+different layers of the FSW. For example, the first strategy is to generate
 random commands, most of which should be safely rejected by the command
 handler; while the third strategy is to generate syntactically valid sets of
 commands and parameters, but with randomised parameter values. Their
@@ -543,7 +543,7 @@ satellites, such as telecommands from the ground, or components integrated in
 the satellite suffering from supply chain attacks. They also outline challenges
 with fuzz testing specific to satellites, including the complexity of satellite
 computer boot processes (as discussed by \citet{Scharnowski_2023}), and the
-difficulty of on target fuzzing. They identify that most fuzzers use crashes as
+difficulty of fuzz testing on target hardware. They identify that most fuzzers use crashes as
 the measure of failure, and state that for satellite software a crash/reboot
 may not be the most problematic outcome. Examples of more severe outcomes
 include triggering end of life procedures such as de-orbiting and battery

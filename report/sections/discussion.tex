@@ -164,13 +164,13 @@ When generating input data, AFL++ saves and maintains a set of input files that
 cover all edges encountered by the fuzzer. The emulator was designed to be able
 to replay these input files without running the fuzzer, to generate instruction
 coverage metrics and debug crashes. The total instruction coverage is a
-percentage of the total number of instructions covered by the all generated
+percentage of the total number of instructions covered by all the generated
 input data. Using AFL++ without the protocol grammar filter achieved 70.4\%
 instruction coverage after the run was complete, while using the PGF achieved
 79.5\% instruction coverage.
 
 The instruction coverage metrics when using the PGF are not that much higher
-than the with raw input. It is likely that the remaining 20\% of instructions
+than those using raw input. It is likely that the remaining 20\% of instructions
 not covered by either method may not be able to be covered by only fuzz testing
 the spacepacket interface. This unreachable code might include guard conditions
 at start-up or when initialising the RTOS. Additionally, this may include the
@@ -204,7 +204,7 @@ errors could lead to more effective fuzzing, at the cost of increased input
 overhead. Perhaps the PGF could be developed into its own fuzzer, rather than a filter
 for AFL++, and be used in combination with the raw AFL++ fuzzer. This approach
 is similar to the one taken by \citet{Fuzztruction_2023}, who showed that
-combining AFL++ with their Fuzztruction led to improved fuzzing performance.
+combining AFL++ with their Fuzztruction tool led to improved fuzzing performance.
 
 As UnicornAFL took a long time to run, it was left for long periods to
 complete. Results from running the fuzzer were therefore most applicable to the
