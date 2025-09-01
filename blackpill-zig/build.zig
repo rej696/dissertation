@@ -29,22 +29,26 @@ pub fn build(b: *std.Build) void {
 
     const zig_obj = b.addObject(.{
         .name = "zig_main.o",
-        .target = target,
-        .optimize = optimize,
-        .link_libc = false,
-        .single_threaded = true,
-        .pic = true,
-        .root_source_file = b.path("src/zig/main.zig"),
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+            .link_libc = false,
+            .single_threaded = true,
+            .pic = true,
+            .root_source_file = b.path("src/zig/main.zig"),
+        })
     });
     zig_obj.addIncludePath(b.path("inc"));
 
     const exe = b.addExecutable(.{
         .name = exe_name ++ ".elf",
-        .target = target,
-        .optimize = optimize,
-        .link_libc = false,
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+            .single_threaded = true,
+            .link_libc = false,
+        }),
         .linkage = .static,
-        .single_threaded = true,
     });
 
     exe.addObject(zig_obj);
